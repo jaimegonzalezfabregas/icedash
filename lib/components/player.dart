@@ -6,9 +6,9 @@ import 'package:icedash/main.dart';
 import 'package:icedash/tile.dart';
 
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
-  Player({super.position}) : super(size: Vector2.all(100), anchor: Anchor.topLeft);
+  Player({super.position}) : super(priority: 1, size: Vector2.all(100), anchor: Anchor.topLeft);
 
-  double speed = 100;
+  double time_per_step = 0.1;
   bool sliding = false;
   Direction? buffered;
 
@@ -61,7 +61,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
     sliding = true;
 
-    EffectController ec = LinearEffectController(0.15);
+    EffectController ec = LinearEffectController(time_per_step);
 
     MoveByEffect effect = MoveByEffect(delta * 100, ec);
 

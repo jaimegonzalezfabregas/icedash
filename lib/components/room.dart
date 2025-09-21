@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:icedash/components/wall.dart';
 import 'package:icedash/direction.dart';
 import 'package:icedash/tile.dart';
 
@@ -14,7 +13,7 @@ class RoomComponent extends Component implements OpacityProvider {
   late Rect worldBB;
   late Direction exitDirection;
 
-  Set<Wall> wallSet = {};
+  Set<OpacityProvider> wallSet = {};
 
   Direction analyzeEntrance((int, int) entrance, List<List<Tile>> tileMap) {
     var width = tileMap[0].length;
@@ -75,19 +74,76 @@ class RoomComponent extends Component implements OpacityProvider {
     );
   }
 
+  Tile? queryMap(List<List<Tile>> tilemap, int x, int y) {
+    if (y >= tilemap.length || y < 0) {
+      return null;
+    }
+    if (x >= tilemap[y].length || x < 0) {
+      return null;
+    }
+    Tile ret = tilemap[y][x];
+
+    if (ret == Tile.gate) {
+      return Tile.ice;
+    }
+    return ret;
+  }
+
+  Map<String, Tile?> neighbouring(List<List<Tile>> tilemap, int x, int y) {
+    return {
+      "center": queryMap(tilemap, x, y),
+      "north": queryMap(tilemap, x, y - 1),
+      "south": queryMap(tilemap, x, y + 1),
+      "east": queryMap(tilemap, x + 1, y),
+      "west": queryMap(tilemap, x - 1, y),
+      "northeast": queryMap(tilemap, x + 1, y - 1),
+      "northwest": queryMap(tilemap, x - 1, y - 1),
+      "southeast": queryMap(tilemap, x + 1, y + 1),
+      "southwest": queryMap(tilemap, x - 1, y + 1),
+    };
+  }
+
   @override
   void onLoad() async {
     for (var (y, row) in tileMap.indexed) {
       for (var (x, tile) in row.indexed) {
-        switch (tile) {
-          case Tile.entrance:
-            var door = Wall(position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos);
+        var neigh = neighbouring(tileMap, x, y);
+        String? bgImg = Tile.neigh2Img(neigh);
+
+        if (bgImg != null) {
+          SpriteComponent img = SpriteComponent(
+            priority: 0,
+            size: Vector2.all(101),
+            position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos,
+          );
+
+          img.sprite = await Sprite.load(bgImg);
+
+          add(img);
+          wallSet.add(img);
+        } else {
+          print("bgTilePattens has no $neigh");
+        }
+
+        if (tile == Tile.entrance) {
+          var door = SpriteComponent(
+            priority: 0,
+            size: Vector2.all(101),
+            position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos,
+          );
+
+          var postNeigh = neigh;
+          postNeigh["center"] = Tile.wall;
+          String? fgImg = Tile.neigh2Img(neigh);
+          if (fgImg != null) {
+            door.sprite = await Sprite.load(fgImg);
+
             door.opacity = 0;
             door.add(
               OpacityEffect.fadeIn(
                 EffectController(
-                  duration: 0.3,
-                  startDelay: 0.5,
+                  duration: 1,
+                  startDelay: 1,
                   onMax: () {
                     wallSet.add(door);
                   },
@@ -95,23 +151,7 @@ class RoomComponent extends Component implements OpacityProvider {
               ),
             );
             add(door);
-
-            break;
-          case Tile.gate:
-            break;
-          case Tile.wall:
-            Wall wall = Wall(position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos);
-
-            add(wall);
-            wallSet.add(wall);
-
-            break;
-          case Tile.ice:
-            break;
-          case Tile.ground:
-            break;
-          case Tile.outside:
-            break;
+          }
         }
       }
     }

@@ -52,16 +52,21 @@ class RoomTraversal {
 
   ((int, int), List<List<Tile>>) getOnLoadRoom() {
     var lobby = '''
-#####
-##  #
-#   G
-#   #
-#   #
-##E##
+##########################
+##    #                  #
+#     ##      ## ###     G
+##     #  #   ## ###    ##
+#                ###    ##
+#       ##               #
+#      ####      #     ###
+#       ##      ###     ##
+#                #       #
+#   #     ###           ##
+##E#######################
 ''';
 
 
-    return ((2, 5), decode(lobby));
+    return ((2, 10), decode(lobby));
   }
 
   ((int, int), List<List<Tile>>) getNextRoom((int, int) pos) {
