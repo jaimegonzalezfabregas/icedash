@@ -32,13 +32,19 @@ class RoomComponent extends Component implements OpacityProvider {
       return Direction.north;
     }
 
-    throw Exception("entrance not in a border ${entrance}, ${tileMap}");
+    throw Exception("entrance not in a border $entrance, $tileMap");
   }
 
-  (List<List<Tile>>, (int, int)) rotateMap(List<List<Tile>> input, (int, int) entrancePos) {
+  (List<List<Tile>>, (int, int)) rotateMap(
+    List<List<Tile>> input,
+    (int, int) entrancePos,
+  ) {
     int rows = input.length;
     int cols = input[0].length;
-    List<List<Tile>> rotated = List.generate(cols, (_) => List.filled(rows, Tile.ice));
+    List<List<Tile>> rotated = List.generate(
+      cols,
+      (_) => List.filled(rows, Tile.ice),
+    );
 
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
@@ -52,7 +58,12 @@ class RoomComponent extends Component implements OpacityProvider {
   late Vector2 entranceRoomPos;
   Vector2 entranceWorldPos;
 
-  RoomComponent(this.entranceWorldPos, Direction entranceDirection, (int, int) entranceMapPos, this.tileMap) {
+  RoomComponent(
+    this.entranceWorldPos,
+    Direction entranceDirection,
+    (int, int) entranceMapPos,
+    this.tileMap,
+  ) {
     assert(tileMap.isNotEmpty);
 
     var (mapEntranceDirection) = analyzeEntrance(entranceMapPos, tileMap);
@@ -64,7 +75,10 @@ class RoomComponent extends Component implements OpacityProvider {
       mapEntranceDirection = analyzeEntrance(entranceMapPos, tileMap);
     }
 
-    entranceRoomPos = Vector2(entranceMapPos.$1.toDouble() * 100, entranceMapPos.$2.toDouble() * 100);
+    entranceRoomPos = Vector2(
+      entranceMapPos.$1.toDouble() * 100,
+      entranceMapPos.$2.toDouble() * 100,
+    );
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x,
@@ -114,7 +128,10 @@ class RoomComponent extends Component implements OpacityProvider {
           SpriteComponent img = SpriteComponent(
             priority: 0,
             size: Vector2.all(101),
-            position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos,
+            position:
+                Vector2(x.toDouble() * 100, y.toDouble() * 100) -
+                entranceRoomPos +
+                entranceWorldPos,
           );
 
           img.sprite = await Sprite.load(bgImg);
@@ -129,7 +146,10 @@ class RoomComponent extends Component implements OpacityProvider {
           var door = SpriteComponent(
             priority: 0,
             size: Vector2.all(101),
-            position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos,
+            position:
+                Vector2(x.toDouble() * 100, y.toDouble() * 100) -
+                entranceRoomPos +
+                entranceWorldPos,
           );
 
           var postNeigh = neigh;

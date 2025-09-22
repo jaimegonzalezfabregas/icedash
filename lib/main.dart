@@ -14,11 +14,17 @@ import 'package:icedash/direction.dart';
 import 'package:icedash/room_traversal.dart';
 import 'package:icedash/tile.dart';
 
+import 'package:icedash/src/rust/api/simple.dart';
+import 'package:icedash/src/rust/frb_generated.dart';
+
 enum GameState { start, play, pause, gameOver }
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Flame.device.fullScreen();
+  await RustLib.init();
+
+  print("${greet(name: "rust")}");
 
   runApp(GameWidget(game: IceDashGame()));
 }
@@ -138,3 +144,6 @@ class IceDashWorld extends World {
     return _currentRoom!.getTile(position);
   }
 }
+
+
+

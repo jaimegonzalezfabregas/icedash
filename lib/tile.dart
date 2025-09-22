@@ -18,9 +18,13 @@ enum Tile {
     }
 
     if (neigh["center"] == Tile.wall) {
-      bool eastNotSolid = neigh["east"] == Tile.ice || (neigh["east"] == Tile.wall && neigh["southeast"] == Tile.ice);
+      bool eastNotSolid =
+          neigh["east"] == Tile.ice ||
+          (neigh["east"] == Tile.wall && neigh["southeast"] == Tile.ice);
 
-      bool westNotSolid = neigh["west"] == Tile.ice || (neigh["west"] == Tile.wall && neigh["southwest"] == Tile.ice);
+      bool westNotSolid =
+          neigh["west"] == Tile.ice ||
+          (neigh["west"] == Tile.wall && neigh["southwest"] == Tile.ice);
 
       bool northNotSolid = neigh["north"] == Tile.ice;
 
@@ -28,37 +32,64 @@ enum Tile {
         return "wall0.png";
       }
 
-      if (neigh case {"northeast": Tile.ice, "north": Tile.wall, "east": Tile.wall, "northwest": Tile.ice, "west": Tile.wall}) {
+      if (neigh case {
+        "northeast": Tile.ice,
+        "north": Tile.wall,
+        "east": Tile.wall,
+        "northwest": Tile.ice,
+        "west": Tile.wall,
+      }) {
         if (neigh["southwest"] != ice && neigh["southeast"] != ice) {
           return "wall12.png";
         }
       }
 
-      if (neigh case {"northwest": Tile.ice, "north": Tile.wall, "west": Tile.wall, "east": Tile.ice}) {
+      if (neigh case {
+        "northwest": Tile.ice,
+        "north": Tile.wall,
+        "west": Tile.wall,
+        "east": Tile.ice,
+      }) {
         if (neigh["southwest"] != ice) {
           return "wall13.png";
         }
       }
 
-      if (neigh case {"northeast": Tile.ice, "north": Tile.wall, "east": Tile.wall, "west": Tile.ice}) {
+      if (neigh case {
+        "northeast": Tile.ice,
+        "north": Tile.wall,
+        "east": Tile.wall,
+        "west": Tile.ice,
+      }) {
         if (neigh["southeast"] != ice) {
           return "wall14.png";
         }
       }
-      
-      if (neigh case {"northeast": Tile.ice, "north": Tile.wall, "east": Tile.wall}) {
+
+      if (neigh case {
+        "northeast": Tile.ice,
+        "north": Tile.wall,
+        "east": Tile.wall,
+      }) {
         if (neigh["southeast"] != ice) {
           return "wall3.png";
         }
       }
-      
-      if (neigh case {"northwest": Tile.ice, "north": Tile.wall, "west": Tile.wall}) {
+
+      if (neigh case {
+        "northwest": Tile.ice,
+        "north": Tile.wall,
+        "west": Tile.wall,
+      }) {
         if (neigh["southwest"] != ice) {
           return "wall11.png";
         }
       }
 
-      if (neigh["south"] == Tile.wall && neigh["north"] == Tile.ice && eastNotSolid && westNotSolid) {
+      if (neigh["south"] == Tile.wall &&
+          neigh["north"] == Tile.ice &&
+          eastNotSolid &&
+          westNotSolid) {
         return "wall8.png";
       }
 
@@ -82,7 +113,11 @@ enum Tile {
         return "wall6.png";
       }
 
-      if (neigh case {"west": Tile.wall, "north": Tile.wall, "southwest": Tile.ice}) {
+      if (neigh case {
+        "west": Tile.wall,
+        "north": Tile.wall,
+        "southwest": Tile.ice,
+      }) {
         return "wall4.png";
       }
 

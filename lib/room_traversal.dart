@@ -65,7 +65,6 @@ class RoomTraversal {
 ##E#######################
 ''';
 
-
     return ((2, 10), decode(lobby));
   }
 
