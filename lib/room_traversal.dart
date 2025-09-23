@@ -1,4 +1,4 @@
-import 'package:icedash/tile.dart';
+import 'package:icedash/src/rust/api/simple.dart';
 
 enum RoomType { lobby, game }
 
@@ -50,7 +50,7 @@ class RoomTraversal {
     return lobby;
   }
 
-  ((int, int), List<List<Tile>>) getOnLoadRoom() {
+  Board getOnLoadRoom() {
     var lobby = '''
 ##########################
 ##    #                  #
@@ -65,10 +65,10 @@ class RoomTraversal {
 ##E#######################
 ''';
 
-    return ((2, 10), decode(lobby));
+    return Board(map: decode(lobby), start: (2, 10), end: (26, 2), startDirection: Direction.north);
   }
 
-  ((int, int), List<List<Tile>>) getNextRoom((int, int) pos) {
-    return getOnLoadRoom();
+  Board getNextRoom((int, int) pos) {
+    return searchBoard();
   }
 }

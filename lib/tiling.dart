@@ -1,12 +1,7 @@
-enum Tile {
-  entrance,
-  gate,
-  wall,
-  ice,
-  ground,
-  outside;
 
-  static String? neigh2Img(Map<String, Tile?> neigh) {
+import 'package:icedash/src/rust/api/simple.dart';
+
+String? neigh2Img(Map<String, Tile?> neigh) {
     if (neigh case {"center": Tile.ice}) {
       return "ice.png";
     }
@@ -39,7 +34,7 @@ enum Tile {
         "northwest": Tile.ice,
         "west": Tile.wall,
       }) {
-        if (neigh["southwest"] != ice && neigh["southeast"] != ice) {
+        if (neigh["southwest"] != Tile.ice && neigh["southeast"] != Tile.ice) {
           return "wall12.png";
         }
       }
@@ -50,7 +45,7 @@ enum Tile {
         "west": Tile.wall,
         "east": Tile.ice,
       }) {
-        if (neigh["southwest"] != ice) {
+        if (neigh["southwest"] != Tile.ice) {
           return "wall13.png";
         }
       }
@@ -61,7 +56,7 @@ enum Tile {
         "east": Tile.wall,
         "west": Tile.ice,
       }) {
-        if (neigh["southeast"] != ice) {
+        if (neigh["southeast"] != Tile.ice) {
           return "wall14.png";
         }
       }
@@ -71,7 +66,7 @@ enum Tile {
         "north": Tile.wall,
         "east": Tile.wall,
       }) {
-        if (neigh["southeast"] != ice) {
+        if (neigh["southeast"] != Tile.ice) {
           return "wall3.png";
         }
       }
@@ -81,7 +76,7 @@ enum Tile {
         "north": Tile.wall,
         "west": Tile.wall,
       }) {
-        if (neigh["southwest"] != ice) {
+        if (neigh["southwest"] != Tile.ice) {
           return "wall11.png";
         }
       }
@@ -127,4 +122,3 @@ enum Tile {
     }
     return null;
   }
-}

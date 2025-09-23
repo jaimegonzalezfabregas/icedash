@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:icedash/direction.dart';
-import 'package:icedash/tile.dart';
+import 'package:icedash/src/rust/api/simple.dart';
+import 'package:icedash/tiling.dart';
 
 class RoomComponent extends Component implements OpacityProvider {
   List<List<Tile>> tileMap;
@@ -122,7 +122,7 @@ class RoomComponent extends Component implements OpacityProvider {
     for (var (y, row) in tileMap.indexed) {
       for (var (x, tile) in row.indexed) {
         var neigh = neighbouring(tileMap, x, y);
-        String? bgImg = Tile.neigh2Img(neigh);
+        String? bgImg = neigh2Img(neigh);
 
         if (bgImg != null) {
           SpriteComponent img = SpriteComponent(
@@ -154,7 +154,7 @@ class RoomComponent extends Component implements OpacityProvider {
 
           var postNeigh = neigh;
           postNeigh["center"] = Tile.wall;
-          String? fgImg = Tile.neigh2Img(neigh);
+          String? fgImg = neigh2Img(neigh);
           if (fgImg != null) {
             door.sprite = await Sprite.load(fgImg);
 
@@ -178,6 +178,7 @@ class RoomComponent extends Component implements OpacityProvider {
   }
 
   bool canWalkInto(Vector2 origin, Vector2 dst) {
+    // TODO migrate to rust
     Tile dstTile = getTile(dst);
     return dstTile != Tile.wall && dstTile != Tile.entrance;
   }

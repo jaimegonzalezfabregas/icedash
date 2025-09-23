@@ -1,13 +1,11 @@
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/services.dart';
-import 'package:icedash/direction.dart';
 import 'package:icedash/main.dart';
-import 'package:icedash/tile.dart';
+import 'package:icedash/src/rust/api/simple.dart';
 
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
-  Player({super.position})
-    : super(priority: 1, size: Vector2.all(100), anchor: Anchor.topLeft);
+  Player({super.position}) : super(priority: 1, size: Vector2.all(100), anchor: Anchor.topLeft);
 
   double timePerStep = 0.1;
   bool sliding = false;
@@ -42,13 +40,15 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   }
 
   void push(Direction dir, {bool force = false}) {
+    var (dx, dy) = dir.vector();
+
     if (!force) {
       if (sliding) {
         buffered = dir;
         return;
       }
 
-      if (!game.idWorld.canWalkInto(position, position + dir.vector * 100)) {
+      if (!game.idWorld.canWalkInto(position, position + Vector2(dx.toDouble(), dy.toDouble()) * 100)) {
         if (buffered != null) {
           Direction d = buffered!;
           buffered = null;
@@ -58,7 +58,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       }
     }
 
-    Vector2 delta = dir.vector;
+    Vector2 delta = Vector2(dx.toDouble(), dy.toDouble());
 
     sliding = true;
 
@@ -74,9 +74,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         game.idWorld.nextRoom(position, dir);
       }
 
-      if (standingOn == Tile.gate ||
-          standingOn == Tile.entrance ||
-          standingOn == Tile.ice) {
+      if (standingOn == Tile.gate || standingOn == Tile.entrance || standingOn == Tile.ice) {
         push(dir);
       }
     };

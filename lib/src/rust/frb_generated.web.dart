@@ -21,52 +21,96 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   });
 
   @protected
-  String dco_decode_String(dynamic raw);
+  Board dco_decode_board(dynamic raw);
 
   @protected
-  Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+  Direction dco_decode_direction(dynamic raw);
 
   @protected
-  int dco_decode_u_8(dynamic raw);
+  int dco_decode_i_32(dynamic raw);
+
+  @protected
+  PlatformInt64 dco_decode_isize(dynamic raw);
+
+  @protected
+  List<List<Tile>> dco_decode_list_list_tile(dynamic raw);
+
+  @protected
+  List<Tile> dco_decode_list_tile(dynamic raw);
+
+  @protected
+  (PlatformInt64, PlatformInt64) dco_decode_record_isize_isize(dynamic raw);
+
+  @protected
+  Tile dco_decode_tile(dynamic raw);
 
   @protected
   void dco_decode_unit(dynamic raw);
 
   @protected
-  String sse_decode_String(SseDeserializer deserializer);
+  Board sse_decode_board(SseDeserializer deserializer);
 
   @protected
-  Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
-
-  @protected
-  int sse_decode_u_8(SseDeserializer deserializer);
-
-  @protected
-  void sse_decode_unit(SseDeserializer deserializer);
+  Direction sse_decode_direction(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
+  PlatformInt64 sse_decode_isize(SseDeserializer deserializer);
+
+  @protected
+  List<List<Tile>> sse_decode_list_list_tile(SseDeserializer deserializer);
+
+  @protected
+  List<Tile> sse_decode_list_tile(SseDeserializer deserializer);
+
+  @protected
+  (PlatformInt64, PlatformInt64) sse_decode_record_isize_isize(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  Tile sse_decode_tile(SseDeserializer deserializer);
+
+  @protected
+  void sse_decode_unit(SseDeserializer deserializer);
+
+  @protected
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
-  void sse_encode_String(String self, SseSerializer serializer);
+  void sse_encode_board(Board self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_prim_u_8_strict(
-    Uint8List self,
+  void sse_encode_direction(Direction self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_isize(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_list_tile(
+    List<List<Tile>> self,
     SseSerializer serializer,
   );
 
   @protected
-  void sse_encode_u_8(int self, SseSerializer serializer);
+  void sse_encode_list_tile(List<Tile> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_record_isize_isize(
+    (PlatformInt64, PlatformInt64) self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_tile(Tile self, SseSerializer serializer);
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);

@@ -6,5 +6,48 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-String greet({required String name}) =>
-    RustLib.instance.api.crateApiSimpleGreet(name: name);
+// These functions are ignored because they are not marked as `pub`: `analyze`, `get_random_board`, `solve`, `step`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Analysis`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`
+
+Board searchBoard() => RustLib.instance.api.crateApiSimpleSearchBoard();
+
+class Board {
+  final List<List<Tile>> map;
+  final (PlatformInt64, PlatformInt64) start;
+  final (PlatformInt64, PlatformInt64) end;
+  final Direction startDirection;
+
+  const Board({
+    required this.map,
+    required this.start,
+    required this.end,
+    required this.startDirection,
+  });
+
+  @override
+  int get hashCode =>
+      map.hashCode ^ start.hashCode ^ end.hashCode ^ startDirection.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Board &&
+          runtimeType == other.runtimeType &&
+          map == other.map &&
+          start == other.start &&
+          end == other.end &&
+          startDirection == other.startDirection;
+}
+
+enum Direction {
+  north,
+  south,
+  east,
+  west;
+
+  (PlatformInt64, PlatformInt64) vector() =>
+      RustLib.instance.api.crateApiSimpleDirectionVector(that: this);
+}
+
+enum Tile { entrance, gate, wall, ice, ground, outside }
