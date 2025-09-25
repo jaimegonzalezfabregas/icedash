@@ -35,16 +35,10 @@ class RoomComponent extends Component implements OpacityProvider {
     throw Exception("entrance not in a border $entrance, $tileMap");
   }
 
-  (List<List<Tile>>, (int, int)) rotateMap(
-    List<List<Tile>> input,
-    (int, int) entrancePos,
-  ) {
+  (List<List<Tile>>, (int, int)) rotateMap(List<List<Tile>> input, (int, int) entrancePos) {
     int rows = input.length;
     int cols = input[0].length;
-    List<List<Tile>> rotated = List.generate(
-      cols,
-      (_) => List.filled(rows, Tile.ice),
-    );
+    List<List<Tile>> rotated = List.generate(cols, (_) => List.filled(rows, Tile.ice));
 
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
@@ -58,12 +52,7 @@ class RoomComponent extends Component implements OpacityProvider {
   late Vector2 entranceRoomPos;
   Vector2 entranceWorldPos;
 
-  RoomComponent(
-    this.entranceWorldPos,
-    Direction entranceDirection,
-    (int, int) entranceMapPos,
-    this.tileMap,
-  ) {
+  RoomComponent(this.entranceWorldPos, Direction entranceDirection, (int, int) entranceMapPos, this.tileMap) {
     assert(tileMap.isNotEmpty);
 
     var (mapEntranceDirection) = analyzeEntrance(entranceMapPos, tileMap);
@@ -75,10 +64,7 @@ class RoomComponent extends Component implements OpacityProvider {
       mapEntranceDirection = analyzeEntrance(entranceMapPos, tileMap);
     }
 
-    entranceRoomPos = Vector2(
-      entranceMapPos.$1.toDouble() * 100,
-      entranceMapPos.$2.toDouble() * 100,
-    );
+    entranceRoomPos = Vector2(entranceMapPos.$1.toDouble() * 100, entranceMapPos.$2.toDouble() * 100);
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x,
@@ -88,7 +74,7 @@ class RoomComponent extends Component implements OpacityProvider {
     );
   }
 
-  Tile? queryMap(List<List<Tile>> tilemap, int x, int y) {
+  Tile? queryMapDisplayTile(List<List<Tile>> tilemap, int x, int y, bool center) {
     if (y >= tilemap.length || y < 0) {
       return null;
     }
@@ -100,20 +86,27 @@ class RoomComponent extends Component implements OpacityProvider {
     if (ret == Tile.gate) {
       return Tile.ice;
     }
+
+    if (!center) {
+      if (ret == Tile.entrance) {
+        return Tile.wall;
+      }
+    }
+
     return ret;
   }
 
   Map<String, Tile?> neighbouring(List<List<Tile>> tilemap, int x, int y) {
     return {
-      "center": queryMap(tilemap, x, y),
-      "north": queryMap(tilemap, x, y - 1),
-      "south": queryMap(tilemap, x, y + 1),
-      "east": queryMap(tilemap, x + 1, y),
-      "west": queryMap(tilemap, x - 1, y),
-      "northeast": queryMap(tilemap, x + 1, y - 1),
-      "northwest": queryMap(tilemap, x - 1, y - 1),
-      "southeast": queryMap(tilemap, x + 1, y + 1),
-      "southwest": queryMap(tilemap, x - 1, y + 1),
+      "center": queryMapDisplayTile(tilemap, x, y, true),
+      "north": queryMapDisplayTile(tilemap, x, y - 1, false),
+      "south": queryMapDisplayTile(tilemap, x, y + 1, false),
+      "east": queryMapDisplayTile(tilemap, x + 1, y, false),
+      "west": queryMapDisplayTile(tilemap, x - 1, y, false),
+      "northeast": queryMapDisplayTile(tilemap, x + 1, y - 1, false),
+      "northwest": queryMapDisplayTile(tilemap, x - 1, y - 1, false),
+      "southeast": queryMapDisplayTile(tilemap, x + 1, y + 1, false),
+      "southwest": queryMapDisplayTile(tilemap, x - 1, y + 1, false),
     };
   }
 
@@ -128,28 +121,20 @@ class RoomComponent extends Component implements OpacityProvider {
           SpriteComponent img = SpriteComponent(
             priority: 0,
             size: Vector2.all(101),
-            position:
-                Vector2(x.toDouble() * 100, y.toDouble() * 100) -
-                entranceRoomPos +
-                entranceWorldPos,
+            position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos,
           );
 
           img.sprite = await Sprite.load(bgImg);
 
           add(img);
           wallSet.add(img);
-        } else {
-          print("bgTilePattens has no $neigh");
         }
 
         if (tile == Tile.entrance) {
           var door = SpriteComponent(
             priority: 0,
             size: Vector2.all(101),
-            position:
-                Vector2(x.toDouble() * 100, y.toDouble() * 100) -
-                entranceRoomPos +
-                entranceWorldPos,
+            position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos,
           );
 
           var postNeigh = neigh;

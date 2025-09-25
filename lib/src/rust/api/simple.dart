@@ -6,9 +6,9 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `analyze`, `get_random_board`, `solve`, `step`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Analysis`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `get_random_board`, `simbol`, `solve`, `step`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Analysis`, `SearchState`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`
 
 Board searchBoard() => RustLib.instance.api.crateApiSimpleSearchBoard();
 
@@ -17,17 +17,23 @@ class Board {
   final (PlatformInt64, PlatformInt64) start;
   final (PlatformInt64, PlatformInt64) end;
   final Direction startDirection;
+  final PlatformInt64 area;
 
   const Board({
     required this.map,
     required this.start,
     required this.end,
     required this.startDirection,
+    required this.area,
   });
 
   @override
   int get hashCode =>
-      map.hashCode ^ start.hashCode ^ end.hashCode ^ startDirection.hashCode;
+      map.hashCode ^
+      start.hashCode ^
+      end.hashCode ^
+      startDirection.hashCode ^
+      area.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -37,7 +43,8 @@ class Board {
           map == other.map &&
           start == other.start &&
           end == other.end &&
-          startDirection == other.startDirection;
+          startDirection == other.startDirection &&
+          area == other.area;
 }
 
 enum Direction {
@@ -45,6 +52,9 @@ enum Direction {
   south,
   east,
   west;
+
+  Future<Direction> reverse() =>
+      RustLib.instance.api.crateApiSimpleDirectionReverse(that: this);
 
   (PlatformInt64, PlatformInt64) vector() =>
       RustLib.instance.api.crateApiSimpleDirectionVector(that: this);

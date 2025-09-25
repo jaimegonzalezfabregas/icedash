@@ -55,7 +55,7 @@ class IceDashWorld extends World {
 
     var board = roomTraversal.getOnLoadRoom();
 
-    setCurrentRoom(board, Vector2(0, 0));
+    setCurrentRoom(board, Vector2(0, 0), Direction.north);
   }
 
   void nextRoom(Vector2 exitPos, Direction exitDirection) {
@@ -64,12 +64,12 @@ class IceDashWorld extends World {
 
     var  board= roomTraversal.getNextRoom(((exitPos.x / 100).round(), (exitPos.y / 100).round()));
 
-    setCurrentRoom(board, entrancePostion);
+    setCurrentRoom(board, entrancePostion, exitDirection);
   }
 
-  void setCurrentRoom(Board board, Vector2 worldEntrancePosition) {
+  void setCurrentRoom(Board board, Vector2 worldEntrancePosition, Direction stichDirection) {
     _lastRoom = _currentRoom;
-    _currentRoom = RoomComponent(worldEntrancePosition, board.startDirection, board.start, board.map);
+    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, board.start, board.map);
 
     var transition = EffectController(duration: 0);
 
@@ -101,7 +101,7 @@ class IceDashWorld extends World {
     _currentRoom!.opacity = 0;
     _currentRoom!.add(OpacityEffect.fadeIn(EffectController(duration: 0.5)));
     add(_currentRoom!);
-    player.push(board.startDirection, force: true);
+    player.push(stichDirection, force: true);
   }
 
   zoomTransition(double duration, double endValue) {

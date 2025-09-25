@@ -66,7 +66,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 321355961;
+  int get rustContentHash => 438601639;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,6 +77,8 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<Direction> crateApiSimpleDirectionReverse({required Direction that});
+
   (PlatformInt64, PlatformInt64) crateApiSimpleDirectionVector({
     required Direction that,
   });
@@ -95,6 +97,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<Direction> crateApiSimpleDirectionReverse({required Direction that}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_direction(that, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_direction,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiSimpleDirectionReverseConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiSimpleDirectionReverseConstMeta =>
+      const TaskConstMeta(debugName: "direction_reverse", argNames: ["that"]);
+
+  @override
   (PlatformInt64, PlatformInt64) crateApiSimpleDirectionVector({
     required Direction that,
   }) {
@@ -103,7 +133,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_direction(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_record_isize_isize,
@@ -128,7 +158,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 3,
             port: port_,
           );
         },
@@ -152,7 +182,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_board,
@@ -172,13 +202,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Board dco_decode_board(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return Board(
       map: dco_decode_list_list_tile(arr[0]),
       start: dco_decode_record_isize_isize(arr[1]),
       end: dco_decode_record_isize_isize(arr[2]),
       startDirection: dco_decode_direction(arr[3]),
+      area: dco_decode_isize(arr[4]),
     );
   }
 
@@ -241,11 +272,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_start = sse_decode_record_isize_isize(deserializer);
     var var_end = sse_decode_record_isize_isize(deserializer);
     var var_startDirection = sse_decode_direction(deserializer);
+    var var_area = sse_decode_isize(deserializer);
     return Board(
       map: var_map,
       start: var_start,
       end: var_end,
       startDirection: var_startDirection,
+      area: var_area,
     );
   }
 
@@ -327,6 +360,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_record_isize_isize(self.start, serializer);
     sse_encode_record_isize_isize(self.end, serializer);
     sse_encode_direction(self.startDirection, serializer);
+    sse_encode_isize(self.area, serializer);
   }
 
   @protected

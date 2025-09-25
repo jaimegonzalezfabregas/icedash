@@ -52,20 +52,14 @@ class RoomTraversal {
 
   Board getOnLoadRoom() {
     var lobby = '''
-##########################
-##    #                  #
-#     ##      ## ###     G
-##     #  #   ## ###    ##
-#                ###    ##
-#       ##               #
-#      ####      #     ###
-#       ##      ###     ##
-#                #       #
-#   #     ###           ##
-##E#######################
+##########
+###      #
+#        G
+#        #
+##E#######
 ''';
 
-    return Board(map: decode(lobby), start: (2, 10), end: (26, 2), startDirection: Direction.north);
+    return Board(map: decode(lobby), start: (2, 4), end: (9, 2), area: 0, startDirection: Direction.north);
   }
 
   Board getNextRoom((int, int) pos) {
