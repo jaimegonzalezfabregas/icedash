@@ -138,27 +138,41 @@ fn get_random_board() -> Board {
         ret.map[((start.1 + end.1) / 2) as usize][((start.0 + end.0) / 2) as usize] = Tile::Wall;
     }
 
-    // let mut rep = true;
-    // while rep {
-    //     rep = false;
-    //     for y in 1..height - 1 {
-    //         for x in 1..width - 1 {
-    //             if ret.map[y as usize][x as usize] == Tile::Wall {
-    //                 let mut neighbours = 0;
-    //                 for (dx, dy) in [(0, 1), (0, -1), (1, 0), (-1, 0)] {
-    //                     if ret.map[(y + dy) as usize][(x + dx) as usize] == Tile::Ice {
-    //                         neighbours += 1;
-    //                     }
-    //                 }
+    let mut rep = true;
+    while rep {
+        rep = false;
+        for y in 1..height - 2 {
+            for x in 1..width - 2 {
+                let a = ret.map[(y) as usize][(x) as usize];
+                let b = ret.map[(y + 1) as usize][(x) as usize];
+                let c = ret.map[(y) as usize][(x + 1) as usize];
+                let d = ret.map[(y + 1) as usize][(x + 1) as usize];
 
-    //                 if neighbours >= 3 {
-    //                     rep = true;
-    //                     ret.map[y as usize][x as usize] = Tile::Wall;
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+                let cuad = (a, b, c, d);
+
+                match cuad {
+                    (Tile::Ice, Tile::Wall, Tile::Wall, Tile::Ice) => {
+                        rep = true;
+                        if *([true, false].choose(&mut rng).unwrap()) {
+                            ret.map[(y) as usize][(x) as usize] = Tile::Wall;
+                        } else {
+                            ret.map[(y + 1) as usize][(x + 1) as usize] = Tile::Wall;
+                        }
+                    }
+                    (Tile::Wall, Tile::Ice, Tile::Ice, Tile::Wall) => {
+                        rep = true;
+                        if *([true, false].choose(&mut rng).unwrap()) {
+                            ret.map[(y + 1) as usize][(x) as usize] = Tile::Wall;
+                        } else {
+                            ret.map[(y) as usize][(x + 1) as usize] = Tile::Wall;
+                        }
+                    }
+
+                    _ => {}
+                }
+            }
+        }
+    }
 
     ret.map[start.1 as usize][start.0 as usize] = Tile::Entrance;
     ret.map[(start.1 + start_direction.vector().1) as usize]
@@ -302,13 +316,9 @@ fn solve(board: &Board) -> Option<Analysis> {
             search_tile_coverage += step_length;
         }
 
-
         for mut new_state in new_states {
             if long_directions > 1 {
-
-                new_state
-                    .decision_positions
-                    .push(last_pos);
+                new_state.decision_positions.push(last_pos);
             }
 
             states.push_back(new_state);
@@ -317,6 +327,50 @@ fn solve(board: &Board) -> Option<Analysis> {
     }
 
     return None;
+}
+
+fn cleanup(mut ret: Board) -> Board {
+    let mut reachability = vec![vec![false; ret.map[0].len()]; ret.map.len()];
+
+    let mut flood_edge: VecDeque<(isize, isize)> = VecDeque::from([ret.start, ret.end]);
+
+    println!("{:?}", flood_edge);
+
+    while let Some(next_check) = flood_edge.pop_front() {
+
+        if next_check.0 < 0 || next_check.0 >= (ret.map[0].len()) as isize {
+            continue;
+        }
+        if next_check.1 < 0 || next_check.1 >= (ret.map.len()) as isize {
+            continue;
+        }
+
+        if reachability[next_check.1 as usize][next_check.0 as usize] == false
+            && ret.map[next_check.1 as usize][next_check.0 as usize] != Tile::Wall
+        {
+            reachability[next_check.1 as usize][next_check.0 as usize] = true;
+
+            for dir in [
+                Direction::North,
+                Direction::South,
+                Direction::East,
+                Direction::West,
+            ] {
+                flood_edge
+                    .push_back((next_check.0 + dir.vector().0, next_check.1 + dir.vector().1));
+            }
+        }
+    }
+
+    for (y, row) in reachability.iter().enumerate() {
+        for (x, reacheable) in row.iter().enumerate() {
+            if (!*reacheable) {
+                ret.map[y][x] = Tile::Wall;
+            }
+        }
+    }
+
+    ret
 }
 
 #[flutter_rust_bridge::frb(sync)] // Synchronous mode for simplicity of the demo
@@ -341,7 +395,7 @@ pub fn search_board() -> Board {
             //     println!("");
             // }
 
-            if (analysis.decision_positions.len() > 2) {
+            if (analysis.decision_positions.len() > 3) {
                 println!("decision_count: {:?}", analysis.decision_positions);
                 for (y, row) in board.map.iter().enumerate() {
                     for (x, tile) in row.iter().enumerate() {
@@ -356,7 +410,7 @@ pub fn search_board() -> Board {
                     }
                     println!("");
                 }
-                return board;
+                return cleanup(board);
             }
         }
     }
