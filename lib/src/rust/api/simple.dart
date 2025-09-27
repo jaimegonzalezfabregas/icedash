@@ -6,9 +6,9 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `get_random_board`, `simbol`, `solve`, `step`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Analysis`, `SearchState`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `board_cleanup`, `fitness`, `get_random_board`, `mutate`, `mutate`, `new`, `presentation_cleanup`, `simbol`, `solve`, `step`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Analysis`, `Creature`, `SearchState`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `partial_cmp`
 
 Board searchBoard() => RustLib.instance.api.crateApiSimpleSearchBoard();
 
@@ -17,6 +17,7 @@ class Board {
   final (PlatformInt64, PlatformInt64) start;
   final (PlatformInt64, PlatformInt64) end;
   final Direction startDirection;
+  final Direction endDirection;
   final PlatformInt64 area;
 
   const Board({
@@ -24,6 +25,7 @@ class Board {
     required this.start,
     required this.end,
     required this.startDirection,
+    required this.endDirection,
     required this.area,
   });
 
@@ -33,6 +35,7 @@ class Board {
       start.hashCode ^
       end.hashCode ^
       startDirection.hashCode ^
+      endDirection.hashCode ^
       area.hashCode;
 
   @override
@@ -44,6 +47,7 @@ class Board {
           start == other.start &&
           end == other.end &&
           startDirection == other.startDirection &&
+          endDirection == other.endDirection &&
           area == other.area;
 }
 

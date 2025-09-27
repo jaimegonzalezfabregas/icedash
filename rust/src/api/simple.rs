@@ -1,6 +1,14 @@
-use std::collections::{BTreeMap, BinaryHeap, HashSet, VecDeque};
+use std::{
+    collections::{HashSet, VecDeque},
+    time::{Duration, Instant},
+};
 
-use rand::prelude::*;
+use rand::{
+    rng,
+    seq::{IndexedRandom, IteratorRandom},
+    Rng,
+};
+use sorted_vec::partial::ReverseSortedVec;
 
 #[derive(Clone, PartialEq, Copy, Debug)]
 pub enum Tile {
@@ -63,19 +71,96 @@ pub struct Analysis {
     decision_positions: Vec<(isize, isize)>,
 }
 
+impl Analysis {
+    fn fitness(&self) -> f32 {
+        (self.decision_positions.len() * 10) as f32 + self.solution.len() as f32
+    }
+}
+
+#[derive(Clone)]
 pub struct Board {
     pub map: Vec<Vec<Tile>>,
     pub start: (isize, isize),
     pub end: (isize, isize),
     pub start_direction: Direction,
+    pub end_direction: Direction,
     pub area: isize,
+}
+impl Board {
+    fn mutate(&self, factor: f32) -> Board {
+        let mut rng = rand::rng();
+
+        let mut ret = self.clone();
+        let height = ret.map.len();
+        let width = ret.map[0].len();
+
+        for y in 1..height - 1 {
+            for x in 1..width - 1 {
+                if rng.random::<f32>() < factor {
+                    ret.map[y as usize][x as usize] = Tile::Ice;
+                }
+            }
+        }
+
+        board_cleanup(
+            &mut ret.map,
+            ret.start,
+            ret.start_direction,
+            ret.end,
+            ret.end_direction,
+        );
+
+        ret
+    }
+}
+
+#[derive(Clone)]
+struct Creature {
+    board: Board,
+    analisis: Analysis,
+    fitness: f32,
+    mutation_count: usize,
+}
+impl Creature {
+    fn new(b: Board) -> Option<Self> {
+        let analysis = solve(&b);
+        if let Some(analysis) = analysis {
+            Some(Self {
+                board: b,
+                fitness: analysis.fitness(),
+                analisis: analysis,
+                mutation_count: 0,
+            })
+        } else {
+            None
+        }
+    }
+
+    fn mutate(&self, factor: f32) -> Option<Self> {
+        Self::new(self.board.mutate(factor)).map(|mut ret| {
+            ret.mutation_count = self.mutation_count + 1;
+            ret
+        })
+    }
+}
+
+impl PartialOrd for Creature {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.fitness.partial_cmp(&other.fitness)
+    }
+}
+
+impl PartialEq for Creature {
+    fn eq(&self, other: &Self) -> bool {
+        self.fitness == other.fitness
+    }
 }
 
 fn get_random_board() -> Board {
     let mut rng = rand::rng();
-    let width = (5..10).choose(&mut rng).unwrap();
-    let height = (5..10).choose(&mut rng).unwrap();
-    let clutterness = 0.05 + rng.random::<f32>() * 0.2;
+    let width = (5..20).choose(&mut rng).unwrap();
+    let height = (5..20).choose(&mut rng).unwrap();
+    let clutterness = 0.25 + rng.random::<f32>() * 0.2;
 
     let start_side = (0..3).choose(&mut rng).unwrap();
     let end_side = ((1..3).choose(&mut rng).unwrap() + start_side) % 4;
@@ -123,6 +208,7 @@ fn get_random_board() -> Board {
         start,
         start_direction,
         end,
+        end_direction,
         area: width * height,
     };
 
@@ -134,8 +220,25 @@ fn get_random_board() -> Board {
         }
     }
 
+    board_cleanup(&mut ret.map, start, start_direction, end, end_direction);
+
+    ret
+}
+
+fn board_cleanup(
+    ret: &mut Vec<Vec<Tile>>,
+    start: (isize, isize),
+    start_direction: Direction,
+    end: (isize, isize),
+    end_direction: Direction,
+) {
+    let mut rng = rand::rng();
+
+    let width = ret[0].len() as isize;
+    let height = ret.len() as isize;
+
     if start.0 == end.0 || start.1 == end.1 {
-        ret.map[((start.1 + end.1) / 2) as usize][((start.0 + end.0) / 2) as usize] = Tile::Wall;
+        ret[((start.1 + end.1) / 2) as usize][((start.0 + end.0) / 2) as usize] = Tile::Wall;
     }
 
     let mut rep = true;
@@ -143,10 +246,10 @@ fn get_random_board() -> Board {
         rep = false;
         for y in 1..height - 2 {
             for x in 1..width - 2 {
-                let a = ret.map[(y) as usize][(x) as usize];
-                let b = ret.map[(y + 1) as usize][(x) as usize];
-                let c = ret.map[(y) as usize][(x + 1) as usize];
-                let d = ret.map[(y + 1) as usize][(x + 1) as usize];
+                let a = ret[(y) as usize][(x) as usize];
+                let b = ret[(y + 1) as usize][(x) as usize];
+                let c = ret[(y) as usize][(x + 1) as usize];
+                let d = ret[(y + 1) as usize][(x + 1) as usize];
 
                 let cuad = (a, b, c, d);
 
@@ -154,17 +257,17 @@ fn get_random_board() -> Board {
                     (Tile::Ice, Tile::Wall, Tile::Wall, Tile::Ice) => {
                         rep = true;
                         if *([true, false].choose(&mut rng).unwrap()) {
-                            ret.map[(y) as usize][(x) as usize] = Tile::Wall;
+                            ret[(y) as usize][(x) as usize] = Tile::Wall;
                         } else {
-                            ret.map[(y + 1) as usize][(x + 1) as usize] = Tile::Wall;
+                            ret[(y + 1) as usize][(x + 1) as usize] = Tile::Wall;
                         }
                     }
                     (Tile::Wall, Tile::Ice, Tile::Ice, Tile::Wall) => {
                         rep = true;
                         if *([true, false].choose(&mut rng).unwrap()) {
-                            ret.map[(y + 1) as usize][(x) as usize] = Tile::Wall;
+                            ret[(y + 1) as usize][(x) as usize] = Tile::Wall;
                         } else {
-                            ret.map[(y) as usize][(x + 1) as usize] = Tile::Wall;
+                            ret[(y) as usize][(x + 1) as usize] = Tile::Wall;
                         }
                     }
 
@@ -174,18 +277,48 @@ fn get_random_board() -> Board {
         }
     }
 
-    ret.map[start.1 as usize][start.0 as usize] = Tile::Entrance;
-    ret.map[(start.1 + start_direction.vector().1) as usize]
+    let mut rep = true;
+    while rep {
+        rep = false;
+        for y in 1..height - 1 {
+            for x in 1..width - 1 {
+                if ret[(y) as usize][(x) as usize] != Tile::Wall {
+                    let mut neigh_count = 0;
+                    for (dx, dy) in [
+                        (0, 1),
+                        (0, -1),
+                        (-1, 0),
+                        (1, 0),
+                        (1, 1),
+                        (1, -1),
+                        (-1, -1),
+                        (-1, 1),
+                    ] {
+                        let neigh = ret[(y + dy) as usize][(x + dx) as usize];
+                        if neigh == Tile::Wall {
+                            neigh_count += 1;
+                        }
+                    }
+
+                    if neigh_count >= 6 {
+                        ret[(y) as usize][(x) as usize] = Tile::Wall;
+                        rep = true;
+                    }
+                }
+            }
+        }
+    }
+
+    ret[start.1 as usize][start.0 as usize] = Tile::Entrance;
+    ret[(start.1 + start_direction.vector().1) as usize]
         [(start.0 + start_direction.vector().0) as usize] = Tile::Ice;
 
     let (dx, dy) = end_direction.vector();
 
-    ret.map[end.1 as usize][end.0 as usize] = Tile::Gate;
-    ret.map[(end.1 + dy) as usize][(end.0 + dx) as usize] = Tile::Ice;
-    ret.map[(end.1 + dy + dx) as usize][(end.0 + dx - dy) as usize] = Tile::Ice;
-    ret.map[(end.1 + dy - dx) as usize][(end.0 + dx + dy) as usize] = Tile::Ice;
-
-    ret
+    ret[end.1 as usize][end.0 as usize] = Tile::Gate;
+    ret[(end.1 + dy) as usize][(end.0 + dx) as usize] = Tile::Ice;
+    ret[(end.1 + dy + dx) as usize][(end.0 + dx - dy) as usize] = Tile::Ice;
+    ret[(end.1 + dy - dx) as usize][(end.0 + dx + dy) as usize] = Tile::Ice;
 }
 
 fn step(map: &Vec<Vec<Tile>>, start: &(isize, isize), direction: Direction) -> (isize, isize) {
@@ -329,7 +462,7 @@ fn solve(board: &Board) -> Option<Analysis> {
     return None;
 }
 
-fn cleanup(mut ret: Board) -> Board {
+fn presentation_cleanup(mut ret: Board) -> Board {
     let mut reachability = vec![vec![false; ret.map[0].len()]; ret.map.len()];
 
     let mut flood_edge: VecDeque<(isize, isize)> = VecDeque::from([ret.start, ret.end]);
@@ -337,7 +470,6 @@ fn cleanup(mut ret: Board) -> Board {
     println!("{:?}", flood_edge);
 
     while let Some(next_check) = flood_edge.pop_front() {
-
         if next_check.0 < 0 || next_check.0 >= (ret.map[0].len()) as isize {
             continue;
         }
@@ -375,45 +507,38 @@ fn cleanup(mut ret: Board) -> Board {
 
 #[flutter_rust_bridge::frb(sync)] // Synchronous mode for simplicity of the demo
 pub fn search_board() -> Board {
-    loop {
-        let board = get_random_board();
+    let mut rng = rand::rng();
 
-        if let Some(analysis) = solve(&board) {
-            // let coverage = (analysis.solution_tile_coverage as f32 / board.area as f32);
+    let start_time = Instant::now();
 
-            // println!(
-            //     "search complexity {}, {} ({}%)",
-            //     analysis.search_complexity,
-            //     analysis.solution_tile_coverage,
-            //     coverage * 100.
-            // );
+    let mut population: ReverseSortedVec<Creature> = (0..100)
+        .map(|_| get_random_board())
+        .map(|b| Creature::new(b))
+        .filter(|e| e.is_some())
+        .map(|e| e.unwrap())
+        .collect();
 
-            // for row in &board.map {
-            //     for tile in row {
-            //         print!("{}", tile.simbol());
-            //     }
-            //     println!("");
-            // }
+    while population.len() == 0 || start_time.elapsed() < Duration::from_secs(1) {
+        while population.len() < 100 {
+            let creature = population.choose(&mut rng);
 
-            if (analysis.decision_positions.len() > 3) {
-                println!("decision_count: {:?}", analysis.decision_positions);
-                for (y, row) in board.map.iter().enumerate() {
-                    for (x, tile) in row.iter().enumerate() {
-                        if analysis
-                            .decision_positions
-                            .contains(&(x as isize, y as isize))
-                        {
-                            print!(".");
-                        } else {
-                            print!("{}", tile.simbol());
-                        }
-                    }
-                    println!("");
+            if let Some(creature) = creature {
+                if let Some(new_creature) = creature.mutate(0.1) {
+                    population.insert(new_creature);
                 }
-                return cleanup(board);
+            } else {
+                if let Some(new_creature) = Creature::new(get_random_board()) {
+                    population.insert(new_creature);
+                }
             }
         }
+
+        population = population[0..30].into_iter().cloned().collect();
     }
+
+    println!("mutation count of winner {}", population[0].mutation_count);
+
+    population[0].board.clone()
 }
 
 #[flutter_rust_bridge::frb(init)]

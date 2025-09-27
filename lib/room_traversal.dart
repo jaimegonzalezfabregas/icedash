@@ -59,7 +59,7 @@ class RoomTraversal {
 ##E#######
 ''';
 
-    return Board(map: decode(lobby), start: (2, 4), end: (9, 2), area: 0, startDirection: Direction.north);
+    return Board(map: decode(lobby), start: (2, 4), end: (9, 2), area: 0, startDirection: Direction.north, endDirection: Direction.west);
   }
 
   Board getNextRoom((int, int) pos) {

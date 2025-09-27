@@ -183,12 +183,14 @@ impl SseDecode for crate::api::simple::Board {
         let mut var_start = <(isize, isize)>::sse_decode(deserializer);
         let mut var_end = <(isize, isize)>::sse_decode(deserializer);
         let mut var_startDirection = <crate::api::simple::Direction>::sse_decode(deserializer);
+        let mut var_endDirection = <crate::api::simple::Direction>::sse_decode(deserializer);
         let mut var_area = <isize>::sse_decode(deserializer);
         return crate::api::simple::Board {
             map: var_map,
             start: var_start,
             end: var_end,
             start_direction: var_startDirection,
+            end_direction: var_endDirection,
             area: var_area,
         };
     }
@@ -322,6 +324,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::simple::Board {
             self.start.into_into_dart().into_dart(),
             self.end.into_into_dart().into_dart(),
             self.start_direction.into_into_dart().into_dart(),
+            self.end_direction.into_into_dart().into_dart(),
             self.area.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -381,6 +384,7 @@ impl SseEncode for crate::api::simple::Board {
         <(isize, isize)>::sse_encode(self.start, serializer);
         <(isize, isize)>::sse_encode(self.end, serializer);
         <crate::api::simple::Direction>::sse_encode(self.start_direction, serializer);
+        <crate::api::simple::Direction>::sse_encode(self.end_direction, serializer);
         <isize>::sse_encode(self.area, serializer);
     }
 }

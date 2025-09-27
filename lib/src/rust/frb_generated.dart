@@ -202,14 +202,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Board dco_decode_board(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return Board(
       map: dco_decode_list_list_tile(arr[0]),
       start: dco_decode_record_isize_isize(arr[1]),
       end: dco_decode_record_isize_isize(arr[2]),
       startDirection: dco_decode_direction(arr[3]),
-      area: dco_decode_isize(arr[4]),
+      endDirection: dco_decode_direction(arr[4]),
+      area: dco_decode_isize(arr[5]),
     );
   }
 
@@ -272,12 +273,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_start = sse_decode_record_isize_isize(deserializer);
     var var_end = sse_decode_record_isize_isize(deserializer);
     var var_startDirection = sse_decode_direction(deserializer);
+    var var_endDirection = sse_decode_direction(deserializer);
     var var_area = sse_decode_isize(deserializer);
     return Board(
       map: var_map,
       start: var_start,
       end: var_end,
       startDirection: var_startDirection,
+      endDirection: var_endDirection,
       area: var_area,
     );
   }
@@ -360,6 +363,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_record_isize_isize(self.start, serializer);
     sse_encode_record_isize_isize(self.end, serializer);
     sse_encode_direction(self.startDirection, serializer);
+    sse_encode_direction(self.endDirection, serializer);
     sse_encode_isize(self.area, serializer);
   }
 
