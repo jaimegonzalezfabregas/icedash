@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/services.dart';
 import 'package:icedash/main.dart';
-import 'package:icedash/src/rust/api/simple.dart';
+import 'package:icedash/src/rust/api/main.dart';
 
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   Player({super.position}) : super(priority: 1, size: Vector2.all(100), anchor: Anchor.topLeft);

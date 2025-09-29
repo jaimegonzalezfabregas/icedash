@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:icedash/src/rust/api/simple.dart';
+import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/tiling.dart';
 
 class RoomComponent extends Component implements OpacityProvider {

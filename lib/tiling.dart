@@ -1,4 +1,5 @@
-import 'package:icedash/src/rust/api/simple.dart';
+
+import 'package:icedash/src/rust/api/main.dart';
 
 String? neigh2Img(Map<String, Tile?> neigh) {
   if (neigh case {"center": Tile.ice}) {

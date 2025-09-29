@@ -1,4 +1,4 @@
-import 'package:icedash/src/rust/api/simple.dart';
+import 'package:icedash/src/rust/api/main.dart';
 
 enum RoomType { lobby, game }
 
@@ -59,7 +59,7 @@ class RoomTraversal {
 ##E#######
 ''';
 
-    return Board(map: decode(lobby), start: (2, 4), end: (9, 2), area: 0, startDirection: Direction.north, endDirection: Direction.west);
+    return Board(map: decode(lobby), start: (2, 4), end: (9, 2), startDirection: Direction.north, endDirection: Direction.west);
   }
 
   Board getNextRoom((int, int) pos) {

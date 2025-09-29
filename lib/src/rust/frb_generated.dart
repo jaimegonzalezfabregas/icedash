@@ -3,7 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
-import 'api/simple.dart';
+import 'api/main.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
@@ -55,7 +55,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 
   @override
   Future<void> executeRustInitializers() async {
-    await api.crateApiSimpleInitApp();
+    api.crateApiMainInitApp();
   }
 
   @override
@@ -66,7 +66,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 438601639;
+  int get rustContentHash => 1228515061;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,15 +77,19 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<Direction> crateApiSimpleDirectionReverse({required Direction that});
+  Board? crateApiMainBoardMutate({required Board that, required double factor});
 
-  (PlatformInt64, PlatformInt64) crateApiSimpleDirectionVector({
+  Board? crateApiMainBoardNewRandom();
+
+  Direction crateApiMainDirectionReverse({required Direction that});
+
+  (PlatformInt64, PlatformInt64) crateApiMainDirectionVector({
     required Direction that,
   });
 
-  Future<void> crateApiSimpleInitApp();
+  void crateApiMainInitApp();
 
-  Board crateApiSimpleSearchBoard();
+  Board crateApiMainSearchBoard();
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -97,35 +101,81 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<Direction> crateApiSimpleDirectionReverse({required Direction that}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+  Board? crateApiMainBoardMutate({
+    required Board that,
+    required double factor,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_board(that, serializer);
+          sse_encode_f_32(factor, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_board,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainBoardMutateConstMeta,
+        argValues: [that, factor],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainBoardMutateConstMeta => const TaskConstMeta(
+    debugName: "board_mutate",
+    argNames: ["that", "factor"],
+  );
+
+  @override
+  Board? crateApiMainBoardNewRandom() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_board,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainBoardNewRandomConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainBoardNewRandomConstMeta =>
+      const TaskConstMeta(debugName: "board_new_random", argNames: []);
+
+  @override
+  Direction crateApiMainDirectionReverse({required Direction that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_direction(that, serializer);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 1,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_direction,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleDirectionReverseConstMeta,
+        constMeta: kCrateApiMainDirectionReverseConstMeta,
         argValues: [that],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleDirectionReverseConstMeta =>
+  TaskConstMeta get kCrateApiMainDirectionReverseConstMeta =>
       const TaskConstMeta(debugName: "direction_reverse", argNames: ["that"]);
 
   @override
-  (PlatformInt64, PlatformInt64) crateApiSimpleDirectionVector({
+  (PlatformInt64, PlatformInt64) crateApiMainDirectionVector({
     required Direction that,
   }) {
     return handler.executeSync(
@@ -133,91 +183,97 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_direction(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_record_isize_isize,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleDirectionVectorConstMeta,
+        constMeta: kCrateApiMainDirectionVectorConstMeta,
         argValues: [that],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleDirectionVectorConstMeta =>
+  TaskConstMeta get kCrateApiMainDirectionVectorConstMeta =>
       const TaskConstMeta(debugName: "direction_vector", argNames: ["that"]);
 
   @override
-  Future<void> crateApiSimpleInitApp() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
+  void crateApiMainInitApp() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(
-            generalizedFrbRustBinding,
-            serializer,
-            funcId: 3,
-            port: port_,
-          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleInitAppConstMeta,
+        constMeta: kCrateApiMainInitAppConstMeta,
         argValues: [],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleInitAppConstMeta =>
+  TaskConstMeta get kCrateApiMainInitAppConstMeta =>
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
-  Board crateApiSimpleSearchBoard() {
+  Board crateApiMainSearchBoard() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_board,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiSimpleSearchBoardConstMeta,
+        constMeta: kCrateApiMainSearchBoardConstMeta,
         argValues: [],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiSimpleSearchBoardConstMeta =>
+  TaskConstMeta get kCrateApiMainSearchBoardConstMeta =>
       const TaskConstMeta(debugName: "search_board", argNames: []);
 
   @protected
   Board dco_decode_board(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return Board(
       map: dco_decode_list_list_tile(arr[0]),
       start: dco_decode_record_isize_isize(arr[1]),
       end: dco_decode_record_isize_isize(arr[2]),
       startDirection: dco_decode_direction(arr[3]),
       endDirection: dco_decode_direction(arr[4]),
-      area: dco_decode_isize(arr[5]),
     );
+  }
+
+  @protected
+  Board dco_decode_box_autoadd_board(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_board(raw);
   }
 
   @protected
   Direction dco_decode_direction(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return Direction.values[raw as int];
+  }
+
+  @protected
+  double dco_decode_f_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
   }
 
   @protected
@@ -242,6 +298,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<Tile> dco_decode_list_tile(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_tile).toList();
+  }
+
+  @protected
+  Board? dco_decode_opt_box_autoadd_board(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_board(raw);
   }
 
   @protected
@@ -274,15 +336,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_end = sse_decode_record_isize_isize(deserializer);
     var var_startDirection = sse_decode_direction(deserializer);
     var var_endDirection = sse_decode_direction(deserializer);
-    var var_area = sse_decode_isize(deserializer);
     return Board(
       map: var_map,
       start: var_start,
       end: var_end,
       startDirection: var_startDirection,
       endDirection: var_endDirection,
-      area: var_area,
     );
+  }
+
+  @protected
+  Board sse_decode_box_autoadd_board(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_board(deserializer));
   }
 
   @protected
@@ -290,6 +356,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return Direction.values[inner];
+  }
+
+  @protected
+  double sse_decode_f_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat32();
   }
 
   @protected
@@ -329,6 +401,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Board? sse_decode_opt_box_autoadd_board(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_board(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   (PlatformInt64, PlatformInt64) sse_decode_record_isize_isize(
     SseDeserializer deserializer,
   ) {
@@ -364,13 +447,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_record_isize_isize(self.end, serializer);
     sse_encode_direction(self.startDirection, serializer);
     sse_encode_direction(self.endDirection, serializer);
-    sse_encode_isize(self.area, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_board(Board self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_board(self, serializer);
   }
 
   @protected
   void sse_encode_direction(Direction self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_f_32(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat32(self);
   }
 
   @protected
@@ -403,6 +497,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_tile(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_board(Board? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_board(self, serializer);
     }
   }
 

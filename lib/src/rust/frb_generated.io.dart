@@ -3,7 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
-import 'api/simple.dart';
+import 'api/main.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
@@ -22,7 +22,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Board dco_decode_board(dynamic raw);
 
   @protected
+  Board dco_decode_box_autoadd_board(dynamic raw);
+
+  @protected
   Direction dco_decode_direction(dynamic raw);
+
+  @protected
+  double dco_decode_f_32(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
@@ -37,6 +43,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Tile> dco_decode_list_tile(dynamic raw);
 
   @protected
+  Board? dco_decode_opt_box_autoadd_board(dynamic raw);
+
+  @protected
   (PlatformInt64, PlatformInt64) dco_decode_record_isize_isize(dynamic raw);
 
   @protected
@@ -49,7 +58,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Board sse_decode_board(SseDeserializer deserializer);
 
   @protected
+  Board sse_decode_box_autoadd_board(SseDeserializer deserializer);
+
+  @protected
   Direction sse_decode_direction(SseDeserializer deserializer);
+
+  @protected
+  double sse_decode_f_32(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
@@ -62,6 +77,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Tile> sse_decode_list_tile(SseDeserializer deserializer);
+
+  @protected
+  Board? sse_decode_opt_box_autoadd_board(SseDeserializer deserializer);
 
   @protected
   (PlatformInt64, PlatformInt64) sse_decode_record_isize_isize(
@@ -81,7 +99,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_board(Board self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_board(Board self, SseSerializer serializer);
+
+  @protected
   void sse_encode_direction(Direction self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_f_32(double self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
@@ -97,6 +121,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_tile(List<Tile> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_board(Board? self, SseSerializer serializer);
 
   @protected
   void sse_encode_record_isize_isize(

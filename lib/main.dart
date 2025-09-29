@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:icedash/components/player.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/room_traversal.dart';
+import 'package:icedash/src/rust/api/main.dart';
 
-import 'package:icedash/src/rust/api/simple.dart';
 import 'package:icedash/src/rust/frb_generated.dart';
 
 enum GameState { start, play, pause, gameOver }

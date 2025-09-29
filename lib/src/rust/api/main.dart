@@ -6,11 +6,10 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `board_cleanup`, `fitness`, `get_random_board`, `mutate`, `mutate`, `new`, `presentation_cleanup`, `simbol`, `solve`, `step`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Analysis`, `Creature`, `SearchState`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `partial_cmp`
+// These functions are ignored because they are not marked as `pub`: `genetic_search_thread`, `print`, `simbol`, `start_search`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`
 
-Board searchBoard() => RustLib.instance.api.crateApiSimpleSearchBoard();
+Board searchBoard() => RustLib.instance.api.crateApiMainSearchBoard();
 
 class Board {
   final List<List<Tile>> map;
@@ -18,7 +17,6 @@ class Board {
   final (PlatformInt64, PlatformInt64) end;
   final Direction startDirection;
   final Direction endDirection;
-  final PlatformInt64 area;
 
   const Board({
     required this.map,
@@ -26,8 +24,13 @@ class Board {
     required this.end,
     required this.startDirection,
     required this.endDirection,
-    required this.area,
   });
+
+  Board? mutate({required double factor}) =>
+      RustLib.instance.api.crateApiMainBoardMutate(that: this, factor: factor);
+
+  static Board? newRandom() =>
+      RustLib.instance.api.crateApiMainBoardNewRandom();
 
   @override
   int get hashCode =>
@@ -35,8 +38,7 @@ class Board {
       start.hashCode ^
       end.hashCode ^
       startDirection.hashCode ^
-      endDirection.hashCode ^
-      area.hashCode;
+      endDirection.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -47,8 +49,7 @@ class Board {
           start == other.start &&
           end == other.end &&
           startDirection == other.startDirection &&
-          endDirection == other.endDirection &&
-          area == other.area;
+          endDirection == other.endDirection;
 }
 
 enum Direction {
@@ -57,11 +58,11 @@ enum Direction {
   east,
   west;
 
-  Future<Direction> reverse() =>
-      RustLib.instance.api.crateApiSimpleDirectionReverse(that: this);
+  Direction reverse() =>
+      RustLib.instance.api.crateApiMainDirectionReverse(that: this);
 
   (PlatformInt64, PlatformInt64) vector() =>
-      RustLib.instance.api.crateApiSimpleDirectionVector(that: this);
+      RustLib.instance.api.crateApiMainDirectionVector(that: this);
 }
 
 enum Tile { entrance, gate, wall, ice, ground, outside }
