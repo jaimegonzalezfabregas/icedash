@@ -52,7 +52,8 @@ pub enum Tile {
     Gate,
     Wall,
     Ice,
-    Ground,
+    ThinIce(u8),
+    WeakBox(u8),
     Outside,
 }
 
@@ -63,7 +64,8 @@ impl Tile {
             Tile::Gate => "G",
             Tile::Wall => "#",
             Tile::Ice => " ",
-            Tile::Ground => ".",
+            Tile::ThinIce(_) => "t",
+            Tile::WeakBox(_) => "b",
             Tile::Outside => " ",
         }
     }
