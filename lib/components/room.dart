@@ -38,7 +38,7 @@ class RoomComponent extends Component implements OpacityProvider {
   (List<List<Tile>>, (int, int)) rotateMap(List<List<Tile>> input, (int, int) entrancePos) {
     int rows = input.length;
     int cols = input[0].length;
-    List<List<Tile>> rotated = List.generate(cols, (_) => List.filled(rows, Tile.ice));
+    List<List<Tile>> rotated = List.generate(cols, (_) => List.filled(rows, Tile.ice()));
 
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
@@ -50,9 +50,10 @@ class RoomComponent extends Component implements OpacityProvider {
   }
 
   late Vector2 entranceRoomPos;
+  late Vector2 resetWorldPos;
   Vector2 entranceWorldPos;
 
-  RoomComponent(this.entranceWorldPos, Direction entranceDirection, (int, int) entranceMapPos, this.tileMap) {
+  RoomComponent(this.entranceWorldPos, Direction entranceDirection, (int, int) entranceMapPos, (int, int) resetMapPos, this.tileMap) {
     assert(tileMap.isNotEmpty);
 
     var (mapEntranceDirection) = analyzeEntrance(entranceMapPos, tileMap);
@@ -65,6 +66,8 @@ class RoomComponent extends Component implements OpacityProvider {
     }
 
     entranceRoomPos = Vector2(entranceMapPos.$1.toDouble() * 100, entranceMapPos.$2.toDouble() * 100);
+    var resetRoomPos = Vector2(resetMapPos.$1.toDouble() * 100, resetMapPos.$2.toDouble() * 100);
+    resetWorldPos = resetRoomPos - entranceRoomPos + entranceWorldPos;
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x,
@@ -83,13 +86,13 @@ class RoomComponent extends Component implements OpacityProvider {
     }
     Tile ret = tilemap[y][x];
 
-    if (ret == Tile.gate) {
-      return Tile.ice;
+    if (ret is Tile_Gate) {
+      return Tile.ice();
     }
 
     if (!center) {
-      if (ret == Tile.entrance) {
-        return Tile.wall;
+      if (ret is Tile_Entrance) {
+        return Tile.wall();
       }
     }
 
@@ -130,7 +133,7 @@ class RoomComponent extends Component implements OpacityProvider {
           wallSet.add(img);
         }
 
-        if (tile == Tile.entrance) {
+        if (tile is Tile_Entrance) {
           var door = SpriteComponent(
             priority: 0,
             size: Vector2.all(101),
@@ -138,7 +141,7 @@ class RoomComponent extends Component implements OpacityProvider {
           );
 
           var postNeigh = neigh;
-          postNeigh["center"] = Tile.wall;
+          postNeigh["center"] = Tile.wall();
           String? fgImg = neigh2Img(neigh);
           if (fgImg != null) {
             door.sprite = await Sprite.load(fgImg);
@@ -165,7 +168,7 @@ class RoomComponent extends Component implements OpacityProvider {
   bool canWalkInto(Vector2 origin, Vector2 dst) {
     // TODO migrate to rust
     Tile dstTile = getTile(dst);
-    return dstTile != Tile.wall && dstTile != Tile.entrance;
+    return dstTile is! Tile_Wall && dstTile is! Tile_Entrance;
   }
 
   Tile getTile(Vector2 worldPos) {
@@ -174,7 +177,7 @@ class RoomComponent extends Component implements OpacityProvider {
 
       return tileMap[(localPos.y / 100).round()][(localPos.x / 100).round()];
     } catch (_) {
-      return Tile.outside;
+      return Tile.outside();
     }
   }
 

@@ -247,14 +247,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Board dco_decode_board(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return Board(
       map: dco_decode_list_list_tile(arr[0]),
       start: dco_decode_record_isize_isize(arr[1]),
       end: dco_decode_record_isize_isize(arr[2]),
-      startDirection: dco_decode_direction(arr[3]),
-      endDirection: dco_decode_direction(arr[4]),
+      resetPos: dco_decode_record_isize_isize(arr[3]),
+      startDirection: dco_decode_direction(arr[4]),
+      endDirection: dco_decode_direction(arr[5]),
     );
   }
 
@@ -319,7 +320,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Tile dco_decode_tile(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return Tile.values[raw as int];
+    switch (raw[0]) {
+      case 0:
+        return Tile_Entrance();
+      case 1:
+        return Tile_Gate();
+      case 2:
+        return Tile_Wall();
+      case 3:
+        return Tile_Ice();
+      case 4:
+        return Tile_ThinIce(dco_decode_u_8(raw[1]));
+      case 5:
+        return Tile_WeakBox(dco_decode_u_8(raw[1]));
+      case 6:
+        return Tile_Outside();
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
+  @protected
+  int dco_decode_u_8(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
   }
 
   @protected
@@ -334,12 +358,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_map = sse_decode_list_list_tile(deserializer);
     var var_start = sse_decode_record_isize_isize(deserializer);
     var var_end = sse_decode_record_isize_isize(deserializer);
+    var var_resetPos = sse_decode_record_isize_isize(deserializer);
     var var_startDirection = sse_decode_direction(deserializer);
     var var_endDirection = sse_decode_direction(deserializer);
     return Board(
       map: var_map,
       start: var_start,
       end: var_end,
+      resetPos: var_resetPos,
       startDirection: var_startDirection,
       endDirection: var_endDirection,
     );
@@ -424,8 +450,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Tile sse_decode_tile(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_i_32(deserializer);
-    return Tile.values[inner];
+
+    var tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        return Tile_Entrance();
+      case 1:
+        return Tile_Gate();
+      case 2:
+        return Tile_Wall();
+      case 3:
+        return Tile_Ice();
+      case 4:
+        var var_field0 = sse_decode_u_8(deserializer);
+        return Tile_ThinIce(var_field0);
+      case 5:
+        var var_field0 = sse_decode_u_8(deserializer);
+        return Tile_WeakBox(var_field0);
+      case 6:
+        return Tile_Outside();
+      default:
+        throw UnimplementedError('');
+    }
+  }
+
+  @protected
+  int sse_decode_u_8(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8();
   }
 
   @protected
@@ -445,6 +497,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_list_tile(self.map, serializer);
     sse_encode_record_isize_isize(self.start, serializer);
     sse_encode_record_isize_isize(self.end, serializer);
+    sse_encode_record_isize_isize(self.resetPos, serializer);
     sse_encode_direction(self.startDirection, serializer);
     sse_encode_direction(self.endDirection, serializer);
   }
@@ -523,7 +576,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_tile(Tile self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.index, serializer);
+    switch (self) {
+      case Tile_Entrance():
+        sse_encode_i_32(0, serializer);
+      case Tile_Gate():
+        sse_encode_i_32(1, serializer);
+      case Tile_Wall():
+        sse_encode_i_32(2, serializer);
+      case Tile_Ice():
+        sse_encode_i_32(3, serializer);
+      case Tile_ThinIce(field0: final field0):
+        sse_encode_i_32(4, serializer);
+        sse_encode_u_8(field0, serializer);
+      case Tile_WeakBox(field0: final field0):
+        sse_encode_i_32(5, serializer);
+        sse_encode_u_8(field0, serializer);
+      case Tile_Outside():
+        sse_encode_i_32(6, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_u_8(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint8(self);
   }
 
   @protected

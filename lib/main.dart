@@ -15,8 +15,6 @@ import 'package:icedash/src/rust/api/main.dart';
 
 import 'package:icedash/src/rust/frb_generated.dart';
 
-enum GameState { start, play, pause, gameOver }
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Flame.device.fullScreen();
@@ -62,14 +60,14 @@ class IceDashWorld extends World {
     var (dx, dy) = exitDirection.vector();
     Vector2 entrancePostion = exitPos + Vector2(dx.toDouble(), dy.toDouble()) * 100;
 
-    var  board= roomTraversal.getNextRoom(((exitPos.x / 100).round(), (exitPos.y / 100).round()));
+    var board = roomTraversal.getNextRoom(((exitPos.x / 100).round(), (exitPos.y / 100).round()));
 
     setCurrentRoom(board, entrancePostion, exitDirection);
   }
 
   void setCurrentRoom(Board board, Vector2 worldEntrancePosition, Direction stichDirection) {
     _lastRoom = _currentRoom;
-    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, board.start, board.map);
+    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, board.start, board.resetPos, board.map);
 
     var transition = EffectController(duration: 0);
 
@@ -102,6 +100,7 @@ class IceDashWorld extends World {
     _currentRoom!.add(OpacityEffect.fadeIn(EffectController(duration: 0.5)));
     add(_currentRoom!);
     player.push(stichDirection, force: true);
+    player.resetPos = _currentRoom!.resetWorldPos;
   }
 
   zoomTransition(double duration, double endValue) {

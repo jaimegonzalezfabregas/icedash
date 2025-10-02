@@ -38,7 +38,7 @@ struct SearchState {
     decision_positions: Vec<(isize, isize)>,
 }
 
-fn step(
+pub fn step(
     map: &Vec<Vec<crate::api::main::Tile>>,
     start: &(isize, isize),
     direction: Direction,

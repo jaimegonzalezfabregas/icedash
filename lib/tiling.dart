@@ -2,88 +2,97 @@
 import 'package:icedash/src/rust/api/main.dart';
 
 String? neigh2Img(Map<String, Tile?> neigh) {
-  if (neigh case {"center": Tile.ice}) {
+if (neigh["center"] is Tile_Ice) {
     return "ice.png";
-  }
-  if (neigh case {"center": Tile.entrance}) {
+}
+if (neigh["center"] is Tile_Entrance) {
     return "ice.png";
-  }
-  if (neigh case {"center": Tile.gate}) {
+}
+if (neigh["center"] is Tile_Gate) {
     return "ice.png";
-  }
+}
 
-  if (neigh["center"] == Tile.wall) {
-    bool eastNotSolid = neigh["east"] == Tile.ice || (neigh["east"] == Tile.wall && neigh["southeast"] == Tile.ice);
+if (neigh["center"] is Tile_Wall) {
+    bool eastNotSolid = neigh["east"] is Tile_Ice || (neigh["east"] is Tile_Wall && neigh["southeast"] is Tile_Ice);
 
-    bool westNotSolid = neigh["west"] == Tile.ice || (neigh["west"] == Tile.wall && neigh["southwest"] == Tile.ice);
+    bool westNotSolid = neigh["west"] is Tile_Ice || (neigh["west"] is Tile_Wall && neigh["southwest"] is Tile_Ice);
 
-    bool northNotSolid = neigh["north"] == Tile.ice;
+    bool northNotSolid = neigh["north"] is Tile_Ice;
 
-    if (neigh case {"south": Tile.ice}) {
-      return "wall0.png";
+    if (neigh["south"] is Tile_Ice) {
+        return "wall0.png";
     }
 
-    if (neigh case {"northeast": Tile.ice, "north": Tile.wall, "east": Tile.wall, "northwest": Tile.ice, "west": Tile.wall}) {
-      if (neigh["southwest"] != Tile.ice && neigh["southeast"] != Tile.ice) {
-        return "wall12.png";
-      }
+    if (neigh["northeast"] is Tile_Ice && neigh["north"] is Tile_Wall && 
+        neigh["east"] is Tile_Wall && neigh["northwest"] is Tile_Ice && 
+        neigh["west"] is Tile_Wall) {
+        if (neigh["southwest"] is! Tile_Ice && neigh["southeast"] is! Tile_Ice) {
+            return "wall12.png";
+        }
     }
 
-    if (neigh case {"northwest": Tile.ice, "north": Tile.wall, "west": Tile.wall, "east": Tile.ice}) {
-      if (neigh["southwest"] != Tile.ice) {
-        return "wall13.png";
-      }
+    if (neigh["northwest"] is Tile_Ice && neigh["north"] is Tile_Wall && 
+        neigh["west"] is Tile_Wall && neigh["east"] is Tile_Ice) {
+        if (neigh["southwest"] is! Tile_Ice) {
+            return "wall13.png";
+        }
     }
 
-    if (neigh case {"northeast": Tile.ice, "north": Tile.wall, "east": Tile.wall, "west": Tile.ice}) {
-      if (neigh["southeast"] != Tile.ice) {
-        return "wall14.png";
-      }
+    if (neigh["northeast"] is Tile_Ice && neigh["north"] is Tile_Wall && 
+        neigh["east"] is Tile_Wall && neigh["west"] is Tile_Ice) {
+        if (neigh["southeast"] is! Tile_Ice) {
+            return "wall14.png";
+        }
     }
 
-    if (neigh case {"northeast": Tile.ice, "north": Tile.wall, "east": Tile.wall}) {
-      if (neigh["southeast"] != Tile.ice) {
-        return "wall3.png";
-      }
+    if (neigh["northeast"] is Tile_Ice && neigh["north"] is Tile_Wall && 
+        neigh["east"] is Tile_Wall) {
+        if (neigh["southeast"] is! Tile_Ice) {
+            return "wall3.png";
+        }
     }
 
-    if (neigh case {"northwest": Tile.ice, "north": Tile.wall, "west": Tile.wall}) {
-      if (neigh["southwest"] != Tile.ice) {
-        return "wall11.png";
-      }
+    if (neigh["northwest"] is Tile_Ice && neigh["north"] is Tile_Wall && 
+        neigh["west"] is Tile_Wall) {
+        if (neigh["southwest"] is! Tile_Ice) {
+            return "wall11.png";
+        }
     }
 
-    if (neigh["south"] == Tile.wall && neigh["north"] == Tile.ice && eastNotSolid && westNotSolid) {
-      return "wall8.png";
+    if (neigh["south"] is Tile_Wall && neigh["north"] is Tile_Ice && 
+        eastNotSolid && westNotSolid) {
+        return "wall8.png";
     }
 
-    if (neigh["south"] == Tile.wall && eastNotSolid && westNotSolid) {
-      return "wall7.png";
+    if (neigh["south"] is Tile_Wall && eastNotSolid && westNotSolid) {
+        return "wall7.png";
     }
 
     if (northNotSolid && westNotSolid) {
-      return "wall10.png";
+        return "wall10.png";
     }
 
     if (northNotSolid && eastNotSolid) {
-      return "wall9.png";
+        return "wall9.png";
     }
 
     if (eastNotSolid) {
-      return "wall1.png";
+        return "wall1.png";
     }
 
     if (westNotSolid) {
-      return "wall6.png";
+        return "wall6.png";
     }
 
-    if (neigh case {"west": Tile.wall, "north": Tile.wall, "southwest": Tile.ice}) {
-      return "wall4.png";
+    if (neigh["west"] is Tile_Wall && neigh["north"] is Tile_Wall && 
+        neigh["southwest"] is Tile_Ice) {
+        return "wall4.png";
     }
 
     if (northNotSolid) {
-      return "wall5.png";
+        return "wall5.png";
     }
-  }
+}
+
   return null;
 }

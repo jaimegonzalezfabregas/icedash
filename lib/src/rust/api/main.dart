@@ -5,6 +5,8 @@
 
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
+part 'main.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `genetic_search_thread`, `print`, `simbol`, `start_search`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`
@@ -15,6 +17,7 @@ class Board {
   final List<List<Tile>> map;
   final (PlatformInt64, PlatformInt64) start;
   final (PlatformInt64, PlatformInt64) end;
+  final (PlatformInt64, PlatformInt64) resetPos;
   final Direction startDirection;
   final Direction endDirection;
 
@@ -22,6 +25,7 @@ class Board {
     required this.map,
     required this.start,
     required this.end,
+    required this.resetPos,
     required this.startDirection,
     required this.endDirection,
   });
@@ -37,6 +41,7 @@ class Board {
       map.hashCode ^
       start.hashCode ^
       end.hashCode ^
+      resetPos.hashCode ^
       startDirection.hashCode ^
       endDirection.hashCode;
 
@@ -48,6 +53,7 @@ class Board {
           map == other.map &&
           start == other.start &&
           end == other.end &&
+          resetPos == other.resetPos &&
           startDirection == other.startDirection &&
           endDirection == other.endDirection;
 }
@@ -65,4 +71,15 @@ enum Direction {
       RustLib.instance.api.crateApiMainDirectionVector(that: this);
 }
 
-enum Tile { entrance, gate, wall, ice, ground, outside }
+@freezed
+sealed class Tile with _$Tile {
+  const Tile._();
+
+  const factory Tile.entrance() = Tile_Entrance;
+  const factory Tile.gate() = Tile_Gate;
+  const factory Tile.wall() = Tile_Wall;
+  const factory Tile.ice() = Tile_Ice;
+  const factory Tile.thinIce(int field0) = Tile_ThinIce;
+  const factory Tile.weakBox(int field0) = Tile_WeakBox;
+  const factory Tile.outside() = Tile_Outside;
+}

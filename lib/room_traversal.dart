@@ -27,16 +27,16 @@ class RoomTraversal {
         // Map the character representation to Tile enum values
         switch (tileChar) {
           case '#':
-            row.add(Tile.wall);
+            row.add(Tile.wall());
             break;
           case ' ':
-            row.add(Tile.ice);
+            row.add(Tile.ice());
             break;
           case 'E':
-            row.add(Tile.entrance);
+            row.add(Tile.entrance());
             break;
           case 'G':
-            row.add(Tile.gate);
+            row.add(Tile.gate());
             break;
           default:
             throw Exception('Unknown tile character: $tileChar');
@@ -59,7 +59,7 @@ class RoomTraversal {
 ##E#######
 ''';
 
-    return Board(map: decode(lobby), start: (2, 4), end: (9, 2), startDirection: Direction.north, endDirection: Direction.west);
+    return Board(map: decode(lobby), start: (2, 4), resetPos: (2,2), end: (9, 2), startDirection: Direction.north, endDirection: Direction.west);
   }
 
   Board getNextRoom((int, int) pos) {

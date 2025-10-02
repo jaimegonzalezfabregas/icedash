@@ -3,7 +3,7 @@ use std::{
         mpsc::{self, Receiver, Sender},
         Mutex,
     },
-    thread::{spawn, JoinHandle},
+    thread::spawn,
 };
 
 use rand::{
@@ -15,7 +15,8 @@ use sorted_vec::partial::ReverseSortedVec;
 
 use crate::logic::{
     creature::Creature,
-    noise_reduction::{asthetic_cleanup, board_noise_cleanup, is_board_valid},
+    noise_reduction::{asthetic_cleanup, is_board_valid, map_noise_cleanup},
+    solver::step,
 };
 
 #[derive(Clone, PartialEq, Copy, Debug)]
@@ -76,12 +77,14 @@ pub struct Board {
     pub map: Vec<Vec<Tile>>,
     pub start: (isize, isize),
     pub end: (isize, isize),
+    pub reset_pos: (isize, isize),
     pub start_direction: Direction,
     pub end_direction: Direction,
 }
 
 impl Board {
     pub fn mutate(&self, factor: f32) -> Option<Self> {
+        return Some(self.clone());
         let mut rng = rand::rng();
 
         let mut ret = self.clone();
@@ -100,7 +103,7 @@ impl Board {
             }
         }
 
-        board_noise_cleanup(
+        map_noise_cleanup(
             &mut ret.map,
             &mut ret.start,
             ret.start_direction,
@@ -149,17 +152,11 @@ impl Board {
             ),
         };
 
-        let mut ret = Board {
-            map: vec![vec![Tile::Wall; width as usize]; height as usize],
-            start,
-            start_direction,
-            end,
-            end_direction,
-        };
+        let mut map = vec![vec![Tile::Wall; width as usize]; height as usize];
 
         for x in 1..width - 1 {
             for y in 1..height - 1 {
-                ret.map[y as usize][x as usize] = Tile::Ice;
+                map[y as usize][x as usize] = Tile::Ice;
             }
         }
 
@@ -169,7 +166,7 @@ impl Board {
             let x = (1..(width - 1) as usize).choose(&mut rng)?;
             let y = (1..(height - 1) as usize).choose(&mut rng)?;
 
-            ret.map[y][x] = Tile::Wall;
+            map[y][x] = Tile::Wall;
         }
 
         let vignet = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
@@ -184,18 +181,30 @@ impl Board {
             let normal_d = normal_x * normal_x + normal_y * normal_y;
 
             if random::<f32>() > normal_d {
-                ret.map[y][x] = Tile::Wall;
+                map[y][x] = Tile::Wall;
             }
 
-            ret.map[y][x] = Tile::Wall;
+            map[y][x] = Tile::Wall;
         }
-        board_noise_cleanup(
-            &mut ret.map,
-            &mut ret.start,
+        let mut start = start;
+        let mut end = end;
+
+        map_noise_cleanup(
+            &mut map,
+            &mut start,
             start_direction,
-            &mut ret.end,
+            &mut end,
             end_direction,
         );
+
+        let ret = Board {
+            reset_pos: step(&map, &start, start_direction),
+            map,
+            start,
+            start_direction,
+            end,
+            end_direction,
+        };
 
         if is_board_valid(&ret) {
             Some(ret)
@@ -251,7 +260,7 @@ pub fn search_board() -> Board {
     };
 
     start_search();
-    ret
+    asthetic_cleanup(ret)
 }
 
 fn start_search() {

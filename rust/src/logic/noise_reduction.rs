@@ -8,8 +8,8 @@ use crate::{
     logic::solver::Analysis,
 };
 
-pub fn board_noise_cleanup(
-    ret: &mut Vec<Vec<Tile>>,
+pub fn map_noise_cleanup(
+    map: &mut Vec<Vec<Tile>>,
     start: &mut (isize, isize),
     start_direction: Direction,
     end: &mut (isize, isize),
@@ -17,11 +17,11 @@ pub fn board_noise_cleanup(
 ) {
     let mut rng = rand::rng();
 
-    let width = ret[0].len() as isize;
-    let height = ret.len() as isize;
+    let width = map[0].len() as isize;
+    let height = map.len() as isize;
 
     if start.0 == end.0 || start.1 == end.1 {
-        ret[((start.1 + end.1) / 2) as usize][((start.0 + end.0) / 2) as usize] = Tile::Wall;
+        map[((start.1 + end.1) / 2) as usize][((start.0 + end.0) / 2) as usize] = Tile::Wall;
     }
 
     let mut rep = true;
@@ -29,10 +29,10 @@ pub fn board_noise_cleanup(
         rep = false;
         for y in 1..height - 2 {
             for x in 1..width - 2 {
-                let a = ret[(y) as usize][(x) as usize];
-                let b = ret[(y + 1) as usize][(x) as usize];
-                let c = ret[(y) as usize][(x + 1) as usize];
-                let d = ret[(y + 1) as usize][(x + 1) as usize];
+                let a = map[(y) as usize][(x) as usize];
+                let b = map[(y + 1) as usize][(x) as usize];
+                let c = map[(y) as usize][(x + 1) as usize];
+                let d = map[(y + 1) as usize][(x + 1) as usize];
 
                 let cuad = (a, b, c, d);
 
@@ -40,17 +40,17 @@ pub fn board_noise_cleanup(
                     (Tile::Ice, Tile::Wall, Tile::Wall, Tile::Ice) => {
                         rep = true;
                         if *([true, false].choose(&mut rng).unwrap()) {
-                            ret[(y) as usize][(x) as usize] = Tile::Wall;
+                            map[(y) as usize][(x) as usize] = Tile::Wall;
                         } else {
-                            ret[(y + 1) as usize][(x + 1) as usize] = Tile::Wall;
+                            map[(y + 1) as usize][(x + 1) as usize] = Tile::Wall;
                         }
                     }
                     (Tile::Wall, Tile::Ice, Tile::Ice, Tile::Wall) => {
                         rep = true;
                         if *([true, false].choose(&mut rng).unwrap()) {
-                            ret[(y + 1) as usize][(x) as usize] = Tile::Wall;
+                            map[(y + 1) as usize][(x) as usize] = Tile::Wall;
                         } else {
-                            ret[(y) as usize][(x + 1) as usize] = Tile::Wall;
+                            map[(y) as usize][(x + 1) as usize] = Tile::Wall;
                         }
                     }
 
@@ -65,7 +65,7 @@ pub fn board_noise_cleanup(
         rep = false;
         for y in 1..height - 1 {
             for x in 1..width - 1 {
-                if ret[(y) as usize][(x) as usize] != Tile::Wall {
+                if map[(y) as usize][(x) as usize] != Tile::Wall {
                     let mut neigh_count = 0;
                     for (dx, dy) in [
                         (0, 1),
@@ -77,14 +77,14 @@ pub fn board_noise_cleanup(
                         (-1, -1),
                         (-1, 1),
                     ] {
-                        let neigh = ret[(y + dy) as usize][(x + dx) as usize];
+                        let neigh = map[(y + dy) as usize][(x + dx) as usize];
                         if neigh == Tile::Wall {
                             neigh_count += 1;
                         }
                     }
 
                     if neigh_count >= 6 {
-                        ret[(y) as usize][(x) as usize] = Tile::Wall;
+                        map[(y) as usize][(x) as usize] = Tile::Wall;
                         rep = true;
                     }
                 }
@@ -97,17 +97,17 @@ pub fn board_noise_cleanup(
         rep = false;
         for y in 1..height - 1 {
             for x in 1..width - 1 {
-                if ret[(y) as usize][(x) as usize] != Tile::Wall {
+                if map[(y) as usize][(x) as usize] != Tile::Wall {
                     let mut neigh_count = 0;
                     for (dx, dy) in [(0, 1), (0, -1), (-1, 0), (1, 0)] {
-                        let neigh = ret[(y + dy) as usize][(x + dx) as usize];
+                        let neigh = map[(y + dy) as usize][(x + dx) as usize];
                         if neigh == Tile::Wall {
                             neigh_count += 1;
                         }
                     }
 
                     if neigh_count >= 3 {
-                        ret[(y) as usize][(x) as usize] = Tile::Wall;
+                        map[(y) as usize][(x) as usize] = Tile::Wall;
                         rep = true;
                     }
                 }
@@ -115,27 +115,27 @@ pub fn board_noise_cleanup(
         }
     }
 
-    ret[start.1 as usize][start.0 as usize] = Tile::Entrance;
-    ret[end.1 as usize][end.0 as usize] = Tile::Gate;
+    map[start.1 as usize][start.0 as usize] = Tile::Entrance;
+    map[end.1 as usize][end.0 as usize] = Tile::Gate;
 
     let (dx, dy) = start_direction.vector();
 
-    ret[(start.1 + dy) as usize][(start.0 + dx) as usize] = Tile::Ice;
-    ret[(start.1 + dy + dx) as usize][(start.0 + dx - dy) as usize] = Tile::Ice;
-    ret[(start.1 + dy - dx) as usize][(start.0 + dx + dy) as usize] = Tile::Ice;
+    map[(start.1 + dy) as usize][(start.0 + dx) as usize] = Tile::Ice;
+    map[(start.1 + dy + dx) as usize][(start.0 + dx - dy) as usize] = Tile::Ice;
+    map[(start.1 + dy - dx) as usize][(start.0 + dx + dy) as usize] = Tile::Ice;
 
-    ret[(start.1 + dy * 2) as usize][(start.0 + dx * 2) as usize] = Tile::Ice;
-    ret[(start.1 + dy * 2 + dx) as usize][(start.0 + dx * 2 - dy) as usize] = Tile::Ice;
-    ret[(start.1 + dy * 2 - dx) as usize][(start.0 + dx * 2 + dy) as usize] = Tile::Ice;
+    map[(start.1 + dy * 2) as usize][(start.0 + dx * 2) as usize] = Tile::Ice;
+    map[(start.1 + dy * 2 + dx) as usize][(start.0 + dx * 2 - dy) as usize] = Tile::Ice;
+    map[(start.1 + dy * 2 - dx) as usize][(start.0 + dx * 2 + dy) as usize] = Tile::Ice;
 
     let (dx, dy) = end_direction.vector();
-    ret[(end.1 + dy) as usize][(end.0 + dx) as usize] = Tile::Ice;
-    ret[(end.1 + dy + dx) as usize][(end.0 + dx - dy) as usize] = Tile::Ice;
-    ret[(end.1 + dy - dx) as usize][(end.0 + dx + dy) as usize] = Tile::Ice;
+    map[(end.1 + dy) as usize][(end.0 + dx) as usize] = Tile::Ice;
+    map[(end.1 + dy + dx) as usize][(end.0 + dx - dy) as usize] = Tile::Ice;
+    map[(end.1 + dy - dx) as usize][(end.0 + dx + dy) as usize] = Tile::Ice;
 
-    ret[(end.1 + dy * 2) as usize][(end.0 + dx * 2) as usize] = Tile::Ice;
-    ret[(end.1 + dy * 2 + dx) as usize][(end.0 + dx * 2 - dy) as usize] = Tile::Ice;
-    ret[(end.1 + dy * 2 - dx) as usize][(end.0 + dx * 2 + dy) as usize] = Tile::Ice;
+    map[(end.1 + dy * 2) as usize][(end.0 + dx * 2) as usize] = Tile::Ice;
+    map[(end.1 + dy * 2 + dx) as usize][(end.0 + dx * 2 - dy) as usize] = Tile::Ice;
+    map[(end.1 + dy * 2 - dx) as usize][(end.0 + dx * 2 + dy) as usize] = Tile::Ice;
 }
 
 pub fn is_board_valid(board: &Board) -> bool {

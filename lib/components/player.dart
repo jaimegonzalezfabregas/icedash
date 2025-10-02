@@ -10,6 +10,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   double timePerStep = 0.1;
   bool sliding = false;
   Direction? buffered;
+  Vector2? resetPos;
 
   @override
   Future<void> onLoad() async {
@@ -34,9 +35,19 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
             push(Direction.south);
             return true;
           },
+          LogicalKeyboardKey.keyR: (keysPressed) {
+            reset();
+            return true;
+          },
         },
       ),
     );
+  }
+
+  void reset() {
+    if (!sliding && resetPos != null) {
+      position = resetPos!;
+    }
   }
 
   void push(Direction dir, {bool force = false}) {
@@ -70,11 +81,11 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       sliding = false;
       var standingOn = game.idWorld.getTile(position);
 
-      if (standingOn == Tile.gate) {
+      if (standingOn is Tile_Gate) {
         game.idWorld.nextRoom(position, dir);
       }
 
-      if (standingOn == Tile.gate || standingOn == Tile.entrance || standingOn == Tile.ice) {
+      if (standingOn is Tile_Gate || standingOn is Tile_Entrance || standingOn is Tile_Ice) {
         push(dir);
       }
     };

@@ -237,12 +237,14 @@ impl SseDecode for crate::api::main::Board {
         let mut var_map = <Vec<Vec<crate::api::main::Tile>>>::sse_decode(deserializer);
         let mut var_start = <(isize, isize)>::sse_decode(deserializer);
         let mut var_end = <(isize, isize)>::sse_decode(deserializer);
+        let mut var_resetPos = <(isize, isize)>::sse_decode(deserializer);
         let mut var_startDirection = <crate::api::main::Direction>::sse_decode(deserializer);
         let mut var_endDirection = <crate::api::main::Direction>::sse_decode(deserializer);
         return crate::api::main::Board {
             map: var_map,
             start: var_start,
             end: var_end,
+            reset_pos: var_resetPos,
             start_direction: var_startDirection,
             end_direction: var_endDirection,
         };
@@ -331,16 +333,42 @@ impl SseDecode for (isize, isize) {
 impl SseDecode for crate::api::main::Tile {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut inner = <i32>::sse_decode(deserializer);
-        return match inner {
-            0 => crate::api::main::Tile::Entrance,
-            1 => crate::api::main::Tile::Gate,
-            2 => crate::api::main::Tile::Wall,
-            3 => crate::api::main::Tile::Ice,
-            4 => crate::api::main::Tile::Ground,
-            5 => crate::api::main::Tile::Outside,
-            _ => unreachable!("Invalid variant for Tile: {}", inner),
-        };
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                return crate::api::main::Tile::Entrance;
+            }
+            1 => {
+                return crate::api::main::Tile::Gate;
+            }
+            2 => {
+                return crate::api::main::Tile::Wall;
+            }
+            3 => {
+                return crate::api::main::Tile::Ice;
+            }
+            4 => {
+                let mut var_field0 = <u8>::sse_decode(deserializer);
+                return crate::api::main::Tile::ThinIce(var_field0);
+            }
+            5 => {
+                let mut var_field0 = <u8>::sse_decode(deserializer);
+                return crate::api::main::Tile::WeakBox(var_field0);
+            }
+            6 => {
+                return crate::api::main::Tile::Outside;
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
+impl SseDecode for u8 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_u8().unwrap()
     }
 }
 
@@ -396,6 +424,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::main::Board {
             self.map.into_into_dart().into_dart(),
             self.start.into_into_dart().into_dart(),
             self.end.into_into_dart().into_dart(),
+            self.reset_pos.into_into_dart().into_dart(),
             self.start_direction.into_into_dart().into_dart(),
             self.end_direction.into_into_dart().into_dart(),
         ]
@@ -432,13 +461,20 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::main::Direction>
 impl flutter_rust_bridge::IntoDart for crate::api::main::Tile {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self {
-            Self::Entrance => 0.into_dart(),
-            Self::Gate => 1.into_dart(),
-            Self::Wall => 2.into_dart(),
-            Self::Ice => 3.into_dart(),
-            Self::Ground => 4.into_dart(),
-            Self::Outside => 5.into_dart(),
-            _ => unreachable!(),
+            crate::api::main::Tile::Entrance => [0.into_dart()].into_dart(),
+            crate::api::main::Tile::Gate => [1.into_dart()].into_dart(),
+            crate::api::main::Tile::Wall => [2.into_dart()].into_dart(),
+            crate::api::main::Tile::Ice => [3.into_dart()].into_dart(),
+            crate::api::main::Tile::ThinIce(field0) => {
+                [4.into_dart(), field0.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::main::Tile::WeakBox(field0) => {
+                [5.into_dart(), field0.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::main::Tile::Outside => [6.into_dart()].into_dart(),
+            _ => {
+                unimplemented!("");
+            }
         }
     }
 }
@@ -455,6 +491,7 @@ impl SseEncode for crate::api::main::Board {
         <Vec<Vec<crate::api::main::Tile>>>::sse_encode(self.map, serializer);
         <(isize, isize)>::sse_encode(self.start, serializer);
         <(isize, isize)>::sse_encode(self.end, serializer);
+        <(isize, isize)>::sse_encode(self.reset_pos, serializer);
         <crate::api::main::Direction>::sse_encode(self.start_direction, serializer);
         <crate::api::main::Direction>::sse_encode(self.end_direction, serializer);
     }
@@ -543,20 +580,41 @@ impl SseEncode for (isize, isize) {
 impl SseEncode for crate::api::main::Tile {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i32>::sse_encode(
-            match self {
-                crate::api::main::Tile::Entrance => 0,
-                crate::api::main::Tile::Gate => 1,
-                crate::api::main::Tile::Wall => 2,
-                crate::api::main::Tile::Ice => 3,
-                crate::api::main::Tile::Ground => 4,
-                crate::api::main::Tile::Outside => 5,
-                _ => {
-                    unimplemented!("");
-                }
-            },
-            serializer,
-        );
+        match self {
+            crate::api::main::Tile::Entrance => {
+                <i32>::sse_encode(0, serializer);
+            }
+            crate::api::main::Tile::Gate => {
+                <i32>::sse_encode(1, serializer);
+            }
+            crate::api::main::Tile::Wall => {
+                <i32>::sse_encode(2, serializer);
+            }
+            crate::api::main::Tile::Ice => {
+                <i32>::sse_encode(3, serializer);
+            }
+            crate::api::main::Tile::ThinIce(field0) => {
+                <i32>::sse_encode(4, serializer);
+                <u8>::sse_encode(field0, serializer);
+            }
+            crate::api::main::Tile::WeakBox(field0) => {
+                <i32>::sse_encode(5, serializer);
+                <u8>::sse_encode(field0, serializer);
+            }
+            crate::api::main::Tile::Outside => {
+                <i32>::sse_encode(6, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
+impl SseEncode for u8 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_u8(self).unwrap();
     }
 }
 
