@@ -1,12 +1,11 @@
 use crate::{
     api::main::Board,
-    logic::solver::{solve, Analysis},
+    logic::solver::{solve},
 };
 
 #[derive(Clone)]
 pub struct Creature {
     pub board: Board,
-    pub analisis: Analysis,
     pub fitness: f32,
     pub mutation_count: usize,
 }
@@ -14,12 +13,20 @@ pub struct Creature {
 impl Creature {
     pub fn board_to_creature(b: Option<Board>) -> Option<Self> {
         let b = b?;
+
         let analysis = solve(&b);
-        if let Some(analysis) = analysis {
+        if analysis.len() != 0 {
+            let mut fitness = analysis[0].fitness();
+
+            for analysis in analysis.iter() {
+                fitness = fitness.min(analysis.fitness())
+            }
+
+            fitness /= analysis.len().pow(2) as f32;
+
             Some(Self {
                 board: b,
-                fitness: analysis.fitness(),
-                analisis: analysis,
+                fitness,
                 mutation_count: 0,
             })
         } else {

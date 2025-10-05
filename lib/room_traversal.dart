@@ -1,4 +1,5 @@
 import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/src/rust/logic/tile_map.dart';
 
 enum RoomType { lobby, game }
 
@@ -59,10 +60,17 @@ class RoomTraversal {
 ##E#######
 ''';
 
-    return Board(map: decode(lobby), start: (2, 4), resetPos: (2,2), end: (9, 2), startDirection: Direction.north, endDirection: Direction.west);
+    return Board(
+      map: TileMap(field0: decode(lobby)),
+      start: Pos(x: 2, y: 4),
+      resetPos: Pos(x: 2, y: 2),
+      end: Pos(x: 9, y: 2),
+      startDirection: Direction.north,
+      endDirection: Direction.west,
+    );
   }
 
-  Board getNextRoom((int, int) pos) {
+  Board getNextRoom(Pos pos) {
     return searchBoard();
   }
 }

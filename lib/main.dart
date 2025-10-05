@@ -57,17 +57,17 @@ class IceDashWorld extends World {
   }
 
   void nextRoom(Vector2 exitPos, Direction exitDirection) {
-    var (dx, dy) = exitDirection.vector();
-    Vector2 entrancePostion = exitPos + Vector2(dx.toDouble(), dy.toDouble()) * 100;
+    Vector2 dpos = Vector2.array(exitDirection.dartVector());
+    Vector2 entrancePostion = exitPos + dpos;
 
-    var board = roomTraversal.getNextRoom(((exitPos.x / 100).round(), (exitPos.y / 100).round()));
+    var board = roomTraversal.getNextRoom(Pos(x: (exitPos.x).round(), y: (exitPos.y).round()));
 
     setCurrentRoom(board, entrancePostion, exitDirection);
   }
 
   void setCurrentRoom(Board board, Vector2 worldEntrancePosition, Direction stichDirection) {
     _lastRoom = _currentRoom;
-    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, board.start, board.resetPos, board.map);
+    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, board);
 
     var transition = EffectController(duration: 0);
 

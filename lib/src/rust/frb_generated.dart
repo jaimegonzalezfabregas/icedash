@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'frb_generated.dart';
 import 'frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
+import 'logic/tile_map.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 /// Main entrypoint of the Rust API
@@ -66,7 +67,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 1228515061;
+  int get rustContentHash => 964213113;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -77,19 +78,35 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  PlatformInt64 crateApiMainBoardGetHeight({required Board that});
+
+  PlatformInt64 crateApiMainBoardGetWidth({required Board that});
+
   Board? crateApiMainBoardMutate({required Board that, required double factor});
 
   Board? crateApiMainBoardNewRandom();
 
+  Board crateApiMainBoardRotateLeft({required Board that});
+
+  Float32List crateApiMainDirectionDartVector({required Direction that});
+
+  Direction crateApiMainDirectionLeft({required Direction that});
+
   Direction crateApiMainDirectionReverse({required Direction that});
 
-  (PlatformInt64, PlatformInt64) crateApiMainDirectionVector({
-    required Direction that,
-  });
+  Direction crateApiMainDirectionRight({required Direction that});
 
   void crateApiMainInitApp();
 
+  Float32List crateApiMainPosDartVector({required Pos that});
+
+  Pos crateApiMainPosNew({required PlatformInt64 x, required PlatformInt64 y});
+
   Board crateApiMainSearchBoard();
+
+  bool crateApiMainTileIsSolid({required Tile that});
+
+  void crateApiMainTileSimbol({required Tile that});
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -99,6 +116,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required super.generalizedFrbRustBinding,
     required super.portManager,
   });
+
+  @override
+  PlatformInt64 crateApiMainBoardGetHeight({required Board that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_board(that, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_isize,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainBoardGetHeightConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainBoardGetHeightConstMeta =>
+      const TaskConstMeta(debugName: "board_get_height", argNames: ["that"]);
+
+  @override
+  PlatformInt64 crateApiMainBoardGetWidth({required Board that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_board(that, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_isize,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainBoardGetWidthConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainBoardGetWidthConstMeta =>
+      const TaskConstMeta(debugName: "board_get_width", argNames: ["that"]);
 
   @override
   Board? crateApiMainBoardMutate({
@@ -111,7 +174,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_board(that, serializer);
           sse_encode_f_32(factor, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_board,
@@ -135,7 +198,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_box_autoadd_board,
@@ -152,13 +215,85 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "board_new_random", argNames: []);
 
   @override
+  Board crateApiMainBoardRotateLeft({required Board that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_board(that, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_board,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainBoardRotateLeftConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainBoardRotateLeftConstMeta =>
+      const TaskConstMeta(debugName: "board_rotate_left", argNames: ["that"]);
+
+  @override
+  Float32List crateApiMainDirectionDartVector({required Direction that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_direction(that, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_f_32_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainDirectionDartVectorConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainDirectionDartVectorConstMeta =>
+      const TaskConstMeta(
+        debugName: "direction_dart_vector",
+        argNames: ["that"],
+      );
+
+  @override
+  Direction crateApiMainDirectionLeft({required Direction that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_direction(that, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_direction,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainDirectionLeftConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainDirectionLeftConstMeta =>
+      const TaskConstMeta(debugName: "direction_left", argNames: ["that"]);
+
+  @override
   Direction crateApiMainDirectionReverse({required Direction that}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_direction(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_direction,
@@ -175,29 +310,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "direction_reverse", argNames: ["that"]);
 
   @override
-  (PlatformInt64, PlatformInt64) crateApiMainDirectionVector({
-    required Direction that,
-  }) {
+  Direction crateApiMainDirectionRight({required Direction that}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_direction(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_record_isize_isize,
+          decodeSuccessData: sse_decode_direction,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiMainDirectionVectorConstMeta,
+        constMeta: kCrateApiMainDirectionRightConstMeta,
         argValues: [that],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiMainDirectionVectorConstMeta =>
-      const TaskConstMeta(debugName: "direction_vector", argNames: ["that"]);
+  TaskConstMeta get kCrateApiMainDirectionRightConstMeta =>
+      const TaskConstMeta(debugName: "direction_right", argNames: ["that"]);
 
   @override
   void crateApiMainInitApp() {
@@ -205,7 +338,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_unit,
@@ -222,12 +355,59 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
+  Float32List crateApiMainPosDartVector({required Pos that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_pos(that, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_f_32_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainPosDartVectorConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainPosDartVectorConstMeta =>
+      const TaskConstMeta(debugName: "pos_dart_vector", argNames: ["that"]);
+
+  @override
+  Pos crateApiMainPosNew({required PlatformInt64 x, required PlatformInt64 y}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_isize(x, serializer);
+          sse_encode_isize(y, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_pos,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainPosNewConstMeta,
+        argValues: [x, y],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainPosNewConstMeta =>
+      const TaskConstMeta(debugName: "pos_new", argNames: ["x", "y"]);
+
+  @override
   Board crateApiMainSearchBoard() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_board,
@@ -243,6 +423,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiMainSearchBoardConstMeta =>
       const TaskConstMeta(debugName: "search_board", argNames: []);
 
+  @override
+  bool crateApiMainTileIsSolid({required Tile that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_tile(that, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_bool,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainTileIsSolidConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainTileIsSolidConstMeta =>
+      const TaskConstMeta(debugName: "tile_is_solid", argNames: ["that"]);
+
+  @override
+  void crateApiMainTileSimbol({required Tile that}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_tile(that, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMainTileSimbolConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMainTileSimbolConstMeta =>
+      const TaskConstMeta(debugName: "tile_simbol", argNames: ["that"]);
+
   @protected
   Board dco_decode_board(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -250,19 +476,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (arr.length != 6)
       throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return Board(
-      map: dco_decode_list_list_tile(arr[0]),
-      start: dco_decode_record_isize_isize(arr[1]),
-      end: dco_decode_record_isize_isize(arr[2]),
-      resetPos: dco_decode_record_isize_isize(arr[3]),
+      map: dco_decode_tile_map(arr[0]),
+      start: dco_decode_pos(arr[1]),
+      end: dco_decode_pos(arr[2]),
+      resetPos: dco_decode_pos(arr[3]),
       startDirection: dco_decode_direction(arr[4]),
       endDirection: dco_decode_direction(arr[5]),
     );
   }
 
   @protected
+  bool dco_decode_bool(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as bool;
+  }
+
+  @protected
   Board dco_decode_box_autoadd_board(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_board(raw);
+  }
+
+  @protected
+  Pos dco_decode_box_autoadd_pos(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_pos(raw);
+  }
+
+  @protected
+  Tile dco_decode_box_autoadd_tile(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_tile(raw);
   }
 
   @protected
@@ -296,6 +540,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Float32List dco_decode_list_prim_f_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Float32List;
+  }
+
+  @protected
   List<Tile> dco_decode_list_tile(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_tile).toList();
@@ -308,13 +558,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  (PlatformInt64, PlatformInt64) dco_decode_record_isize_isize(dynamic raw) {
+  Pos dco_decode_pos(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2) {
-      throw Exception('Expected 2 elements, got ${arr.length}');
-    }
-    return (dco_decode_isize(arr[0]), dco_decode_isize(arr[1]));
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Pos.raw(x: dco_decode_isize(arr[0]), y: dco_decode_isize(arr[1]));
   }
 
   @protected
@@ -341,6 +590,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TileMap dco_decode_tile_map(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1)
+      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return TileMap(field0: dco_decode_list_list_tile(arr[0]));
+  }
+
+  @protected
   int dco_decode_u_8(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -355,10 +613,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Board sse_decode_board(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_map = sse_decode_list_list_tile(deserializer);
-    var var_start = sse_decode_record_isize_isize(deserializer);
-    var var_end = sse_decode_record_isize_isize(deserializer);
-    var var_resetPos = sse_decode_record_isize_isize(deserializer);
+    var var_map = sse_decode_tile_map(deserializer);
+    var var_start = sse_decode_pos(deserializer);
+    var var_end = sse_decode_pos(deserializer);
+    var var_resetPos = sse_decode_pos(deserializer);
     var var_startDirection = sse_decode_direction(deserializer);
     var var_endDirection = sse_decode_direction(deserializer);
     return Board(
@@ -372,9 +630,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint8() != 0;
+  }
+
+  @protected
   Board sse_decode_box_autoadd_board(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_board(deserializer));
+  }
+
+  @protected
+  Pos sse_decode_box_autoadd_pos(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_pos(deserializer));
+  }
+
+  @protected
+  Tile sse_decode_box_autoadd_tile(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_tile(deserializer));
   }
 
   @protected
@@ -415,6 +691,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getFloat32List(len_);
+  }
+
+  @protected
   List<Tile> sse_decode_list_tile(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -438,13 +721,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  (PlatformInt64, PlatformInt64) sse_decode_record_isize_isize(
-    SseDeserializer deserializer,
-  ) {
+  Pos sse_decode_pos(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_field0 = sse_decode_isize(deserializer);
-    var var_field1 = sse_decode_isize(deserializer);
-    return (var_field0, var_field1);
+    var var_x = sse_decode_isize(deserializer);
+    var var_y = sse_decode_isize(deserializer);
+    return Pos.raw(x: var_x, y: var_y);
   }
 
   @protected
@@ -475,6 +756,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TileMap sse_decode_tile_map(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_field0 = sse_decode_list_list_tile(deserializer);
+    return TileMap(field0: var_field0);
+  }
+
+  @protected
   int sse_decode_u_8(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8();
@@ -486,26 +774,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer) {
+  void sse_encode_board(Board self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return deserializer.buffer.getUint8() != 0;
+    sse_encode_tile_map(self.map, serializer);
+    sse_encode_pos(self.start, serializer);
+    sse_encode_pos(self.end, serializer);
+    sse_encode_pos(self.resetPos, serializer);
+    sse_encode_direction(self.startDirection, serializer);
+    sse_encode_direction(self.endDirection, serializer);
   }
 
   @protected
-  void sse_encode_board(Board self, SseSerializer serializer) {
+  void sse_encode_bool(bool self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_list_tile(self.map, serializer);
-    sse_encode_record_isize_isize(self.start, serializer);
-    sse_encode_record_isize_isize(self.end, serializer);
-    sse_encode_record_isize_isize(self.resetPos, serializer);
-    sse_encode_direction(self.startDirection, serializer);
-    sse_encode_direction(self.endDirection, serializer);
+    serializer.buffer.putUint8(self ? 1 : 0);
   }
 
   @protected
   void sse_encode_box_autoadd_board(Board self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_board(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_pos(Pos self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_pos(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_tile(Tile self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_tile(self, serializer);
   }
 
   @protected
@@ -545,6 +845,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_prim_f_32_strict(
+    Float32List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putFloat32List(self);
+  }
+
+  @protected
   void sse_encode_list_tile(List<Tile> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -564,13 +874,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
-  void sse_encode_record_isize_isize(
-    (PlatformInt64, PlatformInt64) self,
-    SseSerializer serializer,
-  ) {
+  void sse_encode_pos(Pos self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_isize(self.$1, serializer);
-    sse_encode_isize(self.$2, serializer);
+    sse_encode_isize(self.x, serializer);
+    sse_encode_isize(self.y, serializer);
   }
 
   @protected
@@ -597,6 +904,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_tile_map(TileMap self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_list_tile(self.field0, serializer);
+  }
+
+  @protected
   void sse_encode_u_8(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint8(self);
@@ -605,11 +918,5 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_unit(void self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-  }
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    serializer.buffer.putUint8(self ? 1 : 0);
   }
 }

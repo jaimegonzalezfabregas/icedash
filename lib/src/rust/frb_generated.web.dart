@@ -10,6 +10,7 @@ import 'api/main.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
+import 'logic/tile_map.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -24,7 +25,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Board dco_decode_board(dynamic raw);
 
   @protected
+  bool dco_decode_bool(dynamic raw);
+
+  @protected
   Board dco_decode_box_autoadd_board(dynamic raw);
+
+  @protected
+  Pos dco_decode_box_autoadd_pos(dynamic raw);
+
+  @protected
+  Tile dco_decode_box_autoadd_tile(dynamic raw);
 
   @protected
   Direction dco_decode_direction(dynamic raw);
@@ -42,16 +52,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<List<Tile>> dco_decode_list_list_tile(dynamic raw);
 
   @protected
+  Float32List dco_decode_list_prim_f_32_strict(dynamic raw);
+
+  @protected
   List<Tile> dco_decode_list_tile(dynamic raw);
 
   @protected
   Board? dco_decode_opt_box_autoadd_board(dynamic raw);
 
   @protected
-  (PlatformInt64, PlatformInt64) dco_decode_record_isize_isize(dynamic raw);
+  Pos dco_decode_pos(dynamic raw);
 
   @protected
   Tile dco_decode_tile(dynamic raw);
+
+  @protected
+  TileMap dco_decode_tile_map(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -63,7 +79,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Board sse_decode_board(SseDeserializer deserializer);
 
   @protected
+  bool sse_decode_bool(SseDeserializer deserializer);
+
+  @protected
   Board sse_decode_box_autoadd_board(SseDeserializer deserializer);
+
+  @protected
+  Pos sse_decode_box_autoadd_pos(SseDeserializer deserializer);
+
+  @protected
+  Tile sse_decode_box_autoadd_tile(SseDeserializer deserializer);
 
   @protected
   Direction sse_decode_direction(SseDeserializer deserializer);
@@ -81,18 +106,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<List<Tile>> sse_decode_list_list_tile(SseDeserializer deserializer);
 
   @protected
+  Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer);
+
+  @protected
   List<Tile> sse_decode_list_tile(SseDeserializer deserializer);
 
   @protected
   Board? sse_decode_opt_box_autoadd_board(SseDeserializer deserializer);
 
   @protected
-  (PlatformInt64, PlatformInt64) sse_decode_record_isize_isize(
-    SseDeserializer deserializer,
-  );
+  Pos sse_decode_pos(SseDeserializer deserializer);
 
   @protected
   Tile sse_decode_tile(SseDeserializer deserializer);
+
+  @protected
+  TileMap sse_decode_tile_map(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -101,13 +130,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
-  bool sse_decode_bool(SseDeserializer deserializer);
-
-  @protected
   void sse_encode_board(Board self, SseSerializer serializer);
 
   @protected
+  void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_board(Board self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_pos(Pos self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_tile(Tile self, SseSerializer serializer);
 
   @protected
   void sse_encode_direction(Direction self, SseSerializer serializer);
@@ -128,28 +163,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_prim_f_32_strict(
+    Float32List self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_tile(List<Tile> self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_board(Board? self, SseSerializer serializer);
 
   @protected
-  void sse_encode_record_isize_isize(
-    (PlatformInt64, PlatformInt64) self,
-    SseSerializer serializer,
-  );
+  void sse_encode_pos(Pos self, SseSerializer serializer);
 
   @protected
   void sse_encode_tile(Tile self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tile_map(TileMap self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_bool(bool self, SseSerializer serializer);
 }
 
 // Section: wire_class

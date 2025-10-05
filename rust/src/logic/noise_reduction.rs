@@ -1,27 +1,27 @@
-use std::collections::VecDeque;
-
-use itertools::Itertools;
+use std::{collections::VecDeque};
 use rand::seq::IndexedRandom;
 
 use crate::{
-    api::main::{Board, Direction, Tile},
-    logic::solver::Analysis,
+    api::main::{Board, Direction, Pos, Tile},
+    logic::tile_map::TileMap,
 };
 
 pub fn map_noise_cleanup(
-    map: &mut Vec<Vec<Tile>>,
-    start: &mut (isize, isize),
+    map: &mut TileMap,
+    start: &mut Pos,
     start_direction: Direction,
-    end: &mut (isize, isize),
+    end: &mut Pos,
     end_direction: Direction,
 ) {
     let mut rng = rand::rng();
 
-    let width = map[0].len() as isize;
-    let height = map.len() as isize;
+    let width = map.get_width();
+    let height = map.get_height();
 
-    if start.0 == end.0 || start.1 == end.1 {
-        map[((start.1 + end.1) / 2) as usize][((start.0 + end.0) / 2) as usize] = Tile::Wall;
+    if start.x == end.x || start.y == end.y {
+        let mean = (*start + *end) / 2;
+
+        map.set(mean, Tile::Wall);
     }
 
     let mut rep = true;
@@ -29,10 +29,10 @@ pub fn map_noise_cleanup(
         rep = false;
         for y in 1..height - 2 {
             for x in 1..width - 2 {
-                let a = map[(y) as usize][(x) as usize];
-                let b = map[(y + 1) as usize][(x) as usize];
-                let c = map[(y) as usize][(x + 1) as usize];
-                let d = map[(y + 1) as usize][(x + 1) as usize];
+                let a = map.atxy(x, y);
+                let b = map.atxy(x, y + 1);
+                let c = map.atxy(x + 1, y);
+                let d = map.atxy(x + 1, y + 1);
 
                 let cuad = (a, b, c, d);
 
@@ -40,17 +40,17 @@ pub fn map_noise_cleanup(
                     (Tile::Ice, Tile::Wall, Tile::Wall, Tile::Ice) => {
                         rep = true;
                         if *([true, false].choose(&mut rng).unwrap()) {
-                            map[(y) as usize][(x) as usize] = Tile::Wall;
+                            *map.at_mut(Pos::new(x, y)) = Tile::Wall;
                         } else {
-                            map[(y + 1) as usize][(x + 1) as usize] = Tile::Wall;
+                            *map.at_mut(Pos::new(x + 1, y + 1)) = Tile::Wall;
                         }
                     }
                     (Tile::Wall, Tile::Ice, Tile::Ice, Tile::Wall) => {
                         rep = true;
                         if *([true, false].choose(&mut rng).unwrap()) {
-                            map[(y + 1) as usize][(x) as usize] = Tile::Wall;
+                            *map.at_mut(Pos::new(x + 1, y)) = Tile::Wall;
                         } else {
-                            map[(y) as usize][(x + 1) as usize] = Tile::Wall;
+                            *map.at_mut(Pos::new(x + 1, y)) = Tile::Wall;
                         }
                     }
 
@@ -63,30 +63,29 @@ pub fn map_noise_cleanup(
     let mut rep = true;
     while rep {
         rep = false;
-        for y in 1..height - 1 {
-            for x in 1..width - 1 {
-                if map[(y) as usize][(x) as usize] != Tile::Wall {
-                    let mut neigh_count = 0;
-                    for (dx, dy) in [
-                        (0, 1),
-                        (0, -1),
-                        (-1, 0),
-                        (1, 0),
-                        (1, 1),
-                        (1, -1),
-                        (-1, -1),
-                        (-1, 1),
-                    ] {
-                        let neigh = map[(y + dy) as usize][(x + dx) as usize];
-                        if neigh == Tile::Wall {
-                            neigh_count += 1;
-                        }
+        let all_inner_pos = map.all_inner_pos().collect::<Vec<_>>();
+        for p in all_inner_pos {
+            if map.at(p) != Tile::Wall {
+                let mut neigh_count = 0;
+                for (dx, dy) in [
+                    (0, 1),
+                    (0, -1),
+                    (-1, 0),
+                    (1, 0),
+                    (1, 1),
+                    (1, -1),
+                    (-1, -1),
+                    (-1, 1),
+                ] {
+                    let neigh = map.at(p + Pos::new(dx, dy));
+                    if neigh.is_solid() {
+                        neigh_count += 1;
                     }
+                }
 
-                    if neigh_count >= 6 {
-                        map[(y) as usize][(x) as usize] = Tile::Wall;
-                        rep = true;
-                    }
+                if neigh_count >= 6 {
+                    map.set(p, Tile::Wall);
+                    rep = true;
                 }
             }
         }
@@ -95,97 +94,136 @@ pub fn map_noise_cleanup(
     let mut rep = true;
     while rep {
         rep = false;
-        for y in 1..height - 1 {
-            for x in 1..width - 1 {
-                if map[(y) as usize][(x) as usize] != Tile::Wall {
-                    let mut neigh_count = 0;
-                    for (dx, dy) in [(0, 1), (0, -1), (-1, 0), (1, 0)] {
-                        let neigh = map[(y + dy) as usize][(x + dx) as usize];
-                        if neigh == Tile::Wall {
-                            neigh_count += 1;
-                        }
+        let all_inner_pos = map.all_inner_pos().collect::<Vec<_>>();
+        for p in all_inner_pos {
+            if map.at(p) != Tile::Wall {
+                let mut neigh_count = 0;
+                for (dx, dy) in [(0, 1), (0, -1), (-1, 0), (1, 0)] {
+                    let neigh = map.at(p + Pos::new(dx, dy));
+                    if neigh.is_solid() {
+                        neigh_count += 1;
                     }
+                }
 
-                    if neigh_count >= 3 {
-                        map[(y) as usize][(x) as usize] = Tile::Wall;
-                        rep = true;
-                    }
+                if neigh_count >= 3 {
+                    map.set(p, Tile::Wall);
+                    rep = true;
                 }
             }
         }
     }
 
-    map[start.1 as usize][start.0 as usize] = Tile::Entrance;
-    map[end.1 as usize][end.0 as usize] = Tile::Gate;
+    map.set(*start, Tile::Entrance);
 
-    let (dx, dy) = start_direction.vector();
+    map.set(*start + start_direction.vector(), Tile::Ice);
+    map.set(
+        *start + start_direction.vector() + start_direction.left().vector(),
+        Tile::Wall,
+    );
+    map.set(
+        *start + start_direction.vector() + start_direction.right().vector(),
+        Tile::Wall,
+    );
 
-    map[(start.1 + dy) as usize][(start.0 + dx) as usize] = Tile::Ice;
-    map[(start.1 + dy + dx) as usize][(start.0 + dx - dy) as usize] = Tile::Ice;
-    map[(start.1 + dy - dx) as usize][(start.0 + dx + dy) as usize] = Tile::Ice;
+    map.set(*start + start_direction.vector() * 2, Tile::Ice);
+    map.set(
+        *start + start_direction.vector() * 2 + start_direction.left().vector(),
+        Tile::Ice,
+    );
+    map.set(
+        *start + start_direction.vector() * 2 + start_direction.right().vector(),
+        Tile::Ice,
+    );
 
-    map[(start.1 + dy * 2) as usize][(start.0 + dx * 2) as usize] = Tile::Ice;
-    map[(start.1 + dy * 2 + dx) as usize][(start.0 + dx * 2 - dy) as usize] = Tile::Ice;
-    map[(start.1 + dy * 2 - dx) as usize][(start.0 + dx * 2 + dy) as usize] = Tile::Ice;
+    map.set(*end, Tile::Gate);
 
-    let (dx, dy) = end_direction.vector();
-    map[(end.1 + dy) as usize][(end.0 + dx) as usize] = Tile::Ice;
-    map[(end.1 + dy + dx) as usize][(end.0 + dx - dy) as usize] = Tile::Ice;
-    map[(end.1 + dy - dx) as usize][(end.0 + dx + dy) as usize] = Tile::Ice;
+    map.set(*end + end_direction.vector(), Tile::Ice);
+    map.set(
+        *end + end_direction.vector() + end_direction.left().vector(),
+        Tile::Ice,
+    );
+    map.set(
+        *end + end_direction.vector() + end_direction.right().vector(),
+        Tile::Ice,
+    );
 
-    map[(end.1 + dy * 2) as usize][(end.0 + dx * 2) as usize] = Tile::Ice;
-    map[(end.1 + dy * 2 + dx) as usize][(end.0 + dx * 2 - dy) as usize] = Tile::Ice;
-    map[(end.1 + dy * 2 - dx) as usize][(end.0 + dx * 2 + dy) as usize] = Tile::Ice;
+    map.set(*end + end_direction.vector() * 2, Tile::Ice);
+    map.set(
+        *end + end_direction.vector() * 2 + end_direction.left().vector(),
+        Tile::Ice,
+    );
+    map.set(
+        *end + end_direction.vector() * 2 + end_direction.right().vector(),
+        Tile::Ice,
+    );
 }
 
-pub fn is_board_valid(board: &Board) -> bool {
-    let height = board.map.len() as isize;
-    let width = board.map[0].len() as isize;
+pub fn room_at(p1: Pos, p2: Pos, board: &Board) -> bool {
+    let entrance_corridor = board.start + board.start_direction.vector();
 
-    for y in 1..height - 1 {
-        for x in 1..width - 1 {
-            if board.map[(y) as usize][(x) as usize] == Tile::Ice {
-                let mut ice_neigh = vec![];
-                for (dx, dy) in [(0, 1), (0, -1), (-1, 0), (1, 0)] {
-                    let neigh = board.map[(y + dy) as usize][(x + dx) as usize];
-                    if neigh == Tile::Ice {
-                        ice_neigh.push(((x + dx), (y + dy)));
-                    }
-                }
-                let mut split_board = board.clone();
-                split_board.map[y as usize][x as usize] = Tile::Wall;
+    if entrance_corridor == p1 || entrance_corridor == p2 {
+        return false;
+    }
 
-                for pair in ice_neigh.iter().permutations(2) {
-                    let reachibility_of_a = flood(vec![*pair[0]], &split_board);
+    let mut split_board1 = board.clone();
+    let mut split_board2 = board.clone();
 
-                    if !reachibility_of_a[pair[1].1 as usize][pair[1].0 as usize] {
-                        // split_board.print(vec![(x,y), *pair[0], *pair[1]]);
+    split_board2.map.set(p1, Tile::Wall);
+    split_board1.map.set(p2, Tile::Wall);
 
-                        return false;
-                    }
-                }
+    let reachibility1 = flood(vec![p2], &split_board2);
+    let reachibility2 = flood(vec![p1], &split_board1);
+
+    for (y, row) in reachibility1.into_iter().enumerate() {
+        for (x, reach) in row.into_iter().enumerate() {
+            if reach && reachibility2[y][x] {
+                return false;
             }
         }
     }
     true
 }
 
-pub fn flood(starting_positions: Vec<(isize, isize)>, board: &Board) -> Vec<Vec<bool>> {
-    let mut reachability = vec![vec![false; board.map[0].len()]; board.map.len()];
-    let mut flood_edge: VecDeque<(isize, isize)> = VecDeque::from(starting_positions);
+pub fn has_rooms(board: &Board) -> bool {
+    for p1 in board.map.all_inner_pos() {
+        if board.map.at(p1) != Tile::Ice {
+            continue;
+        }
+
+        for (dx, dy) in [(0, 1), (1, 0)] {
+            let p2 = p1 + Pos::new(dx, dy);
+
+            if board.map.at(p2) != Tile::Ice {
+                continue;
+            }
+
+            if room_at(p1, p2, board) {
+                // board.print(vec![(x1, y1), (x2, y2)]);
+                return true;
+            }
+        }
+    }
+    false
+}
+
+pub fn is_board_valid(board: &Board) -> bool {
+    !has_rooms(board)
+}
+
+pub fn flood(starting_positions: Vec<Pos>, board: &Board) -> Vec<Vec<bool>> {
+    let mut reachability =
+        vec![vec![false; board.map.get_width() as usize]; board.map.get_height() as usize];
+    let mut flood_edge: VecDeque<Pos> = VecDeque::from(starting_positions);
 
     while let Some(next_check) = flood_edge.pop_front() {
-        if next_check.0 < 0 || next_check.0 >= (board.map[0].len()) as isize {
-            continue;
-        }
-        if next_check.1 < 0 || next_check.1 >= (board.map.len()) as isize {
+        if !board.map.in_bounds(next_check) {
             continue;
         }
 
-        if reachability[next_check.1 as usize][next_check.0 as usize] == false
-            && board.map[next_check.1 as usize][next_check.0 as usize] != Tile::Wall
+        if reachability[next_check.y as usize][next_check.x as usize] == false
+            && !board.map.at(next_check).is_solid()
         {
-            reachability[next_check.1 as usize][next_check.0 as usize] = true;
+            reachability[next_check.y as usize][next_check.x as usize] = true;
 
             for dir in [
                 Direction::North,
@@ -193,8 +231,7 @@ pub fn flood(starting_positions: Vec<(isize, isize)>, board: &Board) -> Vec<Vec<
                 Direction::East,
                 Direction::West,
             ] {
-                flood_edge
-                    .push_back((next_check.0 + dir.vector().0, next_check.1 + dir.vector().1));
+                flood_edge.push_back(next_check + dir.vector());
             }
         }
     }
@@ -202,61 +239,64 @@ pub fn flood(starting_positions: Vec<(isize, isize)>, board: &Board) -> Vec<Vec<
 }
 
 pub fn asthetic_cleanup(mut ret: Board) -> Board {
-    let reachability = flood(vec![ret.start, ret.end], &ret);
 
-    for (y, row) in reachability.iter().enumerate() {
-        for (x, reacheable) in row.iter().enumerate() {
-            if !*reacheable {
-                ret.map[y][x] = Tile::Wall;
-            }
-        }
-    }
+    // TODO
 
-    println!("removing unused borders");
+    // let reachability = flood(vec![ret.start, ret.end], &ret);
 
-    while ret.map[ret.map.len() - 2].iter().all(|e| *e == Tile::Wall) {
-        ret.map.remove(ret.map.len() - 2);
-    }
+    // for (y, row) in reachability.iter().enumerate() {
+    //     for (x, reacheable) in row.iter().enumerate() {
+    //         if !*reacheable {
+    //             ret.map.set(Pos::new(x as isize, y as isize), Tile::Wall);
+    //         }
+    //     }
+    // }
 
-    while ret.map.iter().all(|e| e[e.len() - 2] == Tile::Wall) {
-        ret.map.iter_mut().for_each(|e| {
-            e.remove(e.len() - 1);
-        });
-    }
+    // println!("removing unused borders");
 
-    while ret.map[1].iter().all(|e| *e == Tile::Wall) {
-        ret.map.remove(1);
+    // while ret.map[ret.map.len() - 2].iter().all(|e| *e == Tile::Wall) {
+    //     ret.map.remove(ret.map.len() - 2);
+    // }
 
-        if ret.end.1 == ret.map.len() as isize {
-            ret.end.1 = ret.map.len() as isize - 1;
-        } else if ret.end.1 != 0 {
-            ret.end.1 -= 1;
-        }
+    // while ret.map.iter().all(|e| e[e.len() - 2] == Tile::Wall) {
+    //     ret.map.iter_mut().for_each(|e| {
+    //         e.remove(e.len() - 1);
+    //     });
+    // }
 
-        if ret.start.1 == ret.map.len() as isize {
-            ret.start.1 = ret.map.len() as isize - 1;
-        } else if ret.start.1 != 0 {
-            ret.start.1 -= 1;
-        }
-    }
+    // while ret.map[1].iter().all(|e| *e == Tile::Wall) {
+    //     ret.map.remove(1);
 
-    while ret.map.iter().all(|e| e[1] == Tile::Wall) {
-        ret.map.iter_mut().for_each(|e| {
-            e.remove(1);
-        });
+    //     if ret.end.y == ret.map.len() as isize {
+    //         ret.end.y = ret.map.len() as isize - 1;
+    //     } else if ret.end.y != 0 {
+    //         ret.end.y -= 1;
+    //     }
 
-        if ret.end.0 == ret.map[0].len() as isize {
-            ret.end.0 = ret.map[0].len() as isize - 1;
-        } else if ret.end.0 != 0 {
-            ret.end.0 -= 1;
-        }
+    //     if ret.start.y == ret.map.len() as isize {
+    //         ret.start.y = ret.map.len() as isize - 1;
+    //     } else if ret.start.y != 0 {
+    //         ret.start.y -= 1;
+    //     }
+    // }
 
-        if ret.start.0 == ret.map[0].len() as isize {
-            ret.start.0 = ret.map[0].len() as isize - 1;
-        } else if ret.start.0 != 0 {
-            ret.start.0 -= 1;
-        }
-    }
+    // while ret.map.iter().all(|e| e[1] == Tile::Wall) {
+    //     ret.map.iter_mut().for_each(|e| {
+    //         e.remove(1);
+    //     });
+
+    //     if ret.end.x == ret.map[0].len() as isize {
+    //         ret.end.x = ret.map[0].len() as isize - 1;
+    //     } else if ret.end.x != 0 {
+    //         ret.end.x -= 1;
+    //     }
+
+    //     if ret.start.x == ret.map[0].len() as isize {
+    //         ret.start.x = ret.map[0].len() as isize - 1;
+    //     } else if ret.start.x != 0 {
+    //         ret.start.x -= 1;
+    //     }
+    // }
 
     ret
 }

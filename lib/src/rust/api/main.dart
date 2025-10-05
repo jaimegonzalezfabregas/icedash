@@ -4,20 +4,21 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import '../logic/tile_map.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'main.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `genetic_search_thread`, `print`, `simbol`, `start_search`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `genetic_search_thread`, `print`, `rotate_left`, `start_search`, `vector`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `add_assign`, `add`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `div`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `hash`, `mul`, `sub_assign`
 
 Board searchBoard() => RustLib.instance.api.crateApiMainSearchBoard();
 
 class Board {
-  final List<List<Tile>> map;
-  final (PlatformInt64, PlatformInt64) start;
-  final (PlatformInt64, PlatformInt64) end;
-  final (PlatformInt64, PlatformInt64) resetPos;
+  final TileMap map;
+  final Pos start;
+  final Pos end;
+  final Pos resetPos;
   final Direction startDirection;
   final Direction endDirection;
 
@@ -30,11 +31,20 @@ class Board {
     required this.endDirection,
   });
 
+  PlatformInt64 getHeight() =>
+      RustLib.instance.api.crateApiMainBoardGetHeight(that: this);
+
+  PlatformInt64 getWidth() =>
+      RustLib.instance.api.crateApiMainBoardGetWidth(that: this);
+
   Board? mutate({required double factor}) =>
       RustLib.instance.api.crateApiMainBoardMutate(that: this, factor: factor);
 
   static Board? newRandom() =>
       RustLib.instance.api.crateApiMainBoardNewRandom();
+
+  Board rotateLeft() =>
+      RustLib.instance.api.crateApiMainBoardRotateLeft(that: this);
 
   @override
   int get hashCode =>
@@ -64,11 +74,41 @@ enum Direction {
   east,
   west;
 
+  Float32List dartVector() =>
+      RustLib.instance.api.crateApiMainDirectionDartVector(that: this);
+
+  Direction left() =>
+      RustLib.instance.api.crateApiMainDirectionLeft(that: this);
+
   Direction reverse() =>
       RustLib.instance.api.crateApiMainDirectionReverse(that: this);
 
-  (PlatformInt64, PlatformInt64) vector() =>
-      RustLib.instance.api.crateApiMainDirectionVector(that: this);
+  Direction right() =>
+      RustLib.instance.api.crateApiMainDirectionRight(that: this);
+}
+
+class Pos {
+  final PlatformInt64 x;
+  final PlatformInt64 y;
+
+  const Pos.raw({required this.x, required this.y});
+
+  Float32List dartVector() =>
+      RustLib.instance.api.crateApiMainPosDartVector(that: this);
+
+  factory Pos({required PlatformInt64 x, required PlatformInt64 y}) =>
+      RustLib.instance.api.crateApiMainPosNew(x: x, y: y);
+
+  @override
+  int get hashCode => x.hashCode ^ y.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Pos &&
+          runtimeType == other.runtimeType &&
+          x == other.x &&
+          y == other.y;
 }
 
 @freezed
@@ -82,4 +122,8 @@ sealed class Tile with _$Tile {
   const factory Tile.thinIce(int field0) = Tile_ThinIce;
   const factory Tile.weakBox(int field0) = Tile_WeakBox;
   const factory Tile.outside() = Tile_Outside;
+
+  bool isSolid() => RustLib.instance.api.crateApiMainTileIsSolid(that: this);
+
+  void simbol() => RustLib.instance.api.crateApiMainTileSimbol(that: this);
 }

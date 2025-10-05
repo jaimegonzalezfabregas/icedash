@@ -17,7 +17,72 @@ use crate::logic::{
     creature::Creature,
     noise_reduction::{asthetic_cleanup, is_board_valid, map_noise_cleanup},
     solver::step,
+    tile_map::TileMap,
 };
+
+use std::ops::{Add, AddAssign, Div, Mul, SubAssign};
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Copy)]
+pub struct Pos {
+    pub x: isize,
+    pub y: isize,
+}
+
+impl Pos {
+    pub fn new(x: isize, y: isize) -> Self {
+        Self { x, y }
+    }
+
+    pub fn dart_vector(&self) -> Vec<f32> {
+        vec![self.x as f32, self.y as f32]
+    }
+
+    pub(crate) fn rotate_left(self, width: isize, height: isize) -> Pos {
+        // (1,1), (-1,1)
+        Self {
+            x: -self.y + height - 1,
+            y: self.x,
+        }
+    }
+}
+
+impl Add<Pos> for Pos {
+    type Output = Self;
+
+    fn add(self, rhs: Pos) -> Self::Output {
+        Pos::new(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+
+impl AddAssign for Pos {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
+impl SubAssign for Pos {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+    }
+}
+
+impl Div<isize> for Pos {
+    type Output = Pos;
+
+    fn div(self, rhs: isize) -> Self::Output {
+        Pos::new(self.x / rhs, self.y / rhs)
+    }
+}
+
+impl Mul<isize> for Pos {
+    type Output = Pos;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        Pos::new(self.x * rhs, self.y * rhs)
+    }
+}
 
 #[derive(Clone, PartialEq, Copy, Debug)]
 pub enum Direction {
@@ -28,12 +93,21 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn vector(&self) -> (isize, isize) {
+    pub(crate) fn vector(&self) -> Pos {
         match self {
-            Direction::North => (0, -1),
-            Direction::South => (0, 1),
-            Direction::East => (-1, 0),
-            Direction::West => (1, 0),
+            Direction::North => Pos::new(0, -1),
+            Direction::South => Pos::new(0, 1),
+            Direction::East => Pos::new(-1, 0),
+            Direction::West => Pos::new(1, 0),
+        }
+    }
+
+    pub fn dart_vector(&self) -> Vec<f32> {
+        match self {
+            Direction::North => vec![0., -1.],
+            Direction::South => vec![0., 1.],
+            Direction::East => vec![-1., 0.],
+            Direction::West => vec![1., 0.],
         }
     }
 
@@ -44,6 +118,19 @@ impl Direction {
             Direction::East => Direction::West,
             Direction::West => Direction::East,
         }
+    }
+
+    pub fn left(&self) -> Self {
+        match self {
+            Direction::North => Direction::West,
+            Direction::South => Direction::East,
+            Direction::West => Direction::South,
+            Direction::East => Direction::North,
+        }
+    }
+
+    pub fn right(&self) -> Self {
+        self.left().reverse()
     }
 }
 
@@ -59,7 +146,7 @@ pub enum Tile {
 }
 
 impl Tile {
-    fn simbol(&self) -> &str {
+    pub fn simbol(&self) -> &str {
         match self {
             Tile::Entrance => "E",
             Tile::Gate => "G",
@@ -70,35 +157,50 @@ impl Tile {
             Tile::Outside => " ",
         }
     }
+
+    pub fn is_solid(&self) -> bool {
+        match self {
+            Tile::Entrance => true,
+            Tile::Gate => true,
+            Tile::Wall => true,
+            Tile::Ice => false,
+            Tile::ThinIce(x) => *x <= 0,
+            Tile::WeakBox(x) => *x > 0,
+            Tile::Outside => true,
+        }
+    }
 }
 
 #[derive(Clone)]
 pub struct Board {
-    pub map: Vec<Vec<Tile>>,
-    pub start: (isize, isize),
-    pub end: (isize, isize),
-    pub reset_pos: (isize, isize),
+    pub map: TileMap,
+    pub start: Pos,
+    pub end: Pos,
+    pub reset_pos: Pos,
     pub start_direction: Direction,
     pub end_direction: Direction,
 }
 
 impl Board {
+    pub fn get_height(&self) -> isize {
+        self.map.get_height()
+    }
+
+    pub fn get_width(&self) -> isize {
+        self.map.get_width()
+    }
+
     pub fn mutate(&self, factor: f32) -> Option<Self> {
-        return Some(self.clone());
         let mut rng = rand::rng();
 
         let mut ret = self.clone();
-        let height = ret.map.len();
-        let width = ret.map[0].len();
 
-        for y in 1..height - 1 {
-            for x in 1..width - 1 {
-                if rng.random::<f32>() < factor {
-                    match ret.map[y as usize][x as usize] {
-                        Tile::Wall => ret.map[y as usize][x as usize] = Tile::Ice,
-                        Tile::Ice => ret.map[y as usize][x as usize] = Tile::Wall,
-                        _ => {}
-                    }
+        for pos in self.map.all_inner_pos() {
+            if rng.random::<f32>() < factor {
+                match ret.map.at(pos) {
+                    Tile::Wall => ret.map.set(pos, Tile::Ice),
+                    Tile::Ice => ret.map.set(pos, Tile::Wall),
+                    _ => {}
                 }
             }
         }
@@ -111,6 +213,8 @@ impl Board {
             ret.end_direction,
         );
 
+        ret.reset_pos = step(&ret.map, &ret.start, ret.start_direction);
+
         if is_board_valid(&ret) {
             Some(ret)
         } else {
@@ -120,34 +224,49 @@ impl Board {
 
     pub fn new_random() -> Option<Self> {
         let mut rng = rand::rng();
-        let width = (5..15).choose(&mut rng)?;
-        let height = (5..15).choose(&mut rng)?;
+        let width = (7..15).choose(&mut rng)?;
+        let height = (7..15).choose(&mut rng)?;
 
         let start_side = (0..3).choose(&mut rng)?;
         let end_side = ((1..3).choose(&mut rng)? + start_side) % 4;
 
+        let gate_range_horizontal = &(3..height - 3);
+        let gate_range_vertical = &(3..width - 3);
+
         let (start, start_direction) = match start_side {
-            0 => ((0, (2..height - 2).choose(&mut rng)?), Direction::West),
+            0 => (
+                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng)?),
+                Direction::West,
+            ),
             1 => (
-                (width - 1, (2..height - 2).choose(&mut rng)?),
+                Pos::new(width - 1, gate_range_horizontal.clone().choose(&mut rng)?),
                 Direction::East,
             ),
-            2 => (((2..width - 2).choose(&mut rng)?, 0), Direction::South),
+            2 => (
+                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, 0),
+                Direction::South,
+            ),
             _ => (
-                ((2..width - 2).choose(&mut rng)?, height - 1),
+                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, height - 1),
                 Direction::North,
             ),
         };
 
         let (end, end_direction) = match end_side {
-            0 => ((0, (2..height - 2).choose(&mut rng)?), Direction::West),
+            0 => (
+                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng)?),
+                Direction::West,
+            ),
             1 => (
-                (width - 1, (2..height - 2).choose(&mut rng)?),
+                Pos::new(width - 1, gate_range_horizontal.clone().choose(&mut rng)?),
                 Direction::East,
             ),
-            2 => (((2..width - 2).choose(&mut rng)?, 0), Direction::South),
+            2 => (
+                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, 0),
+                Direction::South,
+            ),
             _ => (
-                ((2..width - 2).choose(&mut rng)?, height - 1),
+                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, height - 1),
                 Direction::North,
             ),
         };
@@ -160,9 +279,9 @@ impl Board {
             }
         }
 
-        let columns = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+        let pilars = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
 
-        for _ in 0..columns {
+        for _ in 0..pilars {
             let x = (1..(width - 1) as usize).choose(&mut rng)?;
             let y = (1..(height - 1) as usize).choose(&mut rng)?;
 
@@ -189,6 +308,8 @@ impl Board {
         let mut start = start;
         let mut end = end;
 
+        let mut map = TileMap(map);
+
         map_noise_cleanup(
             &mut map,
             &mut start,
@@ -213,21 +334,29 @@ impl Board {
         }
     }
 
-    pub(crate) fn print(&self, highlight: Vec<(isize, isize)>) {
+    pub(crate) fn print(&self, highlight: Vec<Pos>) {
         println!(
             "printing start {:?} {:?} end {:?} {:?}",
             self.start, self.start_direction, self.end, self.end_direction
         );
 
-        for (y, row) in self.map.iter().enumerate() {
-            for (x, tile) in row.iter().enumerate() {
-                if highlight.contains(&(x as isize, y as isize)) {
-                    print!(". ");
-                } else {
-                    print!("{} ", tile.simbol());
-                }
-            }
-            println!("");
+        self.map.print(highlight);
+    }
+
+    pub fn rotate_left(self) -> Self {
+        Board {
+            start: self
+                .start
+                .rotate_left(self.map.get_width(), self.map.get_height()),
+            end: self
+                .end
+                .rotate_left(self.map.get_width(), self.map.get_height()),
+            reset_pos: self
+                .reset_pos
+                .rotate_left(self.map.get_width(), self.map.get_height()),
+            start_direction: self.start_direction.left(),
+            end_direction: self.end_direction.left(),
+            map: self.map.rotate_left(),
         }
     }
 }
@@ -260,7 +389,9 @@ pub fn search_board() -> Board {
     };
 
     start_search();
-    asthetic_cleanup(ret)
+    let ret = asthetic_cleanup(ret);
+    ret.print(vec![]);
+    ret
 }
 
 fn start_search() {
@@ -281,7 +412,7 @@ fn genetic_search_thread(returns: Sender<Board>, kill: Receiver<()>) {
 
     let mut population: ReverseSortedVec<Creature> = ReverseSortedVec::new();
 
-    let mut generations = 0;
+    let mut generations = 1;
 
     let mut best_so_far = 0.;
 
@@ -312,10 +443,7 @@ fn genetic_search_thread(returns: Sender<Board>, kill: Receiver<()>) {
             }
         }
 
-        let fitness = population
-            .iter()
-            .map(|e| e.analisis.fitness())
-            .collect::<Vec<_>>();
+        let fitness = population.iter().map(|e| e.fitness).collect::<Vec<_>>();
         println!("generations: {} decicisons: {fitness:?}", generations);
 
         population = population[0..generations * 2]

@@ -5,7 +5,7 @@ import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
-  Player({super.position}) : super(priority: 1, size: Vector2.all(100), anchor: Anchor.topLeft);
+  Player({super.position}) : super(priority: 1, size: Vector2.all(1), anchor: Anchor.topLeft);
 
   double timePerStep = 0.1;
   bool sliding = false;
@@ -51,7 +51,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   }
 
   void push(Direction dir, {bool force = false}) {
-    var (dx, dy) = dir.vector();
+    Vector2 delta = Vector2.array(dir.dartVector());
 
     if (!force) {
       if (sliding) {
@@ -59,7 +59,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         return;
       }
 
-      if (!game.idWorld.canWalkInto(position, position + Vector2(dx.toDouble(), dy.toDouble()) * 100)) {
+      if (!game.idWorld.canWalkInto(position, position + delta)) {
         if (buffered != null) {
           Direction d = buffered!;
           buffered = null;
@@ -69,13 +69,12 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       }
     }
 
-    Vector2 delta = Vector2(dx.toDouble(), dy.toDouble());
 
     sliding = true;
 
     EffectController ec = LinearEffectController(timePerStep);
 
-    MoveByEffect effect = MoveByEffect(delta * 100, ec);
+    MoveByEffect effect = MoveByEffect(delta, ec);
 
     effect.onComplete = () {
       sliding = false;

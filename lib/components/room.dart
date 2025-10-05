@@ -6,7 +6,7 @@ import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/tiling.dart';
 
 class RoomComponent extends Component implements OpacityProvider {
-  List<List<Tile>> tileMap;
+  Board board;
   @override
   double opacity = 0;
 
@@ -15,65 +15,24 @@ class RoomComponent extends Component implements OpacityProvider {
 
   Set<OpacityProvider> wallSet = {};
 
-  Direction analyzeEntrance((int, int) entrance, List<List<Tile>> tileMap) {
-    var width = tileMap[0].length;
-    var height = tileMap.length;
-
-    if (entrance.$1 == 0) {
-      return Direction.west;
-    }
-    if (entrance.$1 == width - 1) {
-      return Direction.east;
-    }
-    if (entrance.$2 == 0) {
-      return Direction.south;
-    }
-    if (entrance.$2 == height - 1) {
-      return Direction.north;
-    }
-
-    throw Exception("entrance not in a border $entrance, $tileMap");
-  }
-
-  (List<List<Tile>>, (int, int)) rotateMap(List<List<Tile>> input, (int, int) entrancePos) {
-    int rows = input.length;
-    int cols = input[0].length;
-    List<List<Tile>> rotated = List.generate(cols, (_) => List.filled(rows, Tile.ice()));
-
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        rotated[j][rows - 1 - i] = input[i][j];
-      }
-    }
-
-    return (rotated, (rows - 1 - entrancePos.$2, entrancePos.$1));
-  }
-
-  late Vector2 entranceRoomPos;
-  late Vector2 resetWorldPos;
   Vector2 entranceWorldPos;
+  late Vector2 resetWorldPos;
+  late Vector2 entranceRoomPos;
 
-  RoomComponent(this.entranceWorldPos, Direction entranceDirection, (int, int) entranceMapPos, (int, int) resetMapPos, this.tileMap) {
-    assert(tileMap.isNotEmpty);
-
-    var (mapEntranceDirection) = analyzeEntrance(entranceMapPos, tileMap);
-
-    while (mapEntranceDirection != entranceDirection) {
-      List<List<Tile>> localTileMap;
-      (localTileMap, entranceMapPos) = rotateMap(tileMap, entranceMapPos);
-      tileMap = localTileMap;
-      mapEntranceDirection = analyzeEntrance(entranceMapPos, tileMap);
+  RoomComponent(this.entranceWorldPos, Direction entranceDirection, this.board) {
+    while (board.startDirection != entranceDirection) {
+      board = board.rotateLeft();
     }
 
-    entranceRoomPos = Vector2(entranceMapPos.$1.toDouble() * 100, entranceMapPos.$2.toDouble() * 100);
-    var resetRoomPos = Vector2(resetMapPos.$1.toDouble() * 100, resetMapPos.$2.toDouble() * 100);
+    entranceRoomPos = Vector2.array(board.start.dartVector());
+    var resetRoomPos = Vector2.array(board.resetPos.dartVector());
     resetWorldPos = resetRoomPos - entranceRoomPos + entranceWorldPos;
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x,
       entranceWorldPos.y - entranceRoomPos.y,
-      tileMap[0].length.toDouble() * 100,
-      tileMap.length.toDouble() * 100,
+      board.getWidth().toDouble(),
+      board.getHeight().toDouble(),
     );
   }
 
@@ -115,16 +74,16 @@ class RoomComponent extends Component implements OpacityProvider {
 
   @override
   void onLoad() async {
-    for (var (y, row) in tileMap.indexed) {
+    for (var (y, row) in board.map.field0.indexed) {
       for (var (x, tile) in row.indexed) {
-        var neigh = neighbouring(tileMap, x, y);
+        var neigh = neighbouring(board.map.field0, x, y);
         String? bgImg = neigh2Img(neigh);
 
         if (bgImg != null) {
           SpriteComponent img = SpriteComponent(
             priority: 0,
-            size: Vector2.all(101),
-            position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos,
+            size: Vector2.all(1),
+            position: Vector2(x.toDouble(), y.toDouble()) - entranceRoomPos + entranceWorldPos,
           );
 
           img.sprite = await Sprite.load(bgImg);
@@ -136,8 +95,8 @@ class RoomComponent extends Component implements OpacityProvider {
         if (tile is Tile_Entrance) {
           var door = SpriteComponent(
             priority: 0,
-            size: Vector2.all(101),
-            position: Vector2(x.toDouble() * 100, y.toDouble() * 100) - entranceRoomPos + entranceWorldPos,
+            size: Vector2.all(1),
+            position: Vector2(x.toDouble(), y.toDouble()) - entranceRoomPos + entranceWorldPos,
           );
 
           var postNeigh = neigh;
@@ -175,7 +134,7 @@ class RoomComponent extends Component implements OpacityProvider {
     try {
       Vector2 localPos = worldPos - entranceWorldPos + entranceRoomPos;
 
-      return tileMap[(localPos.y / 100).round()][(localPos.x / 100).round()];
+      return board.map.field0[(localPos.y).round()][(localPos.x).round()];
     } catch (_) {
       return Tile.outside();
     }
