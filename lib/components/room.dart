@@ -6,7 +6,7 @@ import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/tiling.dart';
 
 class RoomComponent extends Component implements OpacityProvider {
-  Board board;
+  Room room;
   @override
   double opacity = 0;
 
@@ -19,20 +19,20 @@ class RoomComponent extends Component implements OpacityProvider {
   late Vector2 resetWorldPos;
   late Vector2 entranceRoomPos;
 
-  RoomComponent(this.entranceWorldPos, Direction entranceDirection, this.board) {
-    while (board.startDirection != entranceDirection) {
-      board = board.rotateLeft();
+  RoomComponent(this.entranceWorldPos, Direction entranceDirection, this.room) {
+    while (room.getStartDirection() != entranceDirection) {
+      room = room.rotateLeft();
     }
 
-    entranceRoomPos = Vector2.array(board.start.dartVector());
-    var resetRoomPos = Vector2.array(board.resetPos.dartVector());
+    entranceRoomPos = Vector2.array(room.getStart().dartVector());
+    var resetRoomPos = Vector2.array(room.getReset().dartVector());
     resetWorldPos = resetRoomPos - entranceRoomPos + entranceWorldPos;
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x,
       entranceWorldPos.y - entranceRoomPos.y,
-      board.getWidth().toDouble(),
-      board.getHeight().toDouble(),
+      room.getWidth().toDouble(),
+      room.getHeight().toDouble(),
     );
   }
 
@@ -74,9 +74,9 @@ class RoomComponent extends Component implements OpacityProvider {
 
   @override
   void onLoad() async {
-    for (var (y, row) in board.map.field0.indexed) {
+    for (var (y, row) in room.getMap().field0.indexed) {
       for (var (x, tile) in row.indexed) {
-        var neigh = neighbouring(board.map.field0, x, y);
+        var neigh = neighbouring(room.getMap().field0, x, y);
         String? bgImg = neigh2Img(neigh);
 
         if (bgImg != null) {
@@ -134,7 +134,7 @@ class RoomComponent extends Component implements OpacityProvider {
     try {
       Vector2 localPos = worldPos - entranceWorldPos + entranceRoomPos;
 
-      return board.map.field0[(localPos.y).round()][(localPos.x).round()];
+      return room.getMap().field0[(localPos.y).round()][(localPos.x).round()];
     } catch (_) {
       return Tile.outside();
     }

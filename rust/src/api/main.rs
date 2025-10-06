@@ -6,18 +6,11 @@ use std::{
     thread::spawn,
 };
 
-use rand::{
-    random,
-    seq::{IndexedRandom, IteratorRandom},
-    Rng,
-};
+use rand::seq::IndexedRandom;
 use sorted_vec::partial::ReverseSortedVec;
 
 use crate::logic::{
-    creature::Creature,
-    noise_reduction::{asthetic_cleanup, is_board_valid, map_noise_cleanup},
-    solver::step,
-    tile_map::TileMap,
+    board::Board, creature::Creature, noise_reduction::asthetic_cleanup, tile_map::TileMap,
 };
 
 use std::ops::{Add, AddAssign, Div, Mul, SubAssign};
@@ -37,7 +30,7 @@ impl Pos {
         vec![self.x as f32, self.y as f32]
     }
 
-    pub(crate) fn rotate_left(self, width: isize, height: isize) -> Pos {
+    pub(crate) fn rotate_left(self, height: isize) -> Pos {
         // (1,1), (-1,1)
         Self {
             x: -self.y + height - 1,
@@ -171,200 +164,69 @@ impl Tile {
     }
 }
 
-#[derive(Clone)]
-pub struct Board {
-    pub map: TileMap,
-    pub start: Pos,
-    pub end: Pos,
-    pub reset_pos: Pos,
-    pub start_direction: Direction,
-    pub end_direction: Direction,
+pub enum Room {
+    Lobby(Board),
+    Trial(Creature),
 }
 
-impl Board {
-    pub fn get_height(&self) -> isize {
-        self.map.get_height()
-    }
-
-    pub fn get_width(&self) -> isize {
-        self.map.get_width()
-    }
-
-    pub fn mutate(&self, factor: f32) -> Option<Self> {
-        let mut rng = rand::rng();
-
-        let mut ret = self.clone();
-
-        for pos in self.map.all_inner_pos() {
-            if rng.random::<f32>() < factor {
-                match ret.map.at(pos) {
-                    Tile::Wall => ret.map.set(pos, Tile::Ice),
-                    Tile::Ice => ret.map.set(pos, Tile::Wall),
-                    _ => {}
-                }
-            }
+impl Room {
+    pub fn get_start_direction(&self) -> Direction {
+        match self {
+            Room::Lobby(board) => board.start_direction,
+            Room::Trial(creature) => creature.board.start_direction,
         }
-
-        map_noise_cleanup(
-            &mut ret.map,
-            &mut ret.start,
-            ret.start_direction,
-            &mut ret.end,
-            ret.end_direction,
-        );
-
-        ret.reset_pos = step(&ret.map, &ret.start, ret.start_direction);
-
-        if is_board_valid(&ret) {
-            Some(ret)
-        } else {
-            None
-        }
-    }
-
-    pub fn new_random() -> Option<Self> {
-        let mut rng = rand::rng();
-        let width = (7..15).choose(&mut rng)?;
-        let height = (7..15).choose(&mut rng)?;
-
-        let start_side = (0..3).choose(&mut rng)?;
-        let end_side = ((1..3).choose(&mut rng)? + start_side) % 4;
-
-        let gate_range_horizontal = &(3..height - 3);
-        let gate_range_vertical = &(3..width - 3);
-
-        let (start, start_direction) = match start_side {
-            0 => (
-                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng)?),
-                Direction::West,
-            ),
-            1 => (
-                Pos::new(width - 1, gate_range_horizontal.clone().choose(&mut rng)?),
-                Direction::East,
-            ),
-            2 => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, 0),
-                Direction::South,
-            ),
-            _ => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, height - 1),
-                Direction::North,
-            ),
-        };
-
-        let (end, end_direction) = match end_side {
-            0 => (
-                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng)?),
-                Direction::West,
-            ),
-            1 => (
-                Pos::new(width - 1, gate_range_horizontal.clone().choose(&mut rng)?),
-                Direction::East,
-            ),
-            2 => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, 0),
-                Direction::South,
-            ),
-            _ => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, height - 1),
-                Direction::North,
-            ),
-        };
-
-        let mut map = vec![vec![Tile::Wall; width as usize]; height as usize];
-
-        for x in 1..width - 1 {
-            for y in 1..height - 1 {
-                map[y as usize][x as usize] = Tile::Ice;
-            }
-        }
-
-        let pilars = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
-
-        for _ in 0..pilars {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
-
-            map[y][x] = Tile::Wall;
-        }
-
-        let vignet = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
-
-        for _ in 0..vignet {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
-
-            let normal_x = (x as f32 / width as f32) - 0.5;
-            let normal_y = (y as f32 / height as f32) - 0.5;
-
-            let normal_d = normal_x * normal_x + normal_y * normal_y;
-
-            if random::<f32>() > normal_d {
-                map[y][x] = Tile::Wall;
-            }
-
-            map[y][x] = Tile::Wall;
-        }
-        let mut start = start;
-        let mut end = end;
-
-        let mut map = TileMap(map);
-
-        map_noise_cleanup(
-            &mut map,
-            &mut start,
-            start_direction,
-            &mut end,
-            end_direction,
-        );
-
-        let ret = Board {
-            reset_pos: step(&map, &start, start_direction),
-            map,
-            start,
-            start_direction,
-            end,
-            end_direction,
-        };
-
-        if is_board_valid(&ret) {
-            Some(ret)
-        } else {
-            None
-        }
-    }
-
-    pub(crate) fn print(&self, highlight: Vec<Pos>) {
-        println!(
-            "printing start {:?} {:?} end {:?} {:?}",
-            self.start, self.start_direction, self.end, self.end_direction
-        );
-
-        self.map.print(highlight);
     }
 
     pub fn rotate_left(self) -> Self {
-        Board {
-            start: self
-                .start
-                .rotate_left(self.map.get_width(), self.map.get_height()),
-            end: self
-                .end
-                .rotate_left(self.map.get_width(), self.map.get_height()),
-            reset_pos: self
-                .reset_pos
-                .rotate_left(self.map.get_width(), self.map.get_height()),
-            start_direction: self.start_direction.left(),
-            end_direction: self.end_direction.left(),
-            map: self.map.rotate_left(),
+        match self {
+            Room::Lobby(board) => Room::Lobby(board.rotate_left()),
+            Room::Trial(mut creature) => {
+                creature.board = creature.board.rotate_left();
+                Room::Trial(creature)
+            }
         }
+    }
+
+    pub fn get_board(&self) -> Board {
+        match self {
+            Room::Lobby(board) => board,
+            Room::Trial(creature) => &creature.board,
+        }
+        .to_owned()
+    }
+
+    pub fn get_width(&self) -> isize {
+        self.get_board().get_width()
+    }
+
+    pub fn get_max_movement_count(&self) -> Option<isize> {
+        match self {
+            Room::Lobby(_) => None,
+            Room::Trial(creature) => Some(creature.analysis[0].solution.len() as isize),
+        }
+    }
+
+    pub fn get_map(self) -> TileMap {
+        self.get_board().map.clone()
+    }
+
+    pub fn get_height(&self) -> isize {
+        self.get_board().get_height()
+    }
+
+    pub fn get_start(&self) -> Pos {
+        self.get_board().start
+    }
+
+    pub fn get_reset(&self) -> Pos {
+        self.get_board().reset_pos
     }
 }
 
-static G_RET_CHANNEL: Mutex<Option<mpsc::Receiver<Board>>> = Mutex::new(None);
+static G_RET_CHANNEL: Mutex<Option<mpsc::Receiver<Creature>>> = Mutex::new(None);
 static G_KILL_CHANNEL: Mutex<Option<mpsc::Sender<()>>> = Mutex::new(None);
 
-pub fn search_board() -> Board {
+pub fn search_board() -> Room {
     {
         let mut thread = G_KILL_CHANNEL.lock().unwrap();
         let thread = &mut (*thread);
@@ -375,7 +237,7 @@ pub fn search_board() -> Board {
             .expect("could not send kill signal to child worker");
     };
 
-    let ret = {
+    let mut ret = {
         let mut recv = G_RET_CHANNEL.lock().unwrap();
         let thread = &mut (*recv);
 
@@ -389,9 +251,10 @@ pub fn search_board() -> Board {
     };
 
     start_search();
-    let ret = asthetic_cleanup(ret);
-    ret.print(vec![]);
-    ret
+    ret.board = asthetic_cleanup(ret.board);
+    ret.board.print(ret.analysis[0].solution.iter().map(|e| e.1).collect());
+    println!("{:?}", ret.analysis);
+    Room::Trial(ret)
 }
 
 fn start_search() {
@@ -407,7 +270,7 @@ fn start_search() {
     spawn(|| genetic_search_thread(ret_tx, kill_rx));
 }
 
-fn genetic_search_thread(returns: Sender<Board>, kill: Receiver<()>) {
+fn genetic_search_thread(returns: Sender<Creature>, kill: Receiver<()>) {
     let mut rng = rand::rng();
 
     let mut population: ReverseSortedVec<Creature> = ReverseSortedVec::new();
@@ -423,7 +286,7 @@ fn genetic_search_thread(returns: Sender<Board>, kill: Receiver<()>) {
                 if population[0].fitness > best_so_far {
                     best_so_far = population[0].fitness;
                     returns
-                        .send(population[0].board.clone())
+                        .send(population[0].clone())
                         .expect("unable to send best so far");
                 }
             }
@@ -437,17 +300,26 @@ fn genetic_search_thread(returns: Sender<Board>, kill: Receiver<()>) {
                 if population[0].fitness > best_so_far {
                     best_so_far = population[0].fitness;
                     returns
-                        .send(population[0].board.clone())
+                        .send(population[0].clone())
                         .expect("unable to send best so far");
                 }
             }
         }
 
-        let fitness = population.iter().map(|e| e.fitness).collect::<Vec<_>>();
-        println!("generations: {} decicisons: {fitness:?}", generations);
+        // let fitness = population.iter().map(|e| e.fitness).collect::<Vec<_>>();
+        // println!("generations: {} decicisons: {fitness:?}", generations);
 
         population = population[0..generations * 2]
             .into_iter()
+            .cloned()
+            .collect();
+
+        let mean_fitness =
+            population.iter().map(|cre| (*cre).fitness).sum::<f32>() / population.len() as f32;
+
+        population = population
+            .iter()
+            .filter(|e| e.fitness > mean_fitness)
             .cloned()
             .collect();
 

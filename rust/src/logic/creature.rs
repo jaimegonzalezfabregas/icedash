@@ -1,12 +1,10 @@
-use crate::{
-    api::main::Board,
-    logic::solver::{solve},
-};
+use crate::logic::{board::Board, solver::{solve, Analysis}};
 
 #[derive(Clone)]
 pub struct Creature {
     pub board: Board,
     pub fitness: f32,
+    pub analysis: Vec<Analysis>,
     pub mutation_count: usize,
 }
 
@@ -27,6 +25,7 @@ impl Creature {
             Some(Self {
                 board: b,
                 fitness,
+                analysis,
                 mutation_count: 0,
             })
         } else {

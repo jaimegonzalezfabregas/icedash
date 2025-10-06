@@ -1,9 +1,9 @@
-use std::{collections::VecDeque};
 use rand::seq::IndexedRandom;
+use std::collections::VecDeque;
 
 use crate::{
-    api::main::{Board, Direction, Pos, Tile},
-    logic::tile_map::TileMap,
+    api::main::{Direction, Pos, Tile},
+    logic::{board::Board, tile_map::TileMap},
 };
 
 pub fn map_noise_cleanup(
@@ -239,64 +239,36 @@ pub fn flood(starting_positions: Vec<Pos>, board: &Board) -> Vec<Vec<bool>> {
 }
 
 pub fn asthetic_cleanup(mut ret: Board) -> Board {
+    let reachability = flood(
+        vec![
+            ret.start + ret.start_direction.vector(),
+            ret.end + ret.end_direction.vector(),
+        ],
+        &ret,
+    );
 
-    // TODO
+    for (y, row) in reachability.iter().enumerate() {
+        for (x, reacheable) in row.iter().enumerate() {
+            if ret.end.x == x as isize && ret.end.y == y as isize {
+                continue;
+            }
 
-    // let reachability = flood(vec![ret.start, ret.end], &ret);
+            if ret.start.x == x as isize && ret.start.y == y as isize {
+                continue;
+            }
+            if !*reacheable {
+                ret.map.set(Pos::new(x as isize, y as isize), Tile::Wall);
+            }
+        }
+    }
 
-    // for (y, row) in reachability.iter().enumerate() {
-    //     for (x, reacheable) in row.iter().enumerate() {
-    //         if !*reacheable {
-    //             ret.map.set(Pos::new(x as isize, y as isize), Tile::Wall);
-    //         }
-    //     }
-    // }
+    for _ in 0..4 {
+        ret = ret.rotate_left();
 
-    // println!("removing unused borders");
-
-    // while ret.map[ret.map.len() - 2].iter().all(|e| *e == Tile::Wall) {
-    //     ret.map.remove(ret.map.len() - 2);
-    // }
-
-    // while ret.map.iter().all(|e| e[e.len() - 2] == Tile::Wall) {
-    //     ret.map.iter_mut().for_each(|e| {
-    //         e.remove(e.len() - 1);
-    //     });
-    // }
-
-    // while ret.map[1].iter().all(|e| *e == Tile::Wall) {
-    //     ret.map.remove(1);
-
-    //     if ret.end.y == ret.map.len() as isize {
-    //         ret.end.y = ret.map.len() as isize - 1;
-    //     } else if ret.end.y != 0 {
-    //         ret.end.y -= 1;
-    //     }
-
-    //     if ret.start.y == ret.map.len() as isize {
-    //         ret.start.y = ret.map.len() as isize - 1;
-    //     } else if ret.start.y != 0 {
-    //         ret.start.y -= 1;
-    //     }
-    // }
-
-    // while ret.map.iter().all(|e| e[1] == Tile::Wall) {
-    //     ret.map.iter_mut().for_each(|e| {
-    //         e.remove(1);
-    //     });
-
-    //     if ret.end.x == ret.map[0].len() as isize {
-    //         ret.end.x = ret.map[0].len() as isize - 1;
-    //     } else if ret.end.x != 0 {
-    //         ret.end.x -= 1;
-    //     }
-
-    //     if ret.start.x == ret.map[0].len() as isize {
-    //         ret.start.x = ret.map[0].len() as isize - 1;
-    //     } else if ret.start.x != 0 {
-    //         ret.start.x -= 1;
-    //     }
-    // }
+        if ret.map.0[ret.map.0.len() - 1] == ret.map.0[ret.map.0.len() - 2] {
+            ret.map.0.pop();
+        }
+    }
 
     ret
 }

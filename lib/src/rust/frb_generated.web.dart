@@ -10,6 +10,9 @@ import 'api/main.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'frb_generated.dart';
+import 'logic/board.dart';
+import 'logic/creature.dart';
+import 'logic/solver.dart';
 import 'logic/tile_map.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 
@@ -22,6 +25,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   });
 
   @protected
+  Analysis dco_decode_analysis(dynamic raw);
+
+  @protected
   Board dco_decode_board(dynamic raw);
 
   @protected
@@ -31,10 +37,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Board dco_decode_box_autoadd_board(dynamic raw);
 
   @protected
+  Creature dco_decode_box_autoadd_creature(dynamic raw);
+
+  @protected
+  PlatformInt64 dco_decode_box_autoadd_isize(dynamic raw);
+
+  @protected
   Pos dco_decode_box_autoadd_pos(dynamic raw);
 
   @protected
+  Room dco_decode_box_autoadd_room(dynamic raw);
+
+  @protected
   Tile dco_decode_box_autoadd_tile(dynamic raw);
+
+  @protected
+  Creature dco_decode_creature(dynamic raw);
 
   @protected
   Direction dco_decode_direction(dynamic raw);
@@ -49,19 +67,37 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64 dco_decode_isize(dynamic raw);
 
   @protected
+  List<Analysis> dco_decode_list_analysis(dynamic raw);
+
+  @protected
   List<List<Tile>> dco_decode_list_list_tile(dynamic raw);
+
+  @protected
+  List<Pos> dco_decode_list_pos(dynamic raw);
 
   @protected
   Float32List dco_decode_list_prim_f_32_strict(dynamic raw);
 
   @protected
+  Int64List dco_decode_list_prim_isize_strict(dynamic raw);
+
+  @protected
+  List<(Direction, Pos)> dco_decode_list_record_direction_pos(dynamic raw);
+
+  @protected
   List<Tile> dco_decode_list_tile(dynamic raw);
 
   @protected
-  Board? dco_decode_opt_box_autoadd_board(dynamic raw);
+  PlatformInt64? dco_decode_opt_box_autoadd_isize(dynamic raw);
 
   @protected
   Pos dco_decode_pos(dynamic raw);
+
+  @protected
+  (Direction, Pos) dco_decode_record_direction_pos(dynamic raw);
+
+  @protected
+  Room dco_decode_room(dynamic raw);
 
   @protected
   Tile dco_decode_tile(dynamic raw);
@@ -76,6 +112,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void dco_decode_unit(dynamic raw);
 
   @protected
+  BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  Analysis sse_decode_analysis(SseDeserializer deserializer);
+
+  @protected
   Board sse_decode_board(SseDeserializer deserializer);
 
   @protected
@@ -85,10 +127,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Board sse_decode_box_autoadd_board(SseDeserializer deserializer);
 
   @protected
+  Creature sse_decode_box_autoadd_creature(SseDeserializer deserializer);
+
+  @protected
+  PlatformInt64 sse_decode_box_autoadd_isize(SseDeserializer deserializer);
+
+  @protected
   Pos sse_decode_box_autoadd_pos(SseDeserializer deserializer);
 
   @protected
+  Room sse_decode_box_autoadd_room(SseDeserializer deserializer);
+
+  @protected
   Tile sse_decode_box_autoadd_tile(SseDeserializer deserializer);
+
+  @protected
+  Creature sse_decode_creature(SseDeserializer deserializer);
 
   @protected
   Direction sse_decode_direction(SseDeserializer deserializer);
@@ -103,19 +157,41 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64 sse_decode_isize(SseDeserializer deserializer);
 
   @protected
+  List<Analysis> sse_decode_list_analysis(SseDeserializer deserializer);
+
+  @protected
   List<List<Tile>> sse_decode_list_list_tile(SseDeserializer deserializer);
+
+  @protected
+  List<Pos> sse_decode_list_pos(SseDeserializer deserializer);
 
   @protected
   Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer);
 
   @protected
+  Int64List sse_decode_list_prim_isize_strict(SseDeserializer deserializer);
+
+  @protected
+  List<(Direction, Pos)> sse_decode_list_record_direction_pos(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<Tile> sse_decode_list_tile(SseDeserializer deserializer);
 
   @protected
-  Board? sse_decode_opt_box_autoadd_board(SseDeserializer deserializer);
+  PlatformInt64? sse_decode_opt_box_autoadd_isize(SseDeserializer deserializer);
 
   @protected
   Pos sse_decode_pos(SseDeserializer deserializer);
+
+  @protected
+  (Direction, Pos) sse_decode_record_direction_pos(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  Room sse_decode_room(SseDeserializer deserializer);
 
   @protected
   Tile sse_decode_tile(SseDeserializer deserializer);
@@ -130,6 +206,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
+  BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  void sse_encode_analysis(Analysis self, SseSerializer serializer);
+
+  @protected
   void sse_encode_board(Board self, SseSerializer serializer);
 
   @protected
@@ -139,10 +221,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_board(Board self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_creature(Creature self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_isize(
+    PlatformInt64 self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_pos(Pos self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_room(Room self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_tile(Tile self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_creature(Creature self, SseSerializer serializer);
 
   @protected
   void sse_encode_direction(Direction self, SseSerializer serializer);
@@ -157,10 +254,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_isize(PlatformInt64 self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_analysis(List<Analysis> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_list_tile(
     List<List<Tile>> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_list_pos(List<Pos> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_f_32_strict(
@@ -169,13 +272,37 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_prim_isize_strict(
+    Int64List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_record_direction_pos(
+    List<(Direction, Pos)> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_tile(List<Tile> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_opt_box_autoadd_board(Board? self, SseSerializer serializer);
+  void sse_encode_opt_box_autoadd_isize(
+    PlatformInt64? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_pos(Pos self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_record_direction_pos(
+    (Direction, Pos) self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_room(Room self, SseSerializer serializer);
 
   @protected
   void sse_encode_tile(Tile self, SseSerializer serializer);
@@ -188,6 +315,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_usize(BigInt self, SseSerializer serializer);
 }
 
 // Section: wire_class

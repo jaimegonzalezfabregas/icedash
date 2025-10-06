@@ -3,11 +3,11 @@ use std::collections::{HashSet, VecDeque};
 use itertools::Itertools;
 
 use crate::{
-    api::main::{Board, Direction, Pos, Tile},
-    logic::tile_map::TileMap,
+    api::main::{Direction, Pos, Tile},
+    logic::{board::Board, tile_map::TileMap},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Analysis {
     pub solution: Vec<(Direction, Pos)>,
     pub decision_positions: Vec<Pos>,

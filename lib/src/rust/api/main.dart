@@ -4,69 +4,18 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import '../frb_generated.dart';
+import '../logic/board.dart';
+import '../logic/creature.dart';
+import '../logic/solver.dart';
 import '../logic/tile_map.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'main.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `genetic_search_thread`, `print`, `rotate_left`, `start_search`, `vector`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `add_assign`, `add`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `clone`, `div`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `hash`, `mul`, `sub_assign`
+// These functions are ignored because they are not marked as `pub`: `genetic_search_thread`, `rotate_left`, `start_search`, `vector`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `add_assign`, `add`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `div`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `hash`, `mul`, `sub_assign`
 
-Board searchBoard() => RustLib.instance.api.crateApiMainSearchBoard();
-
-class Board {
-  final TileMap map;
-  final Pos start;
-  final Pos end;
-  final Pos resetPos;
-  final Direction startDirection;
-  final Direction endDirection;
-
-  const Board({
-    required this.map,
-    required this.start,
-    required this.end,
-    required this.resetPos,
-    required this.startDirection,
-    required this.endDirection,
-  });
-
-  PlatformInt64 getHeight() =>
-      RustLib.instance.api.crateApiMainBoardGetHeight(that: this);
-
-  PlatformInt64 getWidth() =>
-      RustLib.instance.api.crateApiMainBoardGetWidth(that: this);
-
-  Board? mutate({required double factor}) =>
-      RustLib.instance.api.crateApiMainBoardMutate(that: this, factor: factor);
-
-  static Board? newRandom() =>
-      RustLib.instance.api.crateApiMainBoardNewRandom();
-
-  Board rotateLeft() =>
-      RustLib.instance.api.crateApiMainBoardRotateLeft(that: this);
-
-  @override
-  int get hashCode =>
-      map.hashCode ^
-      start.hashCode ^
-      end.hashCode ^
-      resetPos.hashCode ^
-      startDirection.hashCode ^
-      endDirection.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Board &&
-          runtimeType == other.runtimeType &&
-          map == other.map &&
-          start == other.start &&
-          end == other.end &&
-          resetPos == other.resetPos &&
-          startDirection == other.startDirection &&
-          endDirection == other.endDirection;
-}
+Room searchBoard() => RustLib.instance.api.crateApiMainSearchBoard();
 
 enum Direction {
   north,
@@ -109,6 +58,37 @@ class Pos {
           runtimeType == other.runtimeType &&
           x == other.x &&
           y == other.y;
+}
+
+@freezed
+sealed class Room with _$Room {
+  const Room._();
+
+  const factory Room.lobby(Board field0) = Room_Lobby;
+  const factory Room.trial(Creature field0) = Room_Trial;
+
+  Board getBoard() => RustLib.instance.api.crateApiMainRoomGetBoard(that: this);
+
+  PlatformInt64 getHeight() =>
+      RustLib.instance.api.crateApiMainRoomGetHeight(that: this);
+
+  TileMap getMap() => RustLib.instance.api.crateApiMainRoomGetMap(that: this);
+
+  PlatformInt64? getMaxMovementCount() =>
+      RustLib.instance.api.crateApiMainRoomGetMaxMovementCount(that: this);
+
+  Pos getReset() => RustLib.instance.api.crateApiMainRoomGetReset(that: this);
+
+  Pos getStart() => RustLib.instance.api.crateApiMainRoomGetStart(that: this);
+
+  Direction getStartDirection() =>
+      RustLib.instance.api.crateApiMainRoomGetStartDirection(that: this);
+
+  PlatformInt64 getWidth() =>
+      RustLib.instance.api.crateApiMainRoomGetWidth(that: this);
+
+  Room rotateLeft() =>
+      RustLib.instance.api.crateApiMainRoomRotateLeft(that: this);
 }
 
 @freezed

@@ -82,13 +82,10 @@ impl TileMap {
         ]);
 
         for p in self.all_pos() {
-            ret.set(
-                p.rotate_left(self.get_width(), self.get_height()),
-                self.at(p),
-            );
+            ret.set(p.rotate_left(self.get_height()), self.at(p));
         }
 
-        ret.print(vec![]);
+        // ret.print(vec![]);
 
         ret
     }
