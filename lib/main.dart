@@ -84,20 +84,11 @@ class IceDashWorld extends World {
     if (_lastRoom != null) {
       var fadingOutRoom = _lastRoom!;
       _lastRoom = null;
-      fadingOutRoom.add(
-        OpacityEffect.fadeOut(
-          EffectController(
-            startDelay: 2,
-            duration: 1,
-            onMax: () {
-              remove(fadingOutRoom);
-            },
-          ),
-        ),
-      );
+      fadingOutRoom.fadeOut((){
+         remove(fadingOutRoom);
+      });
+      
     }
-    _currentRoom!.opacity = 0;
-    _currentRoom!.add(OpacityEffect.fadeIn(EffectController(duration: 0.5)));
     add(_currentRoom!);
     player.push(stichDirection, force: true);
 
@@ -110,6 +101,8 @@ class IceDashWorld extends World {
       player.remainingMovesReset = null;
     }
   }
+
+
 
   zoomTransition(double duration, double endValue) {
     var zoomOutEfect = CurvedEffectController(duration / 2, Curves.easeInOut);

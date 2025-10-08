@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
@@ -5,17 +6,16 @@ import 'package:flame/effects.dart';
 import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/tiling.dart';
 
-class RoomComponent extends Component implements OpacityProvider {
+class RoomComponent extends Component {
   Room room;
-  @override
-  double opacity = 0;
 
   late Rect worldBB;
   late Direction exitDirection;
 
-  Set<OpacityProvider> wallSet = {};
+  Set<SpriteComponent> fadeables = {};
 
   Vector2 entranceWorldPos;
+  late Vector2 exitWorldPos;
   late Vector2 resetWorldPos;
   late Vector2 entranceRoomPos;
 
@@ -25,8 +25,12 @@ class RoomComponent extends Component implements OpacityProvider {
     }
 
     entranceRoomPos = Vector2.array(room.getStart().dartVector());
+
     var resetRoomPos = Vector2.array(room.getReset().dartVector());
     resetWorldPos = resetRoomPos - entranceRoomPos + entranceWorldPos;
+
+    var exitRoomPos = Vector2.array(room.getEnd().dartVector());
+    exitWorldPos = exitRoomPos - entranceRoomPos + entranceWorldPos;
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x,
@@ -34,6 +38,36 @@ class RoomComponent extends Component implements OpacityProvider {
       room.getWidth().toDouble(),
       room.getHeight().toDouble(),
     );
+  }
+
+  void fadeIn() {
+    var fade_speed = 0.05;
+    var ripple_speed = 0.05;
+    for (var sprite in fadeables) {
+      double d = (sprite.position - entranceWorldPos).length * ripple_speed;
+      sprite.opacity = 0;
+
+      sprite.add(OpacityEffect.fadeIn(EffectController(duration: fade_speed + d, startDelay: d)));
+    }
+  }
+
+  void fadeOut(onDone) {
+    var fade_speed = 0.05;
+    var ripple_speed = 0.05;
+
+    double max_delay = 0;
+    for (var sprite in fadeables) {
+      double d = (sprite.position - exitWorldPos).length * ripple_speed;
+
+      max_delay = max(max_delay, fade_speed + d);
+    }
+    for (var sprite in fadeables) {
+      double d = (sprite.position - exitWorldPos).length * ripple_speed;
+      sprite.opacity = 1;
+
+      sprite.add(OpacityEffect.fadeOut(EffectController(duration: max_delay - d + fade_speed, startDelay: max_delay - d)));
+    }
+    add(FunctionEffect((_, __) => onDone, EffectController(duration: max_delay)));
   }
 
   Tile? queryMapDisplayTile(List<List<Tile>> tilemap, int x, int y, bool center) {
@@ -89,7 +123,7 @@ class RoomComponent extends Component implements OpacityProvider {
           img.sprite = await Sprite.load(bgImg);
 
           add(img);
-          wallSet.add(img);
+          fadeables.add(img);
         }
 
         if (tile is Tile_Entrance) {
@@ -112,7 +146,7 @@ class RoomComponent extends Component implements OpacityProvider {
                   duration: 1,
                   startDelay: 1,
                   onMax: () {
-                    wallSet.add(door);
+                    fadeables.add(door);
                   },
                 ),
               ),
@@ -122,6 +156,7 @@ class RoomComponent extends Component implements OpacityProvider {
         }
       }
     }
+    fadeIn();
   }
 
   bool canWalkInto(Vector2 origin, Vector2 dst) {
@@ -138,14 +173,5 @@ class RoomComponent extends Component implements OpacityProvider {
     } catch (_) {
       return Tile.outside();
     }
-  }
-
-  @override
-  void update(double dt) {
-    for (var w in wallSet) {
-      w.opacity = opacity;
-    }
-
-    super.update(dt);
   }
 }

@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 145726953;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 977342181;
 
 // Section: executor
 
@@ -284,6 +284,36 @@ fn wire__crate__api__main__room_get_board_impl(
             deserializer.end();
             transform_result_sse::<_, ()>((move || {
                 let output_ok = Result::<_, ()>::Ok(crate::api::main::Room::get_board(&api_that))?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__main__room_get_end_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "room_get_end",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <crate::api::main::Room>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok(crate::api::main::Room::get_end(&api_that))?;
                 Ok(output_ok)
             })())
         },
@@ -944,17 +974,18 @@ fn pde_ffi_dispatcher_sync_impl(
         6 => wire__crate__api__main__pos_dart_vector_impl(ptr, rust_vec_len, data_len),
         7 => wire__crate__api__main__pos_new_impl(ptr, rust_vec_len, data_len),
         8 => wire__crate__api__main__room_get_board_impl(ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__main__room_get_height_impl(ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__main__room_get_map_impl(ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__main__room_get_max_movement_count_impl(ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__main__room_get_reset_impl(ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__main__room_get_start_impl(ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__main__room_get_start_direction_impl(ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__main__room_get_width_impl(ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__main__room_rotate_left_impl(ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__main__search_board_impl(ptr, rust_vec_len, data_len),
-        18 => wire__crate__api__main__tile_is_solid_impl(ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__main__tile_simbol_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__main__room_get_end_impl(ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__main__room_get_height_impl(ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__main__room_get_map_impl(ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__main__room_get_max_movement_count_impl(ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__main__room_get_reset_impl(ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__main__room_get_start_impl(ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__main__room_get_start_direction_impl(ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__main__room_get_width_impl(ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__main__room_rotate_left_impl(ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__main__search_board_impl(ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__main__tile_is_solid_impl(ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__main__tile_simbol_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

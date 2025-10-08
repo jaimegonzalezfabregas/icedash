@@ -12,7 +12,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'main.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `genetic_search_thread`, `rotate_left`, `start_search`, `vector`
+// These functions are ignored because they are not marked as `pub`: `rotate_left`, `vector`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `add_assign`, `add`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `div`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `hash`, `mul`, `sub_assign`
 
 Room searchBoard() => RustLib.instance.api.crateApiMainSearchBoard();
@@ -68,6 +68,8 @@ sealed class Room with _$Room {
   const factory Room.trial(Creature field0) = Room_Trial;
 
   Board getBoard() => RustLib.instance.api.crateApiMainRoomGetBoard(that: this);
+
+  Pos getEnd() => RustLib.instance.api.crateApiMainRoomGetEnd(that: this);
 
   PlatformInt64 getHeight() =>
       RustLib.instance.api.crateApiMainRoomGetHeight(that: this);

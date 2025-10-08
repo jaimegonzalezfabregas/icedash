@@ -1,19 +1,6 @@
-use std::{
-    sync::{
-        mpsc::{self, Receiver, Sender},
-        Mutex,
-    },
-    thread::spawn,
-};
-
-use rand::seq::IndexedRandom;
-use sorted_vec::partial::ReverseSortedVec;
-
-use crate::logic::{
-    board::Board, creature::Creature, noise_reduction::asthetic_cleanup, tile_map::TileMap,
-};
-
 use std::ops::{Add, AddAssign, Div, Mul, SubAssign};
+
+use crate::logic::{board::Board, creature::Creature, tile_map::TileMap, worker_pool::{get_new_room, start_search}};
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Copy)]
 pub struct Pos {
@@ -221,114 +208,14 @@ impl Room {
     pub fn get_reset(&self) -> Pos {
         self.get_board().reset_pos
     }
-}
 
-static G_RET_CHANNEL: Mutex<Option<mpsc::Receiver<Creature>>> = Mutex::new(None);
-static G_KILL_CHANNEL: Mutex<Option<mpsc::Sender<()>>> = Mutex::new(None);
+    pub fn get_end(&self) -> Pos {
+        self.get_board().end
+    }
+}
 
 pub fn search_board() -> Room {
-    {
-        let mut thread = G_KILL_CHANNEL.lock().unwrap();
-        let thread = &mut (*thread);
-        thread
-            .take()
-            .unwrap()
-            .send(())
-            .expect("could not send kill signal to child worker");
-    };
-
-    let mut ret = {
-        let mut recv = G_RET_CHANNEL.lock().unwrap();
-        let thread = &mut (*recv);
-
-        let rx = thread.take().unwrap();
-
-        let mut ret = rx.recv().unwrap();
-        while let Ok(x) = rx.try_recv() {
-            ret = x;
-        }
-        ret
-    };
-
-    start_search();
-    ret.board = asthetic_cleanup(ret.board);
-    ret.board.print(ret.analysis[0].solution.iter().map(|e| e.1).collect());
-    println!("{:?}", ret.analysis);
-    Room::Trial(ret)
-}
-
-fn start_search() {
-    let (kill_tx, kill_rx) = mpsc::channel();
-    let (ret_tx, ret_rx) = mpsc::channel();
-
-    let mut ret = G_RET_CHANNEL.lock().unwrap();
-    let mut kill = G_KILL_CHANNEL.lock().unwrap();
-
-    *ret = Some(ret_rx);
-    *kill = Some(kill_tx);
-
-    spawn(|| genetic_search_thread(ret_tx, kill_rx));
-}
-
-fn genetic_search_thread(returns: Sender<Creature>, kill: Receiver<()>) {
-    let mut rng = rand::rng();
-
-    let mut population: ReverseSortedVec<Creature> = ReverseSortedVec::new();
-
-    let mut generations = 1;
-
-    let mut best_so_far = 0.;
-
-    loop {
-        while population.len() < generations * 3 {
-            if let Some(new_creature) = Creature::board_to_creature(Board::new_random()) {
-                population.insert(new_creature);
-                if population[0].fitness > best_so_far {
-                    best_so_far = population[0].fitness;
-                    returns
-                        .send(population[0].clone())
-                        .expect("unable to send best so far");
-                }
-            }
-        }
-
-        while population.len() < generations * 9 {
-            let creature = population[0..generations * 2].choose(&mut rng).unwrap();
-
-            if let Some(new_creature) = creature.mutate(0.3) {
-                population.insert(new_creature);
-                if population[0].fitness > best_so_far {
-                    best_so_far = population[0].fitness;
-                    returns
-                        .send(population[0].clone())
-                        .expect("unable to send best so far");
-                }
-            }
-        }
-
-        // let fitness = population.iter().map(|e| e.fitness).collect::<Vec<_>>();
-        // println!("generations: {} decicisons: {fitness:?}", generations);
-
-        population = population[0..generations * 2]
-            .into_iter()
-            .cloned()
-            .collect();
-
-        let mean_fitness =
-            population.iter().map(|cre| (*cre).fitness).sum::<f32>() / population.len() as f32;
-
-        population = population
-            .iter()
-            .filter(|e| e.fitness > mean_fitness)
-            .cloned()
-            .collect();
-
-        generations += 1;
-
-        if let Ok(()) = kill.try_recv() {
-            return;
-        }
-    }
+    get_new_room()
 }
 
 #[flutter_rust_bridge::frb(init)]

@@ -83,48 +83,6 @@ pub fn step(map: &TileMap, start: &Pos, direction: Direction) -> Pos {
     ret
 }
 
-pub fn dumb_solve(board: &Board) -> bool {
-    let mut states = VecDeque::from([SearchState {
-        length: 0,
-        path: vec![(
-            board.start_direction,
-            step(&board.map, &board.start, board.start_direction),
-        )],
-        decision_positions: vec![],
-        visitations: HashSet::new(),
-    }]);
-
-    while let Some(state) = states.pop_front() {
-        let last_dir = state.path.last().unwrap().0;
-        let last_pos = state.path.last().unwrap().1;
-
-        let potencial_directions: Vec<Direction> = [last_dir.left(), last_dir.right()]
-            .into_iter()
-            .filter(|dir| !board.map.at(last_pos + dir.vector()).is_solid())
-            .collect();
-
-        // TODO
-
-        for dir in potencial_directions {
-            let (_, new_state) = state.step(dir, board);
-
-            let new_state = if let Ok(new_state) = new_state {
-                new_state
-            } else {
-                continue;
-            };
-
-            if new_state.path.last().unwrap().1 == board.end {
-                return true;
-            } else {
-                states.push_back(new_state)
-            }
-        }
-    }
-
-    false
-}
-
 pub fn solve(board: &Board) -> Vec<Analysis> {
     // board.print(vec![]);
 
