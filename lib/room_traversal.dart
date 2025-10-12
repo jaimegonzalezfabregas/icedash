@@ -74,6 +74,6 @@ class RoomTraversal {
   }
 
   Room getNextRoom(Pos pos) {
-    return searchBoard();
+    return dartGetNewBoard();
   }
 }

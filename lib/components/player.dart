@@ -13,7 +13,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   Vector2? resetPos;
   int? remainingMoves;
   int? remainingMovesReset;
-  int movement_lenght = 0;
+  int movementLenght = 0;
 
   @override
   Future<void> onLoad() async {
@@ -55,6 +55,15 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
     }
   }
 
+  Vector2 raycast(dir, position) {
+    Vector2 delta = Vector2.array(dir.dartVector());
+    Vector2 ray = position;
+    while (game.idWorld.canWalkInto(ray, ray + delta)) {
+      ray += delta;
+    }
+    return ray;
+  }
+
   void push(Direction dir, {bool force = false, bool user = true}) {
     Vector2 delta = Vector2.array(dir.dartVector());
 
@@ -64,8 +73,16 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         return;
       }
 
+      if (user) {
+        Vector2 endPos = raycast(dir, position);
+
+        if (game.idWorld.getTile(endPos) == Tile.gate()) {
+          dartWorkerHalt(millis: BigInt.from((((position - endPos).length + 2) * timePerStep) * 1000));
+        }
+      }
+
       if (!game.idWorld.canWalkInto(position, position + delta)) {
-        if (movement_lenght != 0) {
+        if (movementLenght != 0) {
           if (remainingMoves != null) {
             remainingMoves = remainingMoves! - 1;
             if (remainingMoves == 0) {
@@ -73,7 +90,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
             }
           }
         }
-        movement_lenght = 0;
+        movementLenght = 0;
 
         if (buffered != null) {
           Direction d = buffered!;
@@ -100,7 +117,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       }
 
       if (standingOn is Tile_Entrance || standingOn is Tile_Ice) {
-        movement_lenght += 1;
+        movementLenght += 1;
         push(dir, user: false);
       }
     };

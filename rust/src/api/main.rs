@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Div, Mul, SubAssign};
 
-use crate::logic::{board::Board, creature::Creature, tile_map::TileMap, worker_pool::{get_new_room, start_search}};
+use crate::logic::{board::Board, creature::Creature, tile_map::TileMap, worker_pool::{get_new_room, start_search, worker_halt}};
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Copy)]
 pub struct Pos {
@@ -189,7 +189,7 @@ impl Room {
     pub fn get_max_movement_count(&self) -> Option<isize> {
         match self {
             Room::Lobby(_) => None,
-            Room::Trial(creature) => Some(creature.analysis[0].solution.len() as isize),
+            Room::Trial(creature) => Some(creature.analysis.optimal_movement_count as isize),
         }
     }
 
@@ -214,8 +214,12 @@ impl Room {
     }
 }
 
-pub fn search_board() -> Room {
+pub fn dart_get_new_board() -> Room {
     get_new_room()
+}
+
+pub fn dart_worker_halt(millis: usize){
+    worker_halt(millis)
 }
 
 #[flutter_rust_bridge::frb(init)]

@@ -8,11 +8,38 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 class Analysis {
+  final BigInt optimalMovementCount;
+  final List<Route> optimalRoutes;
+  final List<Route> suboptimalRoutes;
+
+  const Analysis({
+    required this.optimalMovementCount,
+    required this.optimalRoutes,
+    required this.suboptimalRoutes,
+  });
+
+  @override
+  int get hashCode =>
+      optimalMovementCount.hashCode ^
+      optimalRoutes.hashCode ^
+      suboptimalRoutes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Analysis &&
+          runtimeType == other.runtimeType &&
+          optimalMovementCount == other.optimalMovementCount &&
+          optimalRoutes == other.optimalRoutes &&
+          suboptimalRoutes == other.suboptimalRoutes;
+}
+
+class Route {
   final List<(Direction, Pos)> solution;
   final List<Pos> decisionPositions;
   final Int64List moveSizes;
 
-  const Analysis({
+  const Route({
     required this.solution,
     required this.decisionPositions,
     required this.moveSizes,
@@ -25,7 +52,7 @@ class Analysis {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Analysis &&
+      other is Route &&
           runtimeType == other.runtimeType &&
           solution == other.solution &&
           decisionPositions == other.decisionPositions &&

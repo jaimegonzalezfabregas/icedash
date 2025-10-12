@@ -1,11 +1,10 @@
 use std::{
     collections::VecDeque,
-    num::NonZero,
     sync::{
         mpsc::{self, Receiver, Sender},
         Mutex,
     },
-    thread::{available_parallelism, spawn},
+    thread::{self, available_parallelism, spawn}, time,
 };
 
 use rand::seq::IndexedRandom;
@@ -16,20 +15,25 @@ use crate::{
     logic::{board::Board, creature::Creature, noise_reduction::asthetic_cleanup},
 };
 
+enum CtrlMsg{
+    Kill,
+    Halt( usize)
+}
+
 struct Worker {
     return_channel: mpsc::Receiver<Creature>,
-    kill_channel: mpsc::Sender<()>,
+    crtl_channel: mpsc::Sender<CtrlMsg>,
 }
 
 type XXXX<T> = Mutex<VecDeque<T>> ;
 
 static G_WORKER: XXXX<Worker> = Mutex::new(VecDeque::new());
 
-pub fn get_Esnew_room() -> Room {
+pub fn get_new_room() -> Room {
     let mut ret = {
-        let mut worker = G_WORKER.lock().unwrap();
-        let worker = &mut (*worker);
-        let worker = worker.pop_front().unwrap();
+        let mut workers = G_WORKER.lock().unwrap();
+        let workers = &mut (*workers);
+        let worker = workers.pop_front().unwrap();
 
         let mut ret = worker.return_channel.recv().unwrap();
         if let Some(last) = worker.return_channel.try_iter().last() {
@@ -38,8 +42,8 @@ pub fn get_Esnew_room() -> Room {
 
         spawn(move || {
             worker
-                .kill_channel
-                .send(())
+                .crtl_channel
+                .send(CtrlMsg::Kill)
                 .expect("could not send kill signal to child worker");
         });
 
@@ -51,31 +55,37 @@ pub fn get_Esnew_room() -> Room {
     });
     ret.board = asthetic_cleanup(ret.board);
     ret.board
-        .print(ret.analysis[0].solution.iter().map(|e| e.1).collect());
+        .print(ret.analysis.optimal_routes[0].solution.iter().map(|e| e.1).collect());
     println!("{:?}", ret.analysis);
     Room::Trial(ret)
+}
+
+pub fn worker_halt(millis: usize) {
+       let mut workers = G_WORKER.lock().unwrap();
+        let workers = &mut (*workers);
+        workers.iter().for_each(|worker| {worker.crtl_channel.send(CtrlMsg::Halt(millis)).unwrap();});
 }
 
 pub fn start_search() {
     let mut ret = G_WORKER.lock().unwrap();
 
     while ret.len()
-        < available_parallelism()
+        < (available_parallelism()
             .expect("couldnt get available parallelism")
-            .into()
+            .get() - 3)
     {
-        let (kill_tx, kill_rx) = mpsc::channel();
+        let (ctrl_tx, ctrl_rx) = mpsc::channel();
         let (ret_tx, ret_rx) = mpsc::channel();
         ret.push_back(Worker {
             return_channel: ret_rx,
-            kill_channel: kill_tx,
+            crtl_channel: ctrl_tx,
         });
 
-        spawn(|| worker_thread(ret_tx, kill_rx));
+        spawn(|| worker_thread(ret_tx, ctrl_rx));
     }
 }
 
-fn worker_thread(returns: Sender<Creature>, kill: Receiver<()>) {
+fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
     let mut rng = rand::rng();
 
     let mut population: ReverseSortedVec<Creature> = ReverseSortedVec::new();
@@ -85,7 +95,7 @@ fn worker_thread(returns: Sender<Creature>, kill: Receiver<()>) {
     let mut best_so_far = 0.;
 
     loop {
-        while population.len() < generations * 3 {
+        if population.len() < generations * 3 {
             if let Some(new_creature) = Creature::board_to_creature(Board::new_random()) {
                 population.insert(new_creature);
                 if population[0].fitness > best_so_far {
@@ -95,9 +105,7 @@ fn worker_thread(returns: Sender<Creature>, kill: Receiver<()>) {
                         .expect("unable to send best so far");
                 }
             }
-        }
-
-        while population.len() < generations * 9 {
+        }else if population.len() < generations * 9 {
             let creature = population[0..generations * 2].choose(&mut rng).unwrap();
 
             if let Some(new_creature) = creature.mutate(0.3) {
@@ -109,12 +117,8 @@ fn worker_thread(returns: Sender<Creature>, kill: Receiver<()>) {
                         .expect("unable to send best so far");
                 }
             }
-        }
-
-        // let fitness = population.iter().map(|e| e.fitness).collect::<Vec<_>>();
-        // println!("generations: {} decicisons: {fitness:?}", generations);
-
-        population = population[0..generations * 2]
+        } else {
+             population = population[0..generations * 2]
             .into_iter()
             .cloned()
             .collect();
@@ -129,9 +133,18 @@ fn worker_thread(returns: Sender<Creature>, kill: Receiver<()>) {
             .collect();
 
         generations += 1;
+        }
 
-        if let Ok(()) = kill.try_recv() {
-            return;
+        match messenger.try_recv(){
+            Ok(CtrlMsg::Halt(time)) => {
+                println!("halting");
+                thread::sleep(time::Duration::from_millis(time as u64));
+                println!("resuming");
+            
+            },
+            Ok(CtrlMsg::Kill) => return,
+            Err(_) => {},
+    
         }
     }
 }

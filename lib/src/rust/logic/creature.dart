@@ -13,7 +13,7 @@ import 'tile_map.dart';
 class Creature {
   final Board board;
   final double fitness;
-  final List<Analysis> analysis;
+  final Analysis analysis;
   final BigInt mutationCount;
 
   const Creature({

@@ -40,34 +40,40 @@ class RoomComponent extends Component {
     );
   }
 
-  void fadeIn() {
-    var fade_speed = 0.05;
-    var ripple_speed = 0.05;
+  Future fadeIn() async {
+    var fadeSpeed = 0.05;
+    var rippleSpeed = 0.05;
     for (var sprite in fadeables) {
-      double d = (sprite.position - entranceWorldPos).length * ripple_speed;
       sprite.opacity = 0;
+    
+    }
 
-      sprite.add(OpacityEffect.fadeIn(EffectController(duration: fade_speed + d, startDelay: d)));
+    for (var sprite in fadeables) {
+      double d = (sprite.position - entranceWorldPos).length * rippleSpeed;
+
+      await sprite.add(OpacityEffect.fadeIn(EffectController(duration: fadeSpeed + d, startDelay: d)));
+      
     }
   }
 
-  void fadeOut(onDone) {
-    var fade_speed = 0.05;
-    var ripple_speed = 0.05;
+  Future fadeOut(onDone) async {
+    var fadeSpeed = 0.05;
+    var rippleSpeed = 0.05;
 
-    double max_delay = 0;
+    double maxDelay = 0;
     for (var sprite in fadeables) {
-      double d = (sprite.position - exitWorldPos).length * ripple_speed;
-
-      max_delay = max(max_delay, fade_speed + d);
-    }
-    for (var sprite in fadeables) {
-      double d = (sprite.position - exitWorldPos).length * ripple_speed;
+      double d = (sprite.position - exitWorldPos).length * rippleSpeed;
       sprite.opacity = 1;
 
-      sprite.add(OpacityEffect.fadeOut(EffectController(duration: max_delay - d + fade_speed, startDelay: max_delay - d)));
+      maxDelay = max(maxDelay, fadeSpeed + d);
     }
-    add(FunctionEffect((_, __) => onDone, EffectController(duration: max_delay)));
+    for (var sprite in fadeables) {
+      double d = (sprite.position - exitWorldPos).length * rippleSpeed;
+
+      await sprite.add(OpacityEffect.fadeOut(EffectController(duration: maxDelay - d + fadeSpeed, startDelay: maxDelay - d)));
+
+    }
+    add(FunctionEffect((_, __) => onDone, EffectController(duration: maxDelay)));
   }
 
   Tile? queryMapDisplayTile(List<List<Tile>> tilemap, int x, int y, bool center) {
@@ -162,7 +168,7 @@ class RoomComponent extends Component {
   bool canWalkInto(Vector2 origin, Vector2 dst) {
     // TODO migrate to rust
     Tile dstTile = getTile(dst);
-    return dstTile is! Tile_Wall && dstTile is! Tile_Entrance;
+    return dstTile is! Tile_Wall && dstTile is! Tile_Entrance && dstTile is! Tile_Outside;
   }
 
   Tile getTile(Vector2 worldPos) {

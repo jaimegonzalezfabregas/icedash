@@ -15,7 +15,10 @@ part 'main.freezed.dart';
 // These functions are ignored because they are not marked as `pub`: `rotate_left`, `vector`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `add_assign`, `add`, `assert_receiver_is_total_eq`, `clone`, `clone`, `clone`, `div`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `hash`, `mul`, `sub_assign`
 
-Room searchBoard() => RustLib.instance.api.crateApiMainSearchBoard();
+Room dartGetNewBoard() => RustLib.instance.api.crateApiMainDartGetNewBoard();
+
+void dartWorkerHalt({required BigInt millis}) =>
+    RustLib.instance.api.crateApiMainDartWorkerHalt(millis: millis);
 
 enum Direction {
   north,

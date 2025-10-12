@@ -1,36 +1,30 @@
-use crate::logic::{board::Board, solver::{solve, Analysis}};
+use crate::logic::{
+    board::Board,
+    solver::{analyze, Analysis},
+};
 
 #[derive(Clone)]
 pub struct Creature {
     pub board: Board,
     pub fitness: f32,
-    pub analysis: Vec<Analysis>,
+    pub analysis: Analysis,
     pub mutation_count: usize,
 }
 
 impl Creature {
+    
+
     pub fn board_to_creature(b: Option<Board>) -> Option<Self> {
         let b = b?;
 
-        let analysis = solve(&b);
-        if analysis.len() != 0 {
-            let mut fitness = analysis[0].fitness();
+        let analysis = analyze(&b)?;
 
-            for analysis in analysis.iter() {
-                fitness = fitness.min(analysis.fitness())
-            }
-
-            fitness /= analysis.len().pow(2) as f32;
-
-            Some(Self {
-                board: b,
-                fitness,
-                analysis,
-                mutation_count: 0,
-            })
-        } else {
-            None
-        }
+        Some(Self {
+            board: b,
+            fitness : analysis.compute_fitness(),
+            analysis,
+            mutation_count: 0,
+        })
     }
 
     pub fn mutate(&self, factor: f32) -> Option<Self> {

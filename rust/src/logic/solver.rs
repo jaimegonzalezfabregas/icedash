@@ -8,13 +8,35 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
+
 pub struct Analysis {
+    pub optimal_movement_count: usize,
+    pub optimal_routes: Vec<Route>,
+    pub suboptimal_routes: Vec<Route>,
+}
+
+impl Analysis {
+    pub fn compute_fitness(&self) -> f32 {
+        let good_to_bad_ratio = 1.; //            self.suboptimal_routes.len() as f32 / self.optimal_routes.len() as f32; //bigger is better
+
+        let mut good_route_fitness = self.optimal_routes[0].fitness();
+
+        for analysis in self.optimal_routes.iter() {
+            good_route_fitness = good_route_fitness.min(analysis.fitness())
+        }
+
+        good_route_fitness * good_to_bad_ratio
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Route {
     pub solution: Vec<(Direction, Pos)>,
     pub decision_positions: Vec<Pos>,
     pub move_sizes: Vec<isize>,
 }
 
-impl Analysis {
+impl Route {
     pub fn fitness(&self) -> f32 {
         let move_size_mean = self.move_sizes.iter().fold(0, |acc, e| acc + e);
 
@@ -32,7 +54,7 @@ impl Analysis {
 #[derive(Debug)]
 struct SearchState {
     // score: f32,
-    length: isize,
+    tile_length: isize,
     path: Vec<(Direction, Pos)>,
     decision_positions: Vec<Pos>,
     visitations: HashSet<Pos>,
@@ -57,7 +79,7 @@ impl SearchState {
         (
             step_length,
             Ok(SearchState {
-                length: self.length + step_length,
+                tile_length: self.tile_length + step_length,
                 path: new_path,
                 decision_positions: self.decision_positions.clone(),
                 visitations: new_visitations,
@@ -83,11 +105,13 @@ pub fn step(map: &TileMap, start: &Pos, direction: Direction) -> Pos {
     ret
 }
 
-pub fn solve(board: &Board) -> Vec<Analysis> {
+const EXTRA_MOVES_SEARCH_MARGIN: usize = 1;
+
+pub fn analyze(board: &Board) -> Option<Analysis> {
     // board.print(vec![]);
 
     let mut states = VecDeque::from([SearchState {
-        length: 0,
+        tile_length: 0,
         path: vec![(
             board.start_direction,
             step(&board.map, &board.start, board.start_direction),
@@ -97,6 +121,8 @@ pub fn solve(board: &Board) -> Vec<Analysis> {
     }]);
 
     let mut solution_states = vec![];
+
+    let mut max_movement = None;
 
     while let Some(state) = states.pop_front() {
         let last_dir = state.path.last().unwrap().0;
@@ -124,10 +150,11 @@ pub fn solve(board: &Board) -> Vec<Analysis> {
             }
 
             if new_state.path.last().unwrap().1 == board.end {
+                max_movement = Some(new_state.path.len());
                 solution_states.push(new_state);
             } else {
-                if let Some(found_solution) = solution_states.get(0) {
-                    if found_solution.path.len() > new_state.path.len() {
+                if let Some(max_movement) = max_movement {
+                    if new_state.path.len() < (max_movement + EXTRA_MOVES_SEARCH_MARGIN) {
                         new_states.push(new_state);
                     }
                 } else {
@@ -145,10 +172,30 @@ pub fn solve(board: &Board) -> Vec<Analysis> {
         }
     }
 
-    return solution_states.into_iter().map(state2analisis).collect();
+    let all_routes = solution_states
+        .into_iter()
+        .map(state2analisis)
+        .collect::<Vec<_>>();
+
+    if let Some(max_movement) = max_movement {
+        Some(Analysis {
+            optimal_movement_count: max_movement,
+            optimal_routes: all_routes
+                .iter()
+                .filter(|r| r.solution.len() == max_movement)
+                .cloned()
+                .collect(),
+            suboptimal_routes: all_routes
+                .into_iter()
+                .filter(|r| r.solution.len() == max_movement)
+                .collect(),
+        })
+    } else {
+        None
+    }
 }
 
-fn state2analisis(state: SearchState) -> Analysis {
+fn state2analisis(state: SearchState) -> Route {
     let mut move_sizes = vec![];
 
     for (start, end) in state.path.iter().tuple_windows() {
@@ -157,7 +204,7 @@ fn state2analisis(state: SearchState) -> Analysis {
         move_sizes.push(size);
     }
 
-    Analysis {
+    Route {
         move_sizes: move_sizes,
         solution: state.path,
         decision_positions: state.decision_positions,

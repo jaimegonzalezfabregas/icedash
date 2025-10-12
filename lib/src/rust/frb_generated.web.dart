@@ -67,9 +67,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64 dco_decode_isize(dynamic raw);
 
   @protected
-  List<Analysis> dco_decode_list_analysis(dynamic raw);
-
-  @protected
   List<List<Tile>> dco_decode_list_list_tile(dynamic raw);
 
   @protected
@@ -85,6 +82,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<(Direction, Pos)> dco_decode_list_record_direction_pos(dynamic raw);
 
   @protected
+  List<Route> dco_decode_list_route(dynamic raw);
+
+  @protected
   List<Tile> dco_decode_list_tile(dynamic raw);
 
   @protected
@@ -98,6 +98,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Room dco_decode_room(dynamic raw);
+
+  @protected
+  Route dco_decode_route(dynamic raw);
 
   @protected
   Tile dco_decode_tile(dynamic raw);
@@ -157,9 +160,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64 sse_decode_isize(SseDeserializer deserializer);
 
   @protected
-  List<Analysis> sse_decode_list_analysis(SseDeserializer deserializer);
-
-  @protected
   List<List<Tile>> sse_decode_list_list_tile(SseDeserializer deserializer);
 
   @protected
@@ -177,6 +177,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<Route> sse_decode_list_route(SseDeserializer deserializer);
+
+  @protected
   List<Tile> sse_decode_list_tile(SseDeserializer deserializer);
 
   @protected
@@ -192,6 +195,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Room sse_decode_room(SseDeserializer deserializer);
+
+  @protected
+  Route sse_decode_route(SseDeserializer deserializer);
 
   @protected
   Tile sse_decode_tile(SseDeserializer deserializer);
@@ -254,9 +260,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_isize(PlatformInt64 self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_analysis(List<Analysis> self, SseSerializer serializer);
-
-  @protected
   void sse_encode_list_list_tile(
     List<List<Tile>> self,
     SseSerializer serializer,
@@ -284,6 +287,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_route(List<Route> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_tile(List<Tile> self, SseSerializer serializer);
 
   @protected
@@ -303,6 +309,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_room(Room self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_route(Route self, SseSerializer serializer);
 
   @protected
   void sse_encode_tile(Tile self, SseSerializer serializer);
