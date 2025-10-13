@@ -1,6 +1,6 @@
 use crate::api::main::{Pos, Tile};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct TileMap(pub Vec<Vec<Tile>>);
 
 impl TileMap {

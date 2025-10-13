@@ -1,8 +1,15 @@
 use rand::{random, seq::IteratorRandom, Rng};
 
-use crate::{api::main::{Direction, Pos, Tile}, logic::{noise_reduction::{is_board_valid, map_noise_cleanup}, solver::step, tile_map::TileMap}};
+use crate::{
+    api::main::{Direction, Pos, Tile},
+    logic::{
+        noise_reduction::{is_board_valid, map_noise_cleanup},
+        solver::step,
+        tile_map::TileMap,
+    },
+};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Board {
     pub map: TileMap,
     pub start: Pos,
@@ -44,12 +51,27 @@ impl Board {
             ret.end_direction,
         );
 
-        ret.reset_pos = step(&ret.map, &ret.start, ret.start_direction);
+        ret.reset_pos = step(&ret.map, &ret.start, ret.start_direction).pos;
 
         if is_board_valid(&ret) {
             Some(ret)
         } else {
             None
+        }
+    }
+
+    pub fn box_cascade(&mut self, moved_ice_cube: Pos, direction: Direction) {
+        assert!(self.map.at(moved_ice_cube) == Tile::Box);
+
+        if self.map.at(moved_ice_cube + direction.vector()) == Tile::Ice {
+            self.map
+                .set(moved_ice_cube + direction.vector(), Tile::Box);
+            self.map.set(moved_ice_cube, Tile::Ice);
+            self.box_cascade(moved_ice_cube + direction.vector(), direction);
+        }
+
+        if self.map.at(moved_ice_cube + direction.vector()) == Tile::Box {
+            self.box_cascade(moved_ice_cube + direction.vector(), direction);
         }
     }
 
@@ -119,6 +141,24 @@ impl Board {
             map[y][x] = Tile::Wall;
         }
 
+          let weak_walls = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+
+        for _ in 0..weak_walls {
+            let x = (1..(width - 1) as usize).choose(&mut rng)?;
+            let y = (1..(height - 1) as usize).choose(&mut rng)?;
+
+            map[y][x] = Tile::WeakWall(1);
+        }
+
+          let boxes = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+
+        for _ in 0..boxes {
+            let x = (1..(width - 1) as usize).choose(&mut rng)?;
+            let y = (1..(height - 1) as usize).choose(&mut rng)?;
+
+            map[y][x] = Tile::Box;
+        }
+
         let vignet = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
 
         for _ in 0..vignet {
@@ -150,7 +190,7 @@ impl Board {
         );
 
         let ret = Board {
-            reset_pos: step(&map, &start, start_direction),
+            reset_pos: step(&map, &start, start_direction).pos,
             map,
             start,
             start_direction,

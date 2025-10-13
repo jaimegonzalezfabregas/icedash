@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::{collections::{HashSet, VecDeque}, hash::{DefaultHasher, Hash, Hasher}};
 
 use itertools::Itertools;
 
@@ -7,25 +7,31 @@ use crate::{
     logic::{board::Board, tile_map::TileMap},
 };
 
+const EXTRA_MOVES_SEARCH_MARGIN: usize = 3;
+
 #[derive(Clone, Debug)]
 
 pub struct Analysis {
     pub optimal_movement_count: usize,
-    pub optimal_routes: Vec<Route>,
-    pub suboptimal_routes: Vec<Route>,
+    pub routes: Vec<Vec<Route>>,
 }
 
 impl Analysis {
     pub fn compute_fitness(&self) -> f32 {
-        let good_to_bad_ratio = 1.; //            self.suboptimal_routes.len() as f32 / self.optimal_routes.len() as f32; //bigger is better
+        let mut good_route_fitness = self.routes[0][0].fitness();
 
-        let mut good_route_fitness = self.optimal_routes[0].fitness();
-
-        for analysis in self.optimal_routes.iter() {
+        for analysis in self.routes[0].iter() {
             good_route_fitness = good_route_fitness.min(analysis.fitness())
         }
 
-        good_route_fitness * good_to_bad_ratio
+        let solution_distribution = (self.routes[1].len() as f32 + self.routes[2].len() as f32)
+            / (1. + self.routes[0].len() as f32);
+
+        let ret = good_route_fitness * solution_distribution;
+
+        // println!("ret: {ret} {}/({}+1+{})",self.routes[1].len(),self.routes[2].len(),self.routes[0].len());
+
+        ret
     }
 }
 
@@ -34,6 +40,8 @@ pub struct Route {
     pub solution: Vec<(Direction, Pos)>,
     pub decision_positions: Vec<Pos>,
     pub move_sizes: Vec<isize>,
+    pub hitted_boxes: usize,
+    pub broken_walls: usize,
 }
 
 impl Route {
@@ -54,27 +62,73 @@ impl Route {
 #[derive(Debug)]
 struct SearchState {
     // score: f32,
+    board: Board,
     tile_length: isize,
     path: Vec<(Direction, Pos)>,
     decision_positions: Vec<Pos>,
-    visitations: HashSet<Pos>,
+    visitations: HashSet<u64>,
+    broken_walls: usize,
+    hitted_boxes: usize,
 }
 
 impl SearchState {
+
+    fn is_visited(visitations: &HashSet<u64>, pos: Pos, tilemap: &TileMap) -> bool{
+             let mut hasher = DefaultHasher::new();
+        tilemap.hash(&mut hasher);
+        pos.hash(&mut hasher);
+        visitations.contains(&hasher.finish())
+
+
+    }
+
+      fn set_as_visited( visitations: &mut HashSet< u64>, pos: Pos, tilemap: &TileMap){
+             let mut hasher = DefaultHasher::new();
+       tilemap.hash(&mut hasher);
+        pos.hash(&mut hasher);
+        visitations.insert(hasher.finish());
+    }
+
     fn step(&self, direction: Direction, board: &Board) -> (isize, Result<Self, &str>) {
         let step_start = self.path.last().unwrap().1;
 
         let new_step = step(&board.map, &step_start, direction);
-        let step_length = (new_step.x - step_start.x).abs() + (new_step.y - step_start.y).abs();
-        if self.visitations.contains(&new_step) {
+        let step_length =
+            (new_step.pos.x - step_start.x).abs() + (new_step.pos.y - step_start.y).abs();
+
+        if Self::is_visited(&self.visitations, new_step.pos, &board.map)
+          
+        {
             return (step_length, Err("Went into a loop"));
         }
 
         let mut new_path = self.path.clone();
-        new_path.push((direction, new_step));
+        new_path.push((direction, new_step.pos));
+
+        let mut new_board = board.to_owned();
+
+        let mut new_hitted_boxes = self.hitted_boxes;
+
+        if let Tile::WeakWall(hits) = new_step.hit {
+            if hits - 1 == 0 {
+                new_board.map.set(new_step.hit_pos, Tile::Ice);
+                new_hitted_boxes += 1;
+            } else {
+                new_board
+                    .map
+                    .set(new_step.hit_pos, Tile::WeakWall(hits - 1));
+            }
+        }
+        let mut new_broken_walls = self.broken_walls;
+
+        if let Tile::Box = new_step.hit {
+            new_board.box_cascade(new_step.hit_pos, direction);
+            new_broken_walls += 1;
+        }
 
         let mut new_visitations = self.visitations.clone();
-        new_visitations.insert(new_step);
+
+        Self::set_as_visited(&mut new_visitations, new_step.pos, &board.map);
 
         (
             step_length,
@@ -83,18 +137,26 @@ impl SearchState {
                 path: new_path,
                 decision_positions: self.decision_positions.clone(),
                 visitations: new_visitations,
+                board: new_board,
+                broken_walls: new_broken_walls,
+                hitted_boxes: new_hitted_boxes,
             }),
         )
     }
 }
 
-pub fn step(map: &TileMap, start: &Pos, direction: Direction) -> Pos {
+pub struct StepResult {
+    pub hit: Tile,
+    pub hit_pos: Pos,
+    pub pos: Pos,
+}
+
+pub fn step(map: &TileMap, start: &Pos, direction: Direction) -> StepResult {
     let mut ret = start.clone();
 
     ret += direction.vector();
 
     while !map.at(ret).is_solid() {
-        // TODO use canWalkInto from dart
         ret += direction.vector();
     }
 
@@ -102,27 +164,31 @@ pub fn step(map: &TileMap, start: &Pos, direction: Direction) -> Pos {
         ret -= direction.vector();
     }
 
-    ret
+    StepResult {
+        hit: map.at(ret),
+        hit_pos: ret + direction.vector(),
+        pos: ret,
+    }
 }
-
-const EXTRA_MOVES_SEARCH_MARGIN: usize = 1;
 
 pub fn analyze(board: &Board) -> Option<Analysis> {
     // board.print(vec![]);
 
+    let entering_animation = step(&board.map, &board.start, board.start_direction);
+
     let mut states = VecDeque::from([SearchState {
         tile_length: 0,
-        path: vec![(
-            board.start_direction,
-            step(&board.map, &board.start, board.start_direction),
-        )],
+        path: vec![(board.start_direction, entering_animation.pos)],
         decision_positions: vec![],
         visitations: HashSet::new(),
+        board: board.to_owned(),
+        broken_walls: 0,
+        hitted_boxes: 0,
     }]);
 
-    let mut solution_states = vec![];
+    let mut solution_states = vec![vec![]; EXTRA_MOVES_SEARCH_MARGIN];
 
-    let mut max_movement = None;
+    let mut best_movement_count = None;
 
     while let Some(state) = states.pop_front() {
         let last_dir = state.path.last().unwrap().0;
@@ -130,14 +196,14 @@ pub fn analyze(board: &Board) -> Option<Analysis> {
 
         let potencial_directions: Vec<Direction> = [last_dir.left(), last_dir.right()]
             .into_iter()
-            .filter(|dir| !board.map.at(last_pos + dir.vector()).is_solid())
+            .filter(|dir| !state.board.map.at(last_pos + dir.vector()).is_solid())
             .collect();
 
         let mut new_states = vec![];
         let mut long_directions = 0;
 
         for dir in potencial_directions {
-            let (step_length, new_state) = state.step(dir, board);
+            let (step_length, new_state) = state.step(dir, &state.board);
 
             let new_state = if let Ok(new_state) = new_state {
                 new_state
@@ -149,11 +215,18 @@ pub fn analyze(board: &Board) -> Option<Analysis> {
                 long_directions += 1;
             }
 
-            if new_state.path.last().unwrap().1 == board.end {
-                max_movement = Some(new_state.path.len());
-                solution_states.push(new_state);
+            if new_state.path.last().unwrap().1 == state.board.end {
+                let best_movement_count = if let Some(best_movement_count) = best_movement_count {
+                    best_movement_count
+                } else {
+                    best_movement_count = Some(new_state.path.len());
+                    new_state.path.len()
+                };
+
+                solution_states[new_state.path.len() - best_movement_count]
+                    .push(state2analisis(new_state));
             } else {
-                if let Some(max_movement) = max_movement {
+                if let Some(max_movement) = best_movement_count {
                     if new_state.path.len() < (max_movement + EXTRA_MOVES_SEARCH_MARGIN) {
                         new_states.push(new_state);
                     }
@@ -172,23 +245,12 @@ pub fn analyze(board: &Board) -> Option<Analysis> {
         }
     }
 
-    let all_routes = solution_states
-        .into_iter()
-        .map(state2analisis)
-        .collect::<Vec<_>>();
+    let all_routes = solution_states;
 
-    if let Some(max_movement) = max_movement {
+    if let Some(max_movement) = best_movement_count {
         Some(Analysis {
             optimal_movement_count: max_movement,
-            optimal_routes: all_routes
-                .iter()
-                .filter(|r| r.solution.len() == max_movement)
-                .cloned()
-                .collect(),
-            suboptimal_routes: all_routes
-                .into_iter()
-                .filter(|r| r.solution.len() == max_movement)
-                .collect(),
+            routes: all_routes,
         })
     } else {
         None
@@ -208,5 +270,7 @@ fn state2analisis(state: SearchState) -> Route {
         move_sizes: move_sizes,
         solution: state.path,
         decision_positions: state.decision_positions,
+        broken_walls: state.broken_walls,
+        hitted_boxes: state.hitted_boxes,
     }
 }

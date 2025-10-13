@@ -114,14 +114,14 @@ impl Direction {
     }
 }
 
-#[derive(Clone, PartialEq, Copy)]
+#[derive(Clone, PartialEq, Copy, Debug, Eq, Hash)]
 pub enum Tile {
     Entrance,
     Gate,
     Wall,
     Ice,
-    ThinIce(u8),
-    WeakBox(u8),
+    WeakWall(u8),
+    Box,
     Outside,
 }
 
@@ -132,9 +132,9 @@ impl Tile {
             Tile::Gate => "G",
             Tile::Wall => "#",
             Tile::Ice => " ",
-            Tile::ThinIce(_) => "t",
-            Tile::WeakBox(_) => "b",
+            Tile::WeakWall(_) => "w",
             Tile::Outside => " ",
+            Tile::Box => "b",
         }
     }
 
@@ -144,9 +144,9 @@ impl Tile {
             Tile::Gate => true,
             Tile::Wall => true,
             Tile::Ice => false,
-            Tile::ThinIce(x) => *x <= 0,
-            Tile::WeakBox(x) => *x > 0,
+            Tile::WeakWall(_) => true,
             Tile::Outside => true,
+            Tile::Box => true,
         }
     }
 }
