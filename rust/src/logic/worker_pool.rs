@@ -16,7 +16,7 @@ use crate::{
     logic::{board::Board, creature::Creature, noise_reduction::asthetic_cleanup},
 };
 
-enum CtrlMsg {
+pub enum CtrlMsg {
     Kill,
     Halt(usize),
 }
@@ -25,6 +25,8 @@ struct Worker {
     return_channel: mpsc::Receiver<Creature>,
     crtl_channel: mpsc::Sender<CtrlMsg>,
 }
+
+
 
 
 static G_WORKER:  Mutex<VecDeque<Worker>> = Mutex::new(VecDeque::new());
@@ -55,7 +57,17 @@ pub fn get_new_room() -> Room {
     spawn(move || {
         start_search();
     });
+
+    println!("starting trimming");
+     ret.board.print(
+        ret.analysis.routes[0][0]
+            .solution
+            .iter()
+            .map(|e| e.1)
+            .collect(),
+    );
     ret.board = asthetic_cleanup(ret.board);
+    println!("trimming successfull");
     ret.board.print(
         ret.analysis.routes[0][0]
             .solution
@@ -96,7 +108,7 @@ pub fn start_search() {
     }
 }
 
-fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
+pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
     let mut rng = rand::rng();
 
     let mut population: ReverseSortedVec<Creature> = ReverseSortedVec::new();
