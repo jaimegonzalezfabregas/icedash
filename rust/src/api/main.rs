@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Div, Mul, SubAssign};
+use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
 use crate::logic::{board::Board, creature::Creature, tile_map::TileMap, worker_pool::{get_new_room, start_search, worker_halt}};
 
@@ -24,6 +24,8 @@ impl Pos {
             y: self.x,
         }
     }
+
+    
 }
 
 impl Add<Pos> for Pos {
@@ -45,6 +47,16 @@ impl SubAssign for Pos {
     fn sub_assign(&mut self, rhs: Self) {
         self.x -= rhs.x;
         self.y -= rhs.y;
+    }
+}
+
+impl Sub<Pos> for Pos{
+    type Output = Self;
+
+    fn sub(mut self, rhs: Pos) -> Self::Output {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+        self
     }
 }
 

@@ -26,10 +26,7 @@ struct Worker {
     crtl_channel: mpsc::Sender<CtrlMsg>,
 }
 
-
-
-
-static G_WORKER:  Mutex<VecDeque<Worker>> = Mutex::new(VecDeque::new());
+static G_WORKER: Mutex<VecDeque<Worker>> = Mutex::new(VecDeque::new());
 
 pub fn get_new_room() -> Room {
     let mut ret = {
@@ -37,8 +34,10 @@ pub fn get_new_room() -> Room {
         let workers = &mut (*workers);
         let worker = workers.pop_front().unwrap();
 
-        let mut ret = worker.return_channel.recv_timeout(Duration::from_millis(500)).expect("Worker Thread did not return any boards");
-        
+        let mut ret = worker
+            .return_channel
+            .recv_timeout(Duration::from_millis(500))
+            .expect("Worker Thread did not return any boards");
 
         if let Some(last) = worker.return_channel.try_iter().last() {
             ret = last;
@@ -59,7 +58,7 @@ pub fn get_new_room() -> Room {
     });
 
     println!("starting trimming");
-     ret.board.print(
+    ret.board.print(
         ret.analysis.routes[0][0]
             .solution
             .iter()
@@ -116,8 +115,10 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
     let mut generations = 1;
 
     let mut best_so_far = 0.;
+    let mut iter = 0;
 
     loop {
+        iter += 1;
         match messenger.try_recv() {
             Ok(CtrlMsg::Halt(time)) => {
                 println!("halting");
@@ -125,7 +126,11 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
                 println!("resuming");
                 continue;
             }
-            Ok(CtrlMsg::Kill) => return,
+            Ok(CtrlMsg::Kill) => {
+                println!("reached {generations} generations with {iter} iter");
+
+                return;
+            }
             Err(_) => {}
         }
 
@@ -168,7 +173,5 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
 
             generations += 1;
         }
-
-        
     }
 }

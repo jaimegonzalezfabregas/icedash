@@ -141,23 +141,23 @@ impl Board {
             map[y][x] = Tile::Wall;
         }
 
-          let weak_walls = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+        // let weak_walls = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
 
-        for _ in 0..weak_walls {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
+        // for _ in 0..weak_walls {
+        //     let x = (1..(width - 1) as usize).choose(&mut rng)?;
+        //     let y = (1..(height - 1) as usize).choose(&mut rng)?;
 
-            map[y][x] = Tile::WeakWall(1);
-        }
+        //     map[y][x] = Tile::WeakWall(1);
+        // }
 
-          let boxes = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+        // let boxes = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
 
-        for _ in 0..boxes {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
+        // for _ in 0..boxes {
+        //     let x = (1..(width - 1) as usize).choose(&mut rng)?;
+        //     let y = (1..(height - 1) as usize).choose(&mut rng)?;
 
-            map[y][x] = Tile::Box;
-        }
+        //     map[y][x] = Tile::Box;
+        // }
 
         let vignet = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
 

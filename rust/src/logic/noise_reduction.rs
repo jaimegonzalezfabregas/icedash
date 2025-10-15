@@ -1,30 +1,18 @@
 use rand::seq::IndexedRandom;
-use std::collections::VecDeque;
+use std::{collections::VecDeque, vec};
 
 use crate::{
     api::main::{Direction, Pos, Tile},
     logic::{board::Board, tile_map::TileMap},
 };
 
-pub fn map_noise_cleanup(
-    map: &mut TileMap,
-    start: &mut Pos,
-    start_direction: Direction,
-    end: &mut Pos,
-    end_direction: Direction,
-) {
+pub fn remove_awkward_corners(map: &mut TileMap) {
     let mut rng = rand::rng();
 
+    let mut rep = true;
     let width = map.get_width();
     let height = map.get_height();
 
-    if start.x == end.x || start.y == end.y {
-        let mean = (*start + *end) / 2;
-
-        map.set(mean, Tile::Wall);
-    }
-
-    let mut rep = true;
     while rep {
         rep = false;
         for y in 1..height - 2 {
@@ -59,59 +47,70 @@ pub fn map_noise_cleanup(
             }
         }
     }
+}
 
-    let mut rep = true;
-    while rep {
-        rep = false;
-        let all_inner_pos = map.all_inner_pos().collect::<Vec<_>>();
-        for p in all_inner_pos {
+fn remove_sorrounded_spaces<const N: usize>(
+    map: &mut TileMap,
+    vector_list: [(isize, isize); N],
+    threshold: usize,
+) {
+    let mut to_check = map.all_inner_pos().collect::<Vec<_>>();
+    while let Some(p) = to_check.pop() {
+        if map.in_bounds(p) {
             if map.at(p) != Tile::Wall {
                 let mut neigh_count = 0;
-                for (dx, dy) in [
-                    (0, 1),
-                    (0, -1),
-                    (-1, 0),
-                    (1, 0),
-                    (1, 1),
-                    (1, -1),
-                    (-1, -1),
-                    (-1, 1),
-                ] {
-                    let neigh = map.at(p + Pos::new(dx, dy));
-                    if neigh.is_solid() {
-                        neigh_count += 1;
+                for (dx, dy) in vector_list {
+                    if map.in_bounds(p + Pos::new(dx, dy)) {
+                        let neigh = map.at(p + Pos::new(dx, dy));
+                        if neigh.is_solid() {
+                            neigh_count += 1;
+                        }
                     }
                 }
 
-                if neigh_count >= 6 {
+                if neigh_count >= threshold {
                     map.set(p, Tile::Wall);
-                    rep = true;
+
+                    let mut new_to_check = vector_list.map(|(dx, dy)| p - Pos { x: dx, y: dy });
+
+                    to_check.append(&mut new_to_check.into());
                 }
             }
         }
     }
+}
 
-    let mut rep = true;
-    while rep {
-        rep = false;
-        let all_inner_pos = map.all_inner_pos().collect::<Vec<_>>();
-        for p in all_inner_pos {
-            if map.at(p) != Tile::Wall {
-                let mut neigh_count = 0;
-                for (dx, dy) in [(0, 1), (0, -1), (-1, 0), (1, 0)] {
-                    let neigh = map.at(p + Pos::new(dx, dy));
-                    if neigh.is_solid() {
-                        neigh_count += 1;
-                    }
-                }
+pub fn map_noise_cleanup(
+    mut map: &mut TileMap,
+    start: &mut Pos,
+    start_direction: Direction,
+    end: &mut Pos,
+    end_direction: Direction,
+) {
+    if start.x == end.x || start.y == end.y {
+        let mean = (*start + *end) / 2;
 
-                if neigh_count >= 3 {
-                    map.set(p, Tile::Wall);
-                    rep = true;
-                }
-            }
-        }
+        map.set(mean, Tile::Wall);
     }
+
+    // remove_awkward_corners(&mut map);
+
+    // remove_sorrounded_spaces(
+    //     &mut map,
+    //     [
+    //         (0, 1),
+    //         (0, -1),
+    //         (-1, 0),
+    //         (1, 0),
+    //         (1, 1),
+    //         (1, -1),
+    //         (-1, -1),
+    //         (-1, 1),
+    //     ],
+    //     6,
+    // );
+
+    // remove_sorrounded_spaces(&mut map, [(0, 1), (0, -1), (-1, 0), (1, 0)], 3);
 
     map.set(*start, Tile::Entrance);
 
@@ -197,6 +196,21 @@ pub fn has_rooms(board: &Board) -> bool {
                 continue;
             }
 
+            let direction = Pos { x: dx, y: dy };
+            let normal_direction = direction.rotate_left(1);
+
+            if board.map.at(p1 + normal_direction) == Tile::Ice
+                && board.map.at(p2 + normal_direction) == Tile::Ice
+            {
+                continue;
+            }
+
+            if board.map.at(p1 - normal_direction) == Tile::Ice
+                && board.map.at(p2 - normal_direction) == Tile::Ice
+            {
+                continue;
+            }
+
             if room_at(p1, p2, board) {
                 // board.print(vec![(x1, y1), (x2, y2)]);
                 return true;
@@ -265,7 +279,7 @@ pub fn asthetic_cleanup(mut ret: Board) -> Board {
     for _ in 0..4 {
         ret = ret.rotate_left();
 
-        if ret.map.0[ret.map.0.len() - 1] == ret.map.0[ret.map.0.len() - 2] {
+        while ret.map.0[ret.map.0.len() - 1] == ret.map.0[ret.map.0.len() - 2] {
             ret.map.0.pop();
         }
     }
