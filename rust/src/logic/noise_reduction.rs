@@ -1,87 +1,92 @@
-use rand::seq::IndexedRandom;
-use std::{collections::VecDeque, vec};
+use std::{
+    collections::{HashSet, VecDeque},
+    vec,
+};
 
 use crate::{
     api::main::{Direction, Pos, Tile},
-    logic::{board::Board, tile_map::TileMap},
+    logic::{
+        board::{Board, BoardWrap},
+        tile_map::TileMap,
+    },
 };
 
-pub fn remove_awkward_corners(map: &mut TileMap) {
-    let mut rng = rand::rng();
+// pub fn remove_awkward_corners(map: &mut TileMap) {
+//     let mut rng = rand::rng();
 
-    let mut rep = true;
-    let width = map.get_width();
-    let height = map.get_height();
+//     let mut rep = true;
+//     let width = map.get_width();
+//     let height = map.get_height();
 
-    while rep {
-        rep = false;
-        for y in 1..height - 2 {
-            for x in 1..width - 2 {
-                let a = map.atxy(x, y);
-                let b = map.atxy(x, y + 1);
-                let c = map.atxy(x + 1, y);
-                let d = map.atxy(x + 1, y + 1);
+//     while rep {
+//         rep = false;
+//         for y in 1..height - 2 {
+//             for x in 1..width - 2 {
+//                 let a = map.atxy(x, y);
+//                 let b = map.atxy(x, y + 1);
+//                 let c = map.atxy(x + 1, y);
+//                 let d = map.atxy(x + 1, y + 1);
 
-                let cuad = (a, b, c, d);
+//                 let cuad = (a, b, c, d);
 
-                match cuad {
-                    (Tile::Ice, Tile::Wall, Tile::Wall, Tile::Ice) => {
-                        rep = true;
-                        if *([true, false].choose(&mut rng).unwrap()) {
-                            *map.at_mut(Pos::new(x, y)) = Tile::Wall;
-                        } else {
-                            *map.at_mut(Pos::new(x + 1, y + 1)) = Tile::Wall;
-                        }
-                    }
-                    (Tile::Wall, Tile::Ice, Tile::Ice, Tile::Wall) => {
-                        rep = true;
-                        if *([true, false].choose(&mut rng).unwrap()) {
-                            *map.at_mut(Pos::new(x + 1, y)) = Tile::Wall;
-                        } else {
-                            *map.at_mut(Pos::new(x + 1, y)) = Tile::Wall;
-                        }
-                    }
+//                 match cuad {
+//                     (Tile::Ice, Tile::Wall, Tile::Wall, Tile::Ice) => {
+//                         rep = true;
+//                         if *([true, false].choose(&mut rng).unwrap()) {
+//                             *map.at_mut(Pos::new(x, y)) = Tile::Wall;
+//                         } else {
+//                             *map.at_mut(Pos::new(x + 1, y + 1)) = Tile::Wall;
+//                         }
+//                     }
+//                     (Tile::Wall, Tile::Ice, Tile::Ice, Tile::Wall) => {
+//                         rep = true;
+//                         if *([true, false].choose(&mut rng).unwrap()) {
+//                             *map.at_mut(Pos::new(x + 1, y)) = Tile::Wall;
+//                         } else {
+//                             *map.at_mut(Pos::new(x + 1, y)) = Tile::Wall;
+//                         }
+//                     }
 
-                    _ => {}
-                }
-            }
-        }
-    }
-}
+//                     _ => {}
+//                 }
+//             }
+//         }
+//     }
+// }
 
-fn remove_sorrounded_spaces<const N: usize>(
-    map: &mut TileMap,
-    vector_list: [(isize, isize); N],
-    threshold: usize,
-) {
-    let mut to_check = map.all_inner_pos().collect::<Vec<_>>();
-    while let Some(p) = to_check.pop() {
-        if map.in_bounds(p) {
-            if map.at(p) != Tile::Wall {
-                let mut neigh_count = 0;
-                for (dx, dy) in vector_list {
-                    if map.in_bounds(p + Pos::new(dx, dy)) {
-                        let neigh = map.at(p + Pos::new(dx, dy));
-                        if neigh.is_solid() {
-                            neigh_count += 1;
-                        }
-                    }
-                }
+// fn remove_sorrounded_spaces<const N: usize>(
+//     map: &mut TileMap,
+//     vector_list: [(isize, isize); N],
+//     threshold: usize,
+// ) {
+//     let mut to_check = map.all_inner_pos().collect::<Vec<_>>();
+//     while let Some(p) = to_check.pop() {
+//         if map.in_bounds(p) {
+//             if map.at(p) != Tile::Wall {
+//                 let mut neigh_count = 0;
+//                 for (dx, dy) in vector_list {
+//                     if map.in_bounds(p + Pos::new(dx, dy)) {
+//                         let neigh = map.at(p + Pos::new(dx, dy));
+//                         if neigh.is_solid() {
+//                             neigh_count += 1;
+//                         }
+//                     }
+//                 }
 
-                if neigh_count >= threshold {
-                    map.set(p, Tile::Wall);
+//                 if neigh_count >= threshold {
+//                     map.set(p, Tile::Wall);
 
-                    let mut new_to_check = vector_list.map(|(dx, dy)| p - Pos { x: dx, y: dy });
+//                     let new_to_check = vector_list.map(|(dx, dy)| p - Pos { x: dx, y: dy });
 
-                    to_check.append(&mut new_to_check.into());
-                }
-            }
-        }
-    }
-}
+//                     to_check.append(&mut new_to_check.into());
+//                 }
+//             }
+//         }
+//     }
+// }
 
 pub fn map_noise_cleanup(
-    mut map: &mut TileMap,
+    map: &mut TileMap,
     start: &mut Pos,
     start_direction: Direction,
     end: &mut Pos,
@@ -156,6 +161,95 @@ pub fn map_noise_cleanup(
         Tile::Ice,
     );
 }
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ConnectedSearchState {
+    pos: Pos,
+    heuristic: usize,
+}
+
+impl Ord for ConnectedSearchState {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.heuristic.cmp(&self.heuristic)
+        // We want the priority queue to pop the smallest cost first
+    }
+}
+
+impl PartialOrd for ConnectedSearchState {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+pub fn connected(seed1: Pos, seed2: Pos, board1: &BoardWrap, board2: &BoardWrap) -> bool {
+    let mut search1 = BinaryHeap::new();
+    let mut search2 = BinaryHeap::new();
+
+    let mut found = HashSet::<Pos>::new();
+
+    // Push the initial positions with 0 cost and heuristic distance
+    search1.push(ConnectedSearchState {
+        pos: seed1,
+        heuristic: heuristic_distance(seed1, seed2),
+    });
+
+    search2.push(ConnectedSearchState {
+        pos: seed2,
+        heuristic: heuristic_distance(seed2, seed1),
+    });
+
+    found.insert(seed1);
+    found.insert(seed2);
+
+    while !search1.is_empty() && !search2.is_empty() {
+        let p1 = search1.pop().unwrap();
+        let p2 = search2.pop().unwrap();
+
+        // Add new positions to the search based on directions.
+        for direction in Direction::all() {
+            let next_pos1 = direction.vector() + p1.pos;
+            if board1.at(next_pos1) == Tile::Ice {
+                if !found.contains(&next_pos1) {
+                    found.insert(next_pos1);
+                    search1.push(ConnectedSearchState {
+                        pos: next_pos1,
+                        heuristic: heuristic_distance(next_pos1, seed2),
+                    });
+                } else {
+                    println!("{:?}", next_pos1);
+
+                    return true;
+                }
+            }
+
+            let next_pos2 = direction.vector() + p2.pos;
+            if board2.at(next_pos2) == Tile::Ice {
+                if !found.contains(&next_pos2) {
+                    found.insert(next_pos2);
+                    search2.push(ConnectedSearchState {
+                        pos: next_pos2,
+                        heuristic: heuristic_distance(next_pos2, seed1),
+                    });
+                } else {
+                    println!("{:?}", next_pos2);
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
+}
+
+// Assuming you have a function to calculate the heuristic distance
+fn heuristic_distance(pos1: Pos, pos2: Pos) -> usize {
+    // Example: Manhattan distance
+    ((pos1.x - pos2.x).abs() + (pos1.y - pos2.y).abs())
+        .try_into()
+        .unwrap()
+}
 
 pub fn room_at(p1: Pos, p2: Pos, board: &Board) -> bool {
     let entrance_corridor = board.start + board.start_direction.vector();
@@ -164,23 +258,25 @@ pub fn room_at(p1: Pos, p2: Pos, board: &Board) -> bool {
         return false;
     }
 
-    let mut split_board1 = board.clone();
-    let mut split_board2 = board.clone();
+    let ret = !connected(
+        p1,
+        p2,
+        &BoardWrap {
+            base: &board,
+            p: p2,
+            tile: Tile::Wall,
+        },
+        &BoardWrap {
+            base: &board,
+            p: p1,
+            tile: Tile::Wall,
+        },
+    );
 
-    split_board2.map.set(p1, Tile::Wall);
-    split_board1.map.set(p2, Tile::Wall);
+    println!("{ret} room at:");
+    board.print(vec![p1,p2]);
 
-    let reachibility1 = flood(vec![p2], &split_board2);
-    let reachibility2 = flood(vec![p1], &split_board1);
-
-    for (y, row) in reachibility1.into_iter().enumerate() {
-        for (x, reach) in row.into_iter().enumerate() {
-            if reach && reachibility2[y][x] {
-                return false;
-            }
-        }
-    }
-    true
+    ret
 }
 
 pub fn has_rooms(board: &Board) -> bool {

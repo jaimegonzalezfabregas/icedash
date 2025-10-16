@@ -9,6 +9,7 @@ use crate::{
     },
 };
 
+
 #[derive(Clone, Debug)]
 pub struct Board {
     pub map: TileMap,
@@ -222,6 +223,27 @@ impl Board {
             start_direction: self.start_direction.left(),
             end_direction: self.end_direction.left(),
             map: self.map.rotate_left(),
+        }
+    }
+
+    pub fn at(&self, p: Pos)-> Tile{
+        self.map.at(p)
+    }
+}
+
+
+pub struct BoardWrap<'a>{
+    pub base: &'a Board,
+    pub p: Pos,
+    pub tile: Tile,
+}
+
+impl<'a> BoardWrap<'a>{
+    pub fn at(&self, p: Pos) -> Tile{
+        if p == self.p{
+            self.tile
+        }else{
+            self.base.map.at(p)
         }
     }
 }

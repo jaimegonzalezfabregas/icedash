@@ -14,3 +14,9 @@ itertools = "0.14.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+
+[profile.dev]
+opt-level = 3
+
+[profile.release]
+opt-level = 3

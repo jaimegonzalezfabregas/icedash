@@ -124,6 +124,10 @@ impl Direction {
     pub fn right(&self) -> Self {
         self.left().reverse()
     }
+    
+    pub(crate) fn all() -> [Direction;4] {
+        [Direction::North, Direction::East, Direction::South, Direction::West]
+    }
 }
 
 #[derive(Clone, PartialEq, Copy, Debug, Eq, Hash)]

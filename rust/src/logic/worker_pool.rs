@@ -116,9 +116,9 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
 
     let mut best_so_far = 0.;
     let mut iter = 0;
+    let mut successes: i32 = 0;
 
     loop {
-        iter += 1;
         match messenger.try_recv() {
             Ok(CtrlMsg::Halt(time)) => {
                 println!("halting");
@@ -127,7 +127,7 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
                 continue;
             }
             Ok(CtrlMsg::Kill) => {
-                println!("reached {generations} generations with {iter} iter");
+                println!("reached {generations} generations with {iter} iter and {successes} successes {}", successes as f32 / iter as f32);
 
                 return;
             }
@@ -135,8 +135,11 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
         }
 
         if population.len() < generations * 3 {
+        iter += 1;
+
             if let Some(new_creature) = Creature::board_to_creature(Board::new_random()) {
                 population.insert(new_creature);
+                successes+=1;
                 if population[0].fitness > best_so_far {
                     best_so_far = population[0].fitness;
                     returns
@@ -145,10 +148,13 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
                 }
             }
         } else if population.len() < generations * 9 {
-            let creature = population[0..generations * 2].choose(&mut rng).unwrap();
 
-            if let Some(new_creature) = creature.mutate(0.3) {
+            if let Some(new_creature) = (population[0..generations * 2].choose(&mut rng).unwrap()).mutate(0.3) {
+        iter += 1;
+
                 population.insert(new_creature);
+                successes+=1;
+
                 if population[0].fitness > best_so_far {
                     best_so_far = population[0].fitness;
                     returns

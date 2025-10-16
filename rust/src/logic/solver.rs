@@ -1,4 +1,7 @@
-use std::{collections::{HashSet, VecDeque}, hash::{DefaultHasher, Hash, Hasher}};
+use std::{
+    collections::{HashSet, VecDeque},
+    hash::{DefaultHasher, Hash, Hasher},
+};
 
 use itertools::Itertools;
 
@@ -31,8 +34,8 @@ impl Analysis {
 
         if ret != 0. {
 
-        // println!("ret: {ret} ({}+{})/(1+{})",self.routes[1].len(),self.routes[2].len(),self.routes[0].len());
-};
+            // println!("ret: {ret} ({}+{})/(1+{})",self.routes[1].len(),self.routes[2].len(),self.routes[0].len());
+        };
         ret
     }
 }
@@ -68,29 +71,12 @@ struct SearchState {
     tile_length: isize,
     path: Vec<(Direction, Pos)>,
     decision_positions: Vec<Pos>,
-    visitations: HashSet<u64>,
+    visitations: HashSet<Pos>,
     broken_walls: usize,
     hitted_boxes: usize,
 }
 
 impl SearchState {
-
-    fn is_visited(visitations: &HashSet<u64>, pos: Pos, tilemap: &TileMap) -> bool{
-             let mut hasher = DefaultHasher::new();
-        tilemap.hash(&mut hasher);
-        pos.hash(&mut hasher);
-        visitations.contains(&hasher.finish())
-
-
-    }
-
-      fn set_as_visited( visitations: &mut HashSet< u64>, pos: Pos, tilemap: &TileMap){
-             let mut hasher = DefaultHasher::new();
-       tilemap.hash(&mut hasher);
-        pos.hash(&mut hasher);
-        visitations.insert(hasher.finish());
-    }
-
     fn step(&self, direction: Direction, board: &Board) -> (isize, Result<Self, &str>) {
         let step_start = self.path.last().unwrap().1;
 
@@ -98,9 +84,7 @@ impl SearchState {
         let step_length =
             (new_step.pos.x - step_start.x).abs() + (new_step.pos.y - step_start.y).abs();
 
-        if Self::is_visited(&self.visitations, new_step.pos, &board.map)
-          
-        {
+        if self.visitations.contains(&new_step.pos) {
             return (step_length, Err("Went into a loop"));
         }
 
@@ -130,7 +114,7 @@ impl SearchState {
 
         let mut new_visitations = self.visitations.clone();
 
-        Self::set_as_visited(&mut new_visitations, new_step.pos, &board.map);
+        new_visitations.insert(new_step.pos);
 
         (
             step_length,
