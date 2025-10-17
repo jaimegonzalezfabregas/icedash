@@ -187,21 +187,20 @@ pub fn connected(seed1: Pos, seed2: Pos, board1: &BoardWrap, board2: &BoardWrap)
     let mut search1 = BinaryHeap::new();
     let mut search2 = BinaryHeap::new();
 
-    let mut found = HashSet::<Pos>::new();
+    let mut found1 = HashSet::<Pos>::new();
+    let mut found2 = HashSet::<Pos>::new();
 
     // Push the initial positions with 0 cost and heuristic distance
     search1.push(ConnectedSearchState {
         pos: seed1,
         heuristic: heuristic_distance(seed1, seed2),
     });
+    found1.insert(seed1);
 
     search2.push(ConnectedSearchState {
         pos: seed2,
         heuristic: heuristic_distance(seed2, seed1),
     });
-
-    found.insert(seed1);
-    found.insert(seed2);
 
     while !search1.is_empty() && !search2.is_empty() {
         let p1 = search1.pop().unwrap();
@@ -210,31 +209,34 @@ pub fn connected(seed1: Pos, seed2: Pos, board1: &BoardWrap, board2: &BoardWrap)
         // Add new positions to the search based on directions.
         for direction in Direction::all() {
             let next_pos1 = direction.vector() + p1.pos;
-            if board1.at(next_pos1) == Tile::Ice {
-                if !found.contains(&next_pos1) {
-                    found.insert(next_pos1);
+
+            if !found1.contains(&next_pos1) {
+                if board1.at(next_pos1) == Tile::Ice {
+                    if found2.contains(&next_pos1) {
+                        return true;
+                    }
+                    found1.insert(next_pos1);
                     search1.push(ConnectedSearchState {
                         pos: next_pos1,
                         heuristic: heuristic_distance(next_pos1, seed2),
                     });
-                } else {
-                    println!("{:?}", next_pos1);
-
-                    return true;
                 }
             }
 
             let next_pos2 = direction.vector() + p2.pos;
-            if board2.at(next_pos2) == Tile::Ice {
-                if !found.contains(&next_pos2) {
-                    found.insert(next_pos2);
+
+            if !found2.contains(&next_pos2) {
+                if board2.at(next_pos2) == Tile::Ice {
+                    if found1.contains(&next_pos2) {
+                        
+                        return true;
+
+                    }
+                    found2.insert(next_pos2);
                     search2.push(ConnectedSearchState {
                         pos: next_pos2,
                         heuristic: heuristic_distance(next_pos2, seed1),
                     });
-                } else {
-                    println!("{:?}", next_pos2);
-                    return true;
                 }
             }
         }
@@ -258,7 +260,7 @@ pub fn room_at(p1: Pos, p2: Pos, board: &Board) -> bool {
         return false;
     }
 
-    let ret = !connected(
+    !connected(
         p1,
         p2,
         &BoardWrap {
@@ -271,12 +273,7 @@ pub fn room_at(p1: Pos, p2: Pos, board: &Board) -> bool {
             p: p1,
             tile: Tile::Wall,
         },
-    );
-
-    println!("{ret} room at:");
-    board.print(vec![p1,p2]);
-
-    ret
+    )
 }
 
 pub fn has_rooms(board: &Board) -> bool {

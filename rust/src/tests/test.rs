@@ -6,7 +6,7 @@ mod tests {
         time::Duration,
     };
 
-    use crate::logic::{noise_reduction::asthetic_cleanup, worker_pool::worker_thread};
+    use crate::{api::main::{Direction, Pos, Tile}, logic::{board::Board, noise_reduction::{asthetic_cleanup, has_rooms}, tile_map::TileMap, worker_pool::worker_thread}};
 
     #[test]
     fn test_bench() {
@@ -44,37 +44,68 @@ mod tests {
 
     }
 
-    #[test]
-    fn room_detection(){
-        "# # # # # # # # 
-# # #   # #   # 
-#   #       # # 
-# # #         E 
-#       #   # # 
-# .   #   # # # 
-# . #       # # 
-#             # 
-#       #     # 
-#   #         # 
-# #           # 
-# # #         # 
-#             # 
-# # # # G # # # "
+//     #[test]
+//     fn room_detection(){
+
+//     //   "
+//     //     # # # # # # # # 
+//     //     # # #   # #   # 
+//     //     #   #       # # 
+//     //     # # #         E 
+//     //     #       #   # # 
+//     //     # .   #   # # # 
+//     //     # . #       # # 
+//     //     #             # 
+//     //     #       #     # 
+//     //     #   #         # 
+//     //     # #           # 
+//     //     # # #         # 
+//     //     #             # 
+//     //     # # # # G # # # 
+//     //     "
+
+//         let board = Board{
+//             map: TileMap( vec![
+//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Ice,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Entrance ],
+//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,Tile::Ice,Tile::Wall,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice, Tile::Wall,Tile::Ice,Tile::Wall,Tile::Wall,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Ice, Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
+//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Gate, Tile::Wall,Tile::Wall,Tile::Wall,],
+//             ]),
+//             start: Pos { x: 7, y: 3 },
+//             end: Pos{ x: 4, y: 13 },
+//             reset_pos:  Pos { x: 0, y: 0 },
+//             start_direction: Direction::West,
+//             end_direction: Direction::South,
+//         };
+
+//         board.print(vec![]);
+
+//         assert!(!has_rooms(&board));
 
 
-"# # # # # # # # 
-# # #   # #   # 
-#   #       # # 
-# # #         E 
-#       #   # # 
-# .   #   # # # 
-# . #       # # 
-#             # 
-#       #     # 
-#   #         # 
-# #           # 
-# # #         # 
-#             # 
-# # # # G # # # "
-    }
+// // "# # # # # # # # 
+// // # # #   # #   # 
+// // #   #       # # 
+// // # # #         E 
+// // #       #   # # 
+// // # .   #   # # # 
+// // # . #       # # 
+// // #             # 
+// // #       #     # 
+// // #   #         # 
+// // # #           # 
+// // # # #         # 
+// // #             # 
+// // # # # # G # # # "
+//     }
 }

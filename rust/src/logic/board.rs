@@ -229,6 +229,8 @@ impl Board {
     pub fn at(&self, p: Pos)-> Tile{
         self.map.at(p)
     }
+    
+ 
 }
 
 
@@ -241,6 +243,7 @@ pub struct BoardWrap<'a>{
 impl<'a> BoardWrap<'a>{
     pub fn at(&self, p: Pos) -> Tile{
         if p == self.p{
+            // println!("trigger wrap");
             self.tile
         }else{
             self.base.map.at(p)
