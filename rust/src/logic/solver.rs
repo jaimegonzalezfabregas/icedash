@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashSet, VecDeque},
-    hash::{DefaultHasher, Hash, Hasher},
-};
+use std::collections::{HashSet, VecDeque};
 
 use itertools::Itertools;
 
@@ -140,15 +137,11 @@ pub struct StepResult {
 pub fn step(map: &TileMap, start: &Pos, direction: Direction) -> StepResult {
     let mut ret = start.clone();
 
-    ret += direction.vector();
 
-    while !map.at(ret).is_solid() {
+    while !map.at(ret+direction.vector()).stops_player() {
         ret += direction.vector();
     }
 
-    if map.at(ret) != Tile::Gate {
-        ret -= direction.vector();
-    }
 
     StepResult {
         hit: map.at(ret),
@@ -182,7 +175,7 @@ pub fn analyze(board: &Board) -> Option<Analysis> {
 
         let potencial_directions: Vec<Direction> = [last_dir.left(), last_dir.right()]
             .into_iter()
-            .filter(|dir| !state.board.map.at(last_pos + dir.vector()).is_solid())
+            .filter(|dir| !state.board.map.at(last_pos + dir.vector()).stops_player())
             .collect();
 
         let mut new_states = vec![];

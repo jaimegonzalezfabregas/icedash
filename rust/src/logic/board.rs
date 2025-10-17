@@ -1,4 +1,4 @@
-use rand::{random, seq::IteratorRandom, Rng};
+use rand::{ seq::IteratorRandom, Rng};
 
 use crate::{
     api::main::{Direction, Pos, Tile},
@@ -133,23 +133,23 @@ impl Board {
             }
         }
 
-        let pilars = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+        // let pilars = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
 
-        for _ in 0..pilars {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
-
-            map[y][x] = Tile::Wall;
-        }
-
-        // let weak_walls = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
-
-        // for _ in 0..weak_walls {
+        // for _ in 0..pilars {
         //     let x = (1..(width - 1) as usize).choose(&mut rng)?;
         //     let y = (1..(height - 1) as usize).choose(&mut rng)?;
 
-        //     map[y][x] = Tile::WeakWall(1);
+        //     map[y][x] = Tile::Wall;
         // }
+
+        let weak_walls = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+
+        for _ in 0..weak_walls {
+            let x = (1..(width - 1) as usize).choose(&mut rng)?;
+            let y = (1..(height - 1) as usize).choose(&mut rng)?;
+
+            map[y][x] = Tile::WeakWall(1);
+        }
 
         // let boxes = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
 
@@ -160,23 +160,23 @@ impl Board {
         //     map[y][x] = Tile::Box;
         // }
 
-        let vignet = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+        // let vignet = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
 
-        for _ in 0..vignet {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
+        // for _ in 0..vignet {
+        //     let x = (1..(width - 1) as usize).choose(&mut rng)?;
+        //     let y = (1..(height - 1) as usize).choose(&mut rng)?;
 
-            let normal_x = (x as f32 / width as f32) - 0.5;
-            let normal_y = (y as f32 / height as f32) - 0.5;
+        //     let normal_x = (x as f32 / width as f32) - 0.5;
+        //     let normal_y = (y as f32 / height as f32) - 0.5;
 
-            let normal_d = normal_x * normal_x + normal_y * normal_y;
+        //     let normal_d = normal_x * normal_x + normal_y * normal_y;
 
-            if random::<f32>() > normal_d {
-                map[y][x] = Tile::Wall;
-            }
+        //     if random::<f32>() > normal_d {
+        //         map[y][x] = Tile::Wall;
+        //     }
 
-            map[y][x] = Tile::Wall;
-        }
+        //     map[y][x] = Tile::Wall;
+        // }
         let mut start = start;
         let mut end = end;
 
@@ -243,7 +243,6 @@ pub struct BoardWrap<'a>{
 impl<'a> BoardWrap<'a>{
     pub fn at(&self, p: Pos) -> Tile{
         if p == self.p{
-            // println!("trigger wrap");
             self.tile
         }else{
             self.base.map.at(p)

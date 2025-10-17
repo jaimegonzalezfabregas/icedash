@@ -137,6 +137,10 @@ class IceDashWorld extends World {
     return ret;
   }
 
+  void hit(Vector2 pos, Direction dir){
+    _currentRoom!.hit(pos, dir);
+  }
+
   Tile getTile(Vector2 position) {
     return _currentRoom!.getTile(position);
   }

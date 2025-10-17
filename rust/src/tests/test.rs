@@ -6,7 +6,7 @@ mod tests {
         time::Duration,
     };
 
-    use crate::{api::main::{Direction, Pos, Tile}, logic::{board::Board, noise_reduction::{asthetic_cleanup, has_rooms}, tile_map::TileMap, worker_pool::worker_thread}};
+    use crate::logic::{noise_reduction::asthetic_cleanup, worker_pool::worker_thread};
 
     #[test]
     fn test_bench() {

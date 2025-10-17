@@ -317,7 +317,7 @@ pub fn is_board_valid(board: &Board) -> bool {
     !has_rooms(board)
 }
 
-pub fn flood(starting_positions: Vec<Pos>, board: &Board) -> Vec<Vec<bool>> {
+pub fn flood(starting_positions: Vec<Pos>, board: &Board, traversable_tiles: Vec<Tile>) -> Vec<Vec<bool>> {
     let mut reachability =
         vec![vec![false; board.map.get_width() as usize]; board.map.get_height() as usize];
     let mut flood_edge: VecDeque<Pos> = VecDeque::from(starting_positions);
@@ -328,7 +328,7 @@ pub fn flood(starting_positions: Vec<Pos>, board: &Board) -> Vec<Vec<bool>> {
         }
 
         if reachability[next_check.y as usize][next_check.x as usize] == false
-            && !board.map.at(next_check).is_solid()
+            && traversable_tiles.contains(&board.map.at(next_check))
         {
             reachability[next_check.y as usize][next_check.x as usize] = true;
 
@@ -352,6 +352,7 @@ pub fn asthetic_cleanup(mut ret: Board) -> Board {
             ret.end + ret.end_direction.vector(),
         ],
         &ret,
+        vec![Tile::Ice, Tile::WeakWall(1), Tile::Box, Tile::Entrance, Tile::Gate]
     );
 
     for (y, row) in reachability.iter().enumerate() {
@@ -363,7 +364,7 @@ pub fn asthetic_cleanup(mut ret: Board) -> Board {
             if ret.start.x == x as isize && ret.start.y == y as isize {
                 continue;
             }
-            if !*reacheable {
+            if !*reacheable{
                 ret.map.set(Pos::new(x as isize, y as isize), Tile::Wall);
             }
         }

@@ -90,6 +90,9 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
             }
           }
         }
+
+        game.idWorld.hit(position + delta, dir);
+
         movementLenght = 0;
 
         if (buffered != null) {

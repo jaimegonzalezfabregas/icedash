@@ -154,10 +154,10 @@ impl Tile {
         }
     }
 
-    pub fn is_solid(&self) -> bool {
+    pub fn stops_player(&self) -> bool {
         match self {
             Tile::Entrance => true,
-            Tile::Gate => true,
+            Tile::Gate => false,
             Tile::Wall => true,
             Tile::Ice => false,
             Tile::WeakWall(_) => true,
@@ -165,8 +165,21 @@ impl Tile {
             Tile::Box => true,
         }
     }
+
+    pub fn get_asset(&self) -> Option<String>{
+        match self{
+            Tile::Entrance => Some("ice.png".into()),
+            Tile::Gate => Some("ice.png".into()),
+            Tile::Wall => Some("wall.png".into()),
+            Tile::Ice => Some("ice.png".into()),
+            Tile::WeakWall(_) => Some("weakwall.png".into()),
+            Tile::Box =>  Some("ice.png".into()),
+            Tile::Outside => None,
+        }
+    }
 }
 
+#[frb(opaque)]
 pub enum Room {
     Lobby(Board),
     Trial(Creature),
@@ -209,7 +222,7 @@ impl Room {
         }
     }
 
-    pub fn get_map(self) -> TileMap {
+    pub fn get_map(&self) -> TileMap {
         self.get_board().map.clone()
     }
 
@@ -227,6 +240,21 @@ impl Room {
 
     pub fn get_end(&self) -> Pos {
         self.get_board().end
+    }
+
+    pub fn get_all_positions(&self) -> Vec<Pos>{
+        self.get_board().map.all_pos().collect()
+    }
+
+    pub fn at(&self, pos: Pos) -> Tile{
+        self.get_map().at(pos)
+    }
+
+    pub fn set(&mut self, pos: Pos, t: Tile){
+        match self {
+            Room::Lobby(board) => board.map.set(pos, t),
+            Room::Trial(creature) => creature.board.map.set(pos,t),
+        }
     }
 }
 

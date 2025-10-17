@@ -13,12 +13,16 @@ impl TileMap {
     }
 
     pub fn at(&self, p: Pos) -> Tile {
-        self.0
-            .get(p.y as usize)
-            .unwrap()
-            .get(p.x as usize)
-            .unwrap()
-            .clone()
+        if (self.in_bounds(p)) {
+            self.0
+                .get(p.y as usize)
+                .unwrap()
+                .get(p.x as usize)
+                .unwrap()
+                .clone()
+        } else {
+            Tile::Outside
+        }
     }
 
     pub fn atxy(&self, x: isize, y: isize) -> Tile {
