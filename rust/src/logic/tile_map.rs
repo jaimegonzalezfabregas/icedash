@@ -13,7 +13,7 @@ impl TileMap {
     }
 
     pub fn at(&self, p: Pos) -> Tile {
-        if (self.in_bounds(p)) {
+        if self.in_bounds(p) {
             self.0
                 .get(p.y as usize)
                 .unwrap()

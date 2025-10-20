@@ -28,7 +28,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/player.png
-    - assets/images/iceCube.png
+    - assets/images/box.png
     - assets/images/wall.png
     - assets/images/weakwall.png
     # - assets/images/wall0.png

@@ -57,16 +57,9 @@ pub fn get_new_room() -> Room {
         start_search();
     });
 
-    println!("starting trimming");
-    ret.board.print(
-        ret.analysis.routes[0][0]
-            .solution
-            .iter()
-            .map(|e| e.1)
-            .collect(),
-    );
+
+ 
     ret.board = asthetic_cleanup(ret.board);
-    println!("trimming successfull");
     ret.board.print(
         ret.analysis.routes[0][0]
             .solution
@@ -90,11 +83,12 @@ pub fn worker_halt(millis: usize) {
 pub fn start_search() {
     let mut ret = G_WORKER.lock().unwrap();
 
-    while ret.len()
-        < (available_parallelism()
-            .expect("couldnt get available parallelism")
-            .get()
-            - 3)
+    // while ret.len()
+    //     < (available_parallelism()
+    //         .expect("couldnt get available parallelism")
+    //         .get()
+    //         - 3)
+    while ret.len() < 1
     {
         let (ctrl_tx, ctrl_rx) = mpsc::channel();
         let (ret_tx, ret_rx) = mpsc::channel();

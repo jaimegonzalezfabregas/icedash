@@ -136,7 +136,7 @@ pub enum Tile {
     Gate,
     Wall,
     Ice,
-    WeakWall(u8),
+    WeakWall,
     Box,
     Outside,
 }
@@ -148,23 +148,37 @@ impl Tile {
             Tile::Gate => "G",
             Tile::Wall => "#",
             Tile::Ice => " ",
-            Tile::WeakWall(_) => "w",
+            Tile::WeakWall => "w",
             Tile::Outside => " ",
             Tile::Box => "b",
         }
     }
 
-    pub fn stops_player(&self) -> bool {
+    pub fn stops_player_during_sim(&self) -> bool {
         match self {
             Tile::Entrance => true,
             Tile::Gate => false,
             Tile::Wall => true,
             Tile::Ice => false,
-            Tile::WeakWall(_) => true,
+            Tile::WeakWall => true,
             Tile::Outside => true,
             Tile::Box => true,
         }
     }
+
+      pub fn stops_player_during_gameplay(&self) -> bool {
+        match self {
+            Tile::Entrance => true,
+            Tile::Gate => false,
+            Tile::Wall => true,
+            Tile::Ice => false,
+            Tile::WeakWall => false,
+            Tile::Outside => true,
+            Tile::Box => false,
+        }
+    }
+
+    
 
     pub fn get_asset(&self) -> Option<String>{
         match self{
@@ -172,14 +186,14 @@ impl Tile {
             Tile::Gate => Some("ice.png".into()),
             Tile::Wall => Some("wall.png".into()),
             Tile::Ice => Some("ice.png".into()),
-            Tile::WeakWall(_) => Some("weakwall.png".into()),
+            Tile::WeakWall => Some("ice.png".into()),
             Tile::Box =>  Some("ice.png".into()),
             Tile::Outside => None,
         }
     }
 }
 
-#[frb(opaque)]
+#[derive(Clone)]
 pub enum Room {
     Lobby(Board),
     Trial(Creature),
@@ -234,10 +248,6 @@ impl Room {
         self.get_board().start
     }
 
-    pub fn get_reset(&self) -> Pos {
-        self.get_board().reset_pos
-    }
-
     pub fn get_end(&self) -> Pos {
         self.get_board().end
     }
@@ -250,12 +260,15 @@ impl Room {
         self.get_map().at(pos)
     }
 
-    pub fn set(&mut self, pos: Pos, t: Tile){
-        match self {
-            Room::Lobby(board) => board.map.set(pos, t),
-            Room::Trial(creature) => creature.board.map.set(pos,t),
+    pub fn set_tile_at(&self, pos: Pos, tile: Tile) -> Self{
+        let mut ret = self.to_owned();
+        match ret {
+            Room::Lobby(ref mut board) => { board.map.set(pos, tile);},
+            Room::Trial(ref mut creature) => { creature.board.map.set(pos,tile);},
         }
+        ret
     }
+
 }
 
 pub fn dart_get_new_board() -> Room {
@@ -266,8 +279,18 @@ pub fn dart_worker_halt(millis: usize){
     worker_halt(millis)
 }
 
+
+use std::alloc;
+use cap::Cap;
+
+#[global_allocator]
+static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
+
 #[flutter_rust_bridge::frb(init)]
 pub fn init_app() {
+
+    ALLOCATOR.set_limit(5 * 1024 * 1024 * 1024).unwrap();
+
     flutter_rust_bridge::setup_default_user_utils();
     start_search();
 }

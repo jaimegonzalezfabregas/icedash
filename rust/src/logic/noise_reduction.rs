@@ -352,7 +352,7 @@ pub fn asthetic_cleanup(mut ret: Board) -> Board {
             ret.end + ret.end_direction.vector(),
         ],
         &ret,
-        vec![Tile::Ice, Tile::WeakWall(1), Tile::Box, Tile::Entrance, Tile::Gate]
+        vec![Tile::Ice, Tile::WeakWall, Tile::Box, Tile::Entrance, Tile::Gate]
     );
 
     for (y, row) in reachability.iter().enumerate() {

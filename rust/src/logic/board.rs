@@ -4,7 +4,6 @@ use crate::{
     api::main::{Direction, Pos, Tile},
     logic::{
         noise_reduction::{is_board_valid, map_noise_cleanup},
-        solver::step,
         tile_map::TileMap,
     },
 };
@@ -15,7 +14,6 @@ pub struct Board {
     pub map: TileMap,
     pub start: Pos,
     pub end: Pos,
-    pub reset_pos: Pos,
     pub start_direction: Direction,
     pub end_direction: Direction,
 }
@@ -51,8 +49,6 @@ impl Board {
             &mut ret.end,
             ret.end_direction,
         );
-
-        ret.reset_pos = step(&ret.map, &ret.start, ret.start_direction).pos;
 
         if is_board_valid(&ret) {
             Some(ret)
@@ -148,7 +144,7 @@ impl Board {
             let x = (1..(width - 1) as usize).choose(&mut rng)?;
             let y = (1..(height - 1) as usize).choose(&mut rng)?;
 
-            map[y][x] = Tile::WeakWall(1);
+            map[y][x] = Tile::WeakWall;
         }
 
         // let boxes = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
@@ -191,7 +187,6 @@ impl Board {
         );
 
         let ret = Board {
-            reset_pos: step(&map, &start, start_direction).pos,
             map,
             start,
             start_direction,
@@ -219,7 +214,6 @@ impl Board {
         Board {
             start: self.start.rotate_left(self.map.get_height()),
             end: self.end.rotate_left(self.map.get_height()),
-            reset_pos: self.reset_pos.rotate_left(self.map.get_height()),
             start_direction: self.start_direction.left(),
             end_direction: self.end_direction.left(),
             map: self.map.rotate_left(),

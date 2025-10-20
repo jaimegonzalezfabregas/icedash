@@ -84,25 +84,21 @@ class IceDashWorld extends World {
     if (_lastRoom != null) {
       var fadingOutRoom = _lastRoom!;
       _lastRoom = null;
-      fadingOutRoom.fadeOut((){
-         remove(fadingOutRoom);
+      fadingOutRoom.fadeOut(() {
+        remove(fadingOutRoom);
       });
-      
     }
     add(_currentRoom!);
     player.push(stichDirection, force: true);
 
-    player.resetPos = _currentRoom!.resetWorldPos;
     if (room is Room_Trial) {
       player.remainingMoves = room.getMaxMovementCount()!;
-      player.remainingMovesReset = room.getMaxMovementCount()! - 1;
+      player.remainingMovesReset = room.getMaxMovementCount()!;
     } else {
       player.remainingMoves = null;
       player.remainingMovesReset = null;
     }
   }
-
-
 
   zoomTransition(double duration, double endValue) {
     var zoomOutEfect = CurvedEffectController(duration / 2, Curves.easeInOut);
@@ -137,11 +133,23 @@ class IceDashWorld extends World {
     return ret;
   }
 
-  void hit(Vector2 pos, Direction dir){
+  void hit(Vector2 pos, Direction dir) {
     _currentRoom!.hit(pos, dir);
   }
 
   Tile getTile(Vector2 position) {
     return _currentRoom!.getTile(position);
+  }
+
+  reset() {
+    _currentRoom!.reset();
+  }
+
+  Direction getResetDirection() {
+    return _currentRoom!.entranceDirection;
+  }
+
+  Vector2 resetPlayerPos() {
+    return _currentRoom!.entranceWorldPos;
   }
 }

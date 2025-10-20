@@ -50,7 +50,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       if (user) {
         Vector2 endPos = raycast(dir, position);
 
-        if (game.idWorld.getTile(endPos) == Tile.gate()) {
+        if (game.idWorld.getTile(endPos) == Tile.gate) {
           dartWorkerHalt(millis: BigInt.from((((position - endPos).length + 2) * timePerStep) * 1000));
         }
       }
@@ -86,11 +86,11 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       sliding = false;
       var standingOn = game.idWorld.getTile(position);
 
-      if (standingOn is Tile_Gate) {
+      if (standingOn == Tile.gate) {
         game.idWorld.nextRoom(position, dir);
       }
 
-      if (standingOn is Tile_Entrance || standingOn is Tile_Ice) {
+      if (standingOn == Tile.entrance || standingOn == Tile.ice) {
         movementLenght += 1;
         push(dir, user: false);
       }

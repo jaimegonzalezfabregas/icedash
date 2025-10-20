@@ -1,13 +1,15 @@
-import 'dart:collection';
 import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:icedash/components/actor.dart';
+import 'package:icedash/components/actors/box.dart';
+import 'package:icedash/components/actors/entrance.dart';
+import 'package:icedash/components/actors/weak_wall.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 class RoomComponent extends Component {
-  late Room reset_room;
   Room room;
 
   late Rect worldBB;
@@ -15,36 +17,32 @@ class RoomComponent extends Component {
 
   Vector2 entranceWorldPos;
   late Vector2 exitWorldPos;
-  late Vector2 resetWorldPos;
   late Vector2 entranceRoomPos;
   Map<Pos, SpriteComponent> tileSpriteGrid = {};
+  List<Actor> actorList = [];
+  Direction entranceDirection;
 
   Vector2 mapPos2WorldVector(Pos p) {
     return Vector2.array(p.dartVector()) - entranceRoomPos + entranceWorldPos;
   }
 
-  Pos WorldVector2MapPos(Vector2 v) {
-    int x = (v.x - entranceWorldPos.x + entranceRoomPos.x).floor();
-    int y = (v.y - entranceWorldPos.y + entranceRoomPos.y).floor();
+  Pos worldVector2MapPos(Vector2 v) {
+    int x = (v.x - entranceWorldPos.x + entranceRoomPos.x).round();
+    int y = (v.y - entranceWorldPos.y + entranceRoomPos.y).round();
     return Pos(x: x, y: y);
   }
 
   void reset() {
-    room = reset_room;
-
-  
-    rebuildSpriteGrid();
+    buildSpriteGrid();
   }
 
-  RoomComponent(this.entranceWorldPos, Direction entranceDirection, this.room) {
-    reset_room = room;
+  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room) {
     while (room.getStartDirection() != entranceDirection) {
       room = room.rotateLeft();
     }
 
     entranceRoomPos = Vector2.array(room.getStart().dartVector());
 
-    resetWorldPos = mapPos2WorldVector(room.getReset());
     exitWorldPos = mapPos2WorldVector(room.getEnd());
 
     worldBB = Rect.fromLTWH(
@@ -90,16 +88,21 @@ class RoomComponent extends Component {
 
   @override
   void onLoad() async {
-    await rebuildSpriteGrid();
+    await buildSpriteGrid();
     fadeIn();
   }
 
-  Future<void> rebuildSpriteGrid() async {
-      for (var e in tileSpriteGrid.values) {
+  Future<void> buildSpriteGrid() async {
+    for (var e in tileSpriteGrid.values) {
       e.removeFromParent();
     }
-    tileSpriteGrid = {};
 
+    for (var actor in actorList) {
+      actor.removeFromParent();
+    }
+
+    tileSpriteGrid = {};
+    actorList = [];
 
     for (var pos in room.getAllPositions()) {
       var tile = room.at(pos: pos);
@@ -114,42 +117,47 @@ class RoomComponent extends Component {
         tileSpriteGrid[pos] = img;
       }
 
-      if (tile is Tile_Entrance) {
-        var door = SpriteComponent(priority: 0, size: Vector2.all(1), position: mapPos2WorldVector(pos));
+      if (tile == Tile.entrance) {
+        var entrance = Entrance(position: mapPos2WorldVector(pos));
+        actorList.add(entrance);
+        add(entrance);
+      }
 
-        door.sprite = await Sprite.load(Tile.wall().getAsset()!);
+      if (tile == Tile.box) {
+        var box = Box(this, position: mapPos2WorldVector(pos));
+        actorList.add(box);
+        add(box);
+      }
 
-        door.opacity = 0;
-        door.add(
-          OpacityEffect.fadeIn(
-            EffectController(
-              duration: 1,
-              startDelay: 1,
-              onMax: () {
-                tileSpriteGrid[pos]?.removeFromParent();
-
-                tileSpriteGrid[pos] = door;
-              },
-            ),
-          ),
-        );
-        add(door);
+      if (tile == Tile.weakWall) {
+        var weakWall = WeakWall(position: mapPos2WorldVector(pos));
+        actorList.add(weakWall);
+        add(weakWall);
       }
     }
   }
 
   bool canWalkInto(Vector2 origin, Vector2 dst) {
     Tile dstTile = getTile(dst);
-    var ret = dstTile.stopsPlayer();
+    var canWalk = !dstTile.stopsPlayerDuringGameplay();
 
-    return !ret;
+    if (canWalk == true) {
+      for (var actor in actorList) {
+        if (actor.colision && worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
+          return false;
+        }
+      }
+    }
+
+    return canWalk;
   }
 
   void hit(Vector2 pos, Direction dir) {
-    Tile hitTile = getTile(pos);
 
-    if (hitTile is Tile_WeakWall) {
-      setTile(pos, Tile_Ice());
+    for (var actor in actorList) {
+      if (worldVector2MapPos(actor.position) == worldVector2MapPos(pos)) {
+        actor.hit(dir);
+      }
     }
   }
 
@@ -159,15 +167,7 @@ class RoomComponent extends Component {
 
       return room.getMap().field0[(localPos.y).round()][(localPos.x).round()];
     } catch (_) {
-      return Tile.outside();
+      return Tile.outside;
     }
-  }
-
-  void setTile(Vector2 worldPos, Tile t) async {
-    Vector2 localPos = worldPos - entranceWorldPos + entranceRoomPos;
-
-    room.set(localPos,t);
-
-    rebuildSpriteGrid();
   }
 }
