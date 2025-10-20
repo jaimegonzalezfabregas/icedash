@@ -61,6 +61,9 @@ pub fn get_new_room() -> Room {
  
     ret.board = asthetic_cleanup(ret.board);
     ret.board.print(
+        vec![]
+    );
+    ret.board.print(
         ret.analysis.routes[0][0]
             .solution
             .iter()

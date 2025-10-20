@@ -40,7 +40,6 @@ impl Analysis {
 #[derive(Clone, Debug)]
 pub struct Route {
     pub solution: Vec<(Direction, Pos)>,
-    pub decision_positions: Vec<Pos>,
     pub move_sizes: Vec<isize>,
     pub hitted_boxes: usize,
     pub broken_walls: usize,
@@ -51,7 +50,6 @@ impl Route {
         let move_size_mean = self.move_sizes.iter().fold(0, |acc, e| acc + e);
 
         let factors = [
-            self.decision_positions.len() as f32 * 100000.,
             self.move_sizes.iter().filter(|e| **e > 3).count() as f32 * 10.,
             move_size_mean as f32 * 10.,
             self.solution.len() as f32,
@@ -105,14 +103,13 @@ struct SearchState {
     tile_length: isize,
     path: Rc<PathNode>,
     path_len: usize,
-    decision_positions: Vec<Pos>,
     visitations: Visitations,
     broken_walls: usize,
     hitted_boxes: usize,
 }
 
 impl SearchState {
-    fn step(&self, direction: Direction) -> (isize, Result<Self, &str>) {
+    fn step(&self, direction: Direction) -> Result<Self, &str> {
         let step_start = self.path.position;
 
         let new_step = step(&self.board.map, &step_start, direction);
@@ -120,7 +117,7 @@ impl SearchState {
             (new_step.pos.x - step_start.x).abs() + (new_step.pos.y - step_start.y).abs();
 
         if self.visitations.contains(&new_step.pos) {
-            return (step_length, Err("Went into a loop"));
+            return Err("Went into a loop");
         }
 
         // println!("path deepth is {}", self.path.len());
@@ -154,19 +151,15 @@ impl SearchState {
 
         new_visitations.insert(&new_step.pos);
 
-        (
-            step_length,
-            Ok(SearchState {
-                tile_length: self.tile_length + step_length,
-                path: Rc::from(new_path),
-                path_len: self.path_len + 1,
-                decision_positions: self.decision_positions.clone(),
-                visitations: new_visitations,
-                board: new_board,
-                broken_walls: new_broken_walls,
-                hitted_boxes: new_hitted_boxes,
-            }),
-        )
+        Ok(SearchState {
+            tile_length: self.tile_length + step_length,
+            path: Rc::from(new_path),
+            path_len: self.path_len + 1,
+            visitations: new_visitations,
+            board: new_board,
+            broken_walls: new_broken_walls,
+            hitted_boxes: new_hitted_boxes,
+        })
     }
 }
 
@@ -201,7 +194,6 @@ pub fn analyze(initial_board: &Board) -> Option<Analysis> {
             last_move: None,
         }),
         path_len: 1,
-        decision_positions: vec![],
         visitations: Visitations::new(initial_board.get_width(), initial_board.get_height()),
         board: Rc::from(initial_board.clone()),
         broken_walls: 0,
@@ -215,21 +207,16 @@ pub fn analyze(initial_board: &Board) -> Option<Analysis> {
     while let Some(state) = states.pop_front() {
         let last_pos = state.path.position;
 
-        let mut new_states = vec![];
-        let mut long_directions = 0;
+        println!("considering {:?}", state.path.into_vector());
 
         for dir in Direction::all() {
-            let (step_length, new_state) = state.step(dir);
+            let new_state = state.step(dir);
 
             let new_state = if let Ok(new_state) = new_state {
                 new_state
             } else {
                 continue;
             };
-
-            if step_length > 1 {
-                long_directions += 1;
-            }
 
             if last_pos == state.board.end {
                 let best_movement_count = if let Some(best_movement_count) = best_movement_count {
@@ -244,29 +231,19 @@ pub fn analyze(initial_board: &Board) -> Option<Analysis> {
             } else {
                 if let Some(best_movement_count) = best_movement_count {
                     if new_state.path_len < (best_movement_count + EXTRA_MOVES_SEARCH_MARGIN - 1) {
-                        new_states.push(new_state);
+                        states.push_back(new_state);
                     }
                 } else {
-                    new_states.push(new_state);
+                    states.push_back(new_state);
                 }
             }
         }
-
-        for mut new_state in new_states {
-            if long_directions == 2 {
-                new_state.decision_positions.push(last_pos);
-            }
-
-            states.push_back(new_state);
-        }
     }
-
-    let all_routes = solution_states;
 
     if let Some(max_movement) = best_movement_count {
         Some(Analysis {
             optimal_movement_count: max_movement,
-            routes: all_routes,
+            routes: solution_states,
         })
     } else {
         None
@@ -285,7 +262,6 @@ fn state2analisis(state: SearchState) -> Route {
     Route {
         move_sizes: move_sizes,
         solution: state.path.into_vector(),
-        decision_positions: state.decision_positions,
         broken_walls: state.broken_walls,
         hitted_boxes: state.hitted_boxes,
     }
