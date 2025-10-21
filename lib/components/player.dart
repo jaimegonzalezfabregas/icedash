@@ -48,7 +48,8 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
   void reset() {
     if (!sliding ) {
-      game.idWorld.reset();
+      print("reset");
+            game.idWorld.reset();
       buffered = null;
       position = game.idWorld.resetPlayerPos();
       push( game.idWorld.getResetDirection(), user: false, force: true);
@@ -83,14 +84,15 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       }
 
       if (!game.idWorld.canWalkInto(position, position + delta)) {
-        if (movementLenght != 0) {
+       
           if (remainingMoves != null) {
             remainingMoves = remainingMoves! - 1;
+            print("remaining moves $remainingMoves");
             if (remainingMoves == 0) {
               reset();
             }
           }
-        }
+        
 
         game.idWorld.hit(position + delta, dir);
 

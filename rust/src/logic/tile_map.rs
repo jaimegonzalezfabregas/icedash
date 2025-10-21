@@ -68,7 +68,7 @@ impl TileMap {
                 if highlight.contains(&Pos::new(x as isize, y as isize)) {
                     print!(". ");
                 } else {
-                    print!("{} ", tile.simbol());
+                    print!("{} ", tile.symbol());
                 }
             }
             println!("");
@@ -92,5 +92,23 @@ impl TileMap {
         // ret.print(vec![]);
 
         ret
+    }
+
+    pub(crate) fn from_print(arg: &str) -> TileMap {
+        let mut ret = vec![];
+
+        for line in arg.split("\n") {
+            let mut line = line.as_bytes();
+            let mut row = vec![];
+
+            while (line.len() != 0) {
+                row.push(Tile::from_symbol(line[0]));
+
+                line = &line[2..];
+            }
+            ret.push(row)
+        }
+
+        TileMap(ret)
     }
 }

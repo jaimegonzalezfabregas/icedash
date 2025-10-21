@@ -117,9 +117,7 @@ pub fn map_noise_cleanup(
 
     // remove_sorrounded_spaces(&mut map, [(0, 1), (0, -1), (-1, 0), (1, 0)], 3);
 
-    remove_rooms(map, &start, &start_direction);
 
-    map.set(start, Tile::Entrance);
 
     map.set(&(*start + start_direction.vector()), Tile::Ice);
     map.set(
@@ -141,7 +139,6 @@ pub fn map_noise_cleanup(
         Tile::Ice,
     );
 
-    map.set(end, Tile::Gate);
 
     map.set(&(*end + end_direction.vector()), Tile::Ice);
     map.set(
@@ -162,6 +159,13 @@ pub fn map_noise_cleanup(
         &(*end + end_direction.vector() * 2 + end_direction.right().vector()),
         Tile::Ice,
     );
+
+        remove_rooms(map, &start, &start_direction);
+
+            map.set(end, Tile::Gate);
+    map.set(start, Tile::Entrance);
+
+
 }
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
@@ -212,7 +216,7 @@ pub fn connected(seed1: Pos, seed2: Pos, board1: &TileMapWrap, board2: &TileMapW
         for direction in Direction::all() {
             let next_pos1 = direction.vector() + p1.pos;
 
-            if !found1.contains(&next_pos1) {
+            if board2.base.in_bounds(&next_pos1) && !found1.contains(&next_pos1) {
                 if !board1.at(&next_pos1).stops_player_during_gameplay() {
                     if found2.contains(&next_pos1) {
                         return true;
@@ -227,7 +231,7 @@ pub fn connected(seed1: Pos, seed2: Pos, board1: &TileMapWrap, board2: &TileMapW
 
             let next_pos2 = direction.vector() + p2.pos;
 
-            if !found2.contains(&next_pos2) {
+            if board2.base.in_bounds(&next_pos2) && !found2.contains(&next_pos2) {
                 if !board2.at(&next_pos2).stops_player_during_gameplay() {
                     if found1.contains(&next_pos2) {
                         return true;

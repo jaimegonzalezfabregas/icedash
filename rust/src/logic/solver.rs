@@ -8,6 +8,7 @@ use crate::{
 };
 
 const EXTRA_MOVES_SEARCH_MARGIN: usize = 3;
+const TOP_SOLUTION_SIZE: usize = 20;
 
 #[derive(Clone, Debug)]
 
@@ -35,6 +36,24 @@ impl Analysis {
         };
         ret
     }
+
+    pub fn print(&self){
+        println!("analisis:");
+    
+        for (tier, routes) in self.routes.iter().enumerate(){
+
+            println!("tier {tier}");
+            for route in routes {
+                print!(":");
+                for (step,_) in &route.solution{
+                    print!(" {}", step.icon());
+                }
+                println!("");    
+            }
+            
+        }
+    
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -59,7 +78,7 @@ impl Route {
 
         let negative_factors = [self.boxes_in_the_way as f32];
 
-        positive_factors.iter().sum::<f32>() / (negative_factors.iter().sum::<f32>()+1.)
+        positive_factors.iter().sum::<f32>() / (negative_factors.iter().sum::<f32>() + 1.)
     }
 }
 
@@ -90,29 +109,19 @@ impl PathNode {
                 ret.push((*direction, *position));
                 ret
             }
-            Self::Root {
-                root_direction,
-                root_position,
-            } => vec![],
+            Self::Root { .. } => vec![],
         }
     }
 
     fn get_position(&self) -> Pos {
         match self {
-            PathNode::Node {
-                board_change,
-                direction,
-                position,
-                last_move,
-            } => *position,
-            PathNode::Root {
-                root_direction,
-                root_position,
-            } => *root_position,
+            PathNode::Node { position, .. } => *position,
+            PathNode::Root { root_position, .. } => *root_position,
         }
     }
 
     fn next_posible_directions(&self) -> Vec<Direction> {
+        return Direction::all();
         match self {
             PathNode::Node {
                 board_change,
@@ -260,17 +269,18 @@ pub fn analyze(initial_board: &Board) -> Result<Analysis, String> {
                     best_movement_count
                 } else {
                     best_movement_count = Some(new_state.path_len);
+
                     new_state.path_len
                 };
 
                 solution_states[new_state.path_len - best_movement_count]
-                    .push(state2analisis(new_state, &initial_board.map));
+                    .push(state2analysis(new_state, &initial_board.map));
             } else {
                 if let Some(best_movement_count) = best_movement_count {
                     if new_state.path_len < (best_movement_count + EXTRA_MOVES_SEARCH_MARGIN - 1) {
                         states.push_back(new_state);
                     }
-                } else {
+                } else if TOP_SOLUTION_SIZE > new_state.path_len {
                     states.push_back(new_state);
                 }
             }
@@ -287,7 +297,7 @@ pub fn analyze(initial_board: &Board) -> Result<Analysis, String> {
     }
 }
 
-fn state2analisis(state: SearchState, starting_tilemap: &TileMap) -> Route {
+fn state2analysis(state: SearchState, starting_tilemap: &TileMap) -> Route {
     let mut move_sizes = vec![];
     let mut weakwalls_in_the_way = 0;
     let mut boxes_in_the_way = 0;

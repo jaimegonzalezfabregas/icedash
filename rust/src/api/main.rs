@@ -85,6 +85,17 @@ pub enum Direction {
 }
 
 impl Direction {
+
+    pub fn icon(&self) -> &str{
+        match self{
+            Direction::North => "^",
+            Direction::South => "v",
+            Direction::East => "<",
+            Direction::West => ">",
+        }
+    }
+
+
     pub(crate) fn vector(&self) -> Pos {
         match self {
             Direction::North => Pos::new(0, -1),
@@ -142,7 +153,7 @@ pub enum Tile {
 }
 
 impl Tile {
-    pub fn simbol(&self) -> &str {
+    pub fn symbol(&self) -> &str {
         match self {
             Tile::Entrance => "E",
             Tile::Gate => "G",
@@ -189,6 +200,18 @@ impl Tile {
             Tile::WeakWall => Some("ice.png".into()),
             Tile::Box =>  Some("ice.png".into()),
             Tile::Outside => None,
+        }
+    }
+    
+    pub(crate) fn from_symbol(symbol: u8) -> Tile {
+        match symbol {
+            b'E' => Tile::Entrance,
+            b'G' => Tile::Gate,
+            b'#' => Tile::Wall,
+            b' ' => Tile::Ice,
+            b'w' => Tile::WeakWall,
+            b'b' => Tile::Box,
+            _ => Tile::Outside,
         }
     }
 }

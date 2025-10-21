@@ -67,7 +67,7 @@ pub fn get_new_room() -> Room {
     );
 
     ret.board = asthetic_cleanup(ret.board);
-    println!("{:?}", ret.analysis);
+    ret.analysis.print();
 
     Room::Trial(ret)
 }
@@ -145,24 +145,24 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
                             .expect("unable to send best so far");
                     }
                 }
-                Err(err) => {}
+                Err(_) => {}
             }
-        // } else if population.len() < generations * 9 {
-        //     if let Ok(new_creature) =
-        //         (population[0..generations * 2].choose(&mut rng).unwrap()).mutate(0.3)
-        //     {
-        //         iter += 1;
+        } else if population.len() < generations * 9 {
+            if let Ok(new_creature) =
+                (population[0..generations * 2].choose(&mut rng).unwrap()).mutate(0.3)
+            {
+                iter += 1;
 
-        //         population.insert(new_creature);
-        //         successes += 1;
+                population.insert(new_creature);
+                successes += 1;
 
-        //         if population[0].fitness > best_so_far {
-        //             best_so_far = population[0].fitness;
-        //             returns
-        //                 .send(population[0].clone())
-        //                 .expect("unable to send best so far");
-        //         }
-        //     }
+                if population[0].fitness > best_so_far {
+                    best_so_far = population[0].fitness;
+                    returns
+                        .send(population[0].clone())
+                        .expect("unable to send best so far");
+                }
+            }
         } else {
             population = population[0..generations * 2]
                 .into_iter()
