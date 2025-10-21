@@ -14,12 +14,11 @@ pub struct Creature {
 impl Creature {
     
 
-    pub fn board_to_creature(b: Option<Board>) -> Option<Self> {
-        let b = b?;
+    pub fn board_to_creature(b: Board) -> Result<Self, String> {
 
         let analysis = analyze(&b)?;
 
-        Some(Self {
+        Ok(Self {
             board: b,
             fitness : analysis.compute_fitness(),
             analysis,
@@ -27,7 +26,7 @@ impl Creature {
         })
     }
 
-    pub fn mutate(&self, factor: f32) -> Option<Self> {
+    pub fn mutate(&self, factor: f32) -> Result<Self, String> {
         Self::board_to_creature(self.board.mutate(factor)).map(|mut ret| {
             ret.mutation_count = self.mutation_count + 1;
             ret

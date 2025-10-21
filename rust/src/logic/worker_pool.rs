@@ -57,12 +57,7 @@ pub fn get_new_room() -> Room {
         start_search();
     });
 
-
- 
-    ret.board = asthetic_cleanup(ret.board);
-    ret.board.print(
-        vec![]
-    );
+    ret.board.print(vec![]);
     ret.board.print(
         ret.analysis.routes[0][0]
             .solution
@@ -70,6 +65,8 @@ pub fn get_new_room() -> Room {
             .map(|e| e.1)
             .collect(),
     );
+
+    ret.board = asthetic_cleanup(ret.board);
     println!("{:?}", ret.analysis);
 
     Room::Trial(ret)
@@ -91,8 +88,7 @@ pub fn start_search() {
     //         .expect("couldnt get available parallelism")
     //         .get()
     //         - 3)
-    while ret.len() < 1
-    {
+    while ret.len() < 1 {
         let (ctrl_tx, ctrl_rx) = mpsc::channel();
         let (ret_tx, ret_rx) = mpsc::channel();
         ret.push_back(Worker {
@@ -102,6 +98,10 @@ pub fn start_search() {
 
         spawn(|| worker_thread(ret_tx, ctrl_rx));
     }
+}
+
+pub fn random_creature() -> Result<Creature, String> {
+    Creature::board_to_creature(Board::new_random()?)
 }
 
 pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
@@ -124,7 +124,7 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
                 continue;
             }
             Ok(CtrlMsg::Kill) => {
-                println!("reached {generations} generations with {iter} iter and {successes} successes {}", successes as f32 / iter as f32);
+                println!("reached {generations} generations with {iter} iter and {successes} successes (ratio of {})", successes as f32 / iter as f32);
 
                 return;
             }
@@ -132,33 +132,37 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
         }
 
         if population.len() < generations * 3 {
-        iter += 1;
+            iter += 1;
 
-            if let Some(new_creature) = Creature::board_to_creature(Board::new_random()) {
-                population.insert(new_creature);
-                successes+=1;
-                if population[0].fitness > best_so_far {
-                    best_so_far = population[0].fitness;
-                    returns
-                        .send(population[0].clone())
-                        .expect("unable to send best so far");
+            match random_creature() {
+                Ok(new_creature) => {
+                    population.insert(new_creature);
+                    successes += 1;
+                    if population[0].fitness > best_so_far {
+                        best_so_far = population[0].fitness;
+                        returns
+                            .send(population[0].clone())
+                            .expect("unable to send best so far");
+                    }
                 }
+                Err(err) => {}
             }
-        } else if population.len() < generations * 9 {
+        // } else if population.len() < generations * 9 {
+        //     if let Ok(new_creature) =
+        //         (population[0..generations * 2].choose(&mut rng).unwrap()).mutate(0.3)
+        //     {
+        //         iter += 1;
 
-            if let Some(new_creature) = (population[0..generations * 2].choose(&mut rng).unwrap()).mutate(0.3) {
-        iter += 1;
+        //         population.insert(new_creature);
+        //         successes += 1;
 
-                population.insert(new_creature);
-                successes+=1;
-
-                if population[0].fitness > best_so_far {
-                    best_so_far = population[0].fitness;
-                    returns
-                        .send(population[0].clone())
-                        .expect("unable to send best so far");
-                }
-            }
+        //         if population[0].fitness > best_so_far {
+        //             best_so_far = population[0].fitness;
+        //             returns
+        //                 .send(population[0].clone())
+        //                 .expect("unable to send best so far");
+        //         }
+        //     }
         } else {
             population = population[0..generations * 2]
                 .into_iter()

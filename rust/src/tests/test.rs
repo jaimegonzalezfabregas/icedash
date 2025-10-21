@@ -6,7 +6,13 @@ mod tests {
         time::Duration,
     };
 
-    use crate::logic::{noise_reduction::asthetic_cleanup, worker_pool::worker_thread};
+    use crate::{
+        api::main::{Direction, Pos, Tile},
+        logic::{
+            board::Board, noise_reduction::asthetic_cleanup, solver::analyze, tile_map::TileMap,
+            worker_pool::worker_thread,
+        },
+    };
 
     #[test]
     fn test_bench() {
@@ -20,7 +26,7 @@ mod tests {
         ctrl_tx
             .send(crate::logic::worker_pool::CtrlMsg::Kill)
             .expect("couldnt stop worker");
-        
+
         thread::sleep(Duration::from_secs(1));
 
         let mut ret = ret_rx
@@ -40,72 +46,32 @@ mod tests {
                 .collect(),
         );
         println!("{:?}", ret.analysis);
-            println!("mutated {:?} times", ret.mutation_count);
-
+        println!("mutated {:?} times", ret.mutation_count);
     }
 
-//     #[test]
-//     fn room_detection(){
+    // #[test]
 
-//     //   "
-//     //     # # # # # # # # 
-//     //     # # #   # #   # 
-//     //     #   #       # # 
-//     //     # # #         E 
-//     //     #       #   # # 
-//     //     # .   #   # # # 
-//     //     # . #       # # 
-//     //     #             # 
-//     //     #       #     # 
-//     //     #   #         # 
-//     //     # #           # 
-//     //     # # #         # 
-//     //     #             # 
-//     //     # # # # G # # # 
-//     //     "
+    // fn analyze_test() {
+    //     let board = Board {
+    //         map: TileMap(vec![
+    //             vec![Tile::Wall, Tile::Entrance, Tile::Wall],
+    //             vec![Tile::Gate, Tile::Ice, Tile::Wall],
+    //             vec![Tile::Wall, Tile::Wall, Tile::Wall],
+    //         ]),
+    //         start: Pos { x: 1, y: 0 },
+    //         end: Pos { x: 0, y: 1 },
+    //         start_direction: Direction::South,
+    //         end_direction: Direction::East,
+    //     };
+    //     let analysis = analyze(&board).expect("err");
 
-//         let board = Board{
-//             map: TileMap( vec![
-//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Ice,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Entrance ],
-//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,Tile::Ice,Tile::Wall,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice, Tile::Wall,Tile::Ice,Tile::Wall,Tile::Wall,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Ice, Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Ice,Tile::Wall,],
-//                 vec![ Tile::Wall,Tile::Wall,Tile::Wall,Tile::Wall,Tile::Gate, Tile::Wall,Tile::Wall,Tile::Wall,],
-//             ]),
-//             start: Pos { x: 7, y: 3 },
-//             end: Pos{ x: 4, y: 13 },
-//             reset_pos:  Pos { x: 0, y: 0 },
-//             start_direction: Direction::West,
-//             end_direction: Direction::South,
-//         };
-
-//         board.print(vec![]);
-
-//         assert!(!has_rooms(&board));
-
-
-// // "# # # # # # # # 
-// // # # #   # #   # 
-// // #   #       # # 
-// // # # #         E 
-// // #       #   # # 
-// // # .   #   # # # 
-// // # . #       # # 
-// // #             # 
-// // #       #     # 
-// // #   #         # 
-// // # #           # 
-// // # # #         # 
-// // #             # 
-// // # # # # G # # # "
-//     }
+    //     board.print(
+    //         analysis.routes[0][0]
+    //             .solution
+    //             .iter()
+    //             .map(|(_, b)| b)
+    //             .cloned()
+    //             .collect(),
+    //     );
+    // }
 }

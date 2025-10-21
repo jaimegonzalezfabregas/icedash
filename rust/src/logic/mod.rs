@@ -4,3 +4,4 @@ pub mod solver;
 pub mod tile_map;
 pub mod board;
 pub mod worker_pool;
+mod visitations;

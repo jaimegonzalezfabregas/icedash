@@ -1,13 +1,9 @@
-use rand::{ random, seq::IteratorRandom, Rng};
+use rand::{random, seq::IteratorRandom, Rng};
 
 use crate::{
     api::main::{Direction, Pos, Tile},
-    logic::{
-        noise_reduction::{is_board_valid, map_noise_cleanup},
-        tile_map::TileMap,
-    },
+    logic::{noise_reduction::map_noise_cleanup, tile_map::TileMap},
 };
-
 
 #[derive(Clone, Debug)]
 pub struct Board {
@@ -27,16 +23,16 @@ impl Board {
         self.map.get_width()
     }
 
-    pub fn mutate(&self, factor: f32) -> Option<Self> {
+    pub fn mutate(&self, factor: f32) -> Self {
         let mut rng = rand::rng();
 
         let mut ret = self.clone();
 
         for pos in self.map.all_inner_pos() {
             if rng.random::<f32>() < factor {
-                match ret.map.at(pos) {
-                    Tile::Wall => ret.map.set(pos, Tile::Ice),
-                    Tile::Ice => ret.map.set(pos, Tile::Wall),
+                match ret.map.at(&pos) {
+                    Tile::Wall => ret.map.set(&pos, Tile::Ice),
+                    Tile::Ice => ret.map.set(&pos, Tile::Wall),
                     _ => {}
                 }
             }
@@ -50,73 +46,82 @@ impl Board {
             ret.end_direction,
         );
 
-        if is_board_valid(&ret) {
-            Some(ret)
-        } else {
-            None
-        }
+        ret
     }
 
-    pub fn box_cascade(&mut self, moved_ice_cube: Pos, direction: Direction) {
+    pub fn box_cascade(&mut self, moved_ice_cube: &Pos, direction: &Direction) {
         assert!(self.map.at(moved_ice_cube) == Tile::Box);
 
-        if self.map.at(moved_ice_cube + direction.vector()) == Tile::Ice {
-            self.map
-                .set(moved_ice_cube + direction.vector(), Tile::Box);
+        let next_pos = *moved_ice_cube + direction.vector();
+
+        if self.map.at(&next_pos) == Tile::Ice {
+            self.map.set(&next_pos, Tile::Box);
             self.map.set(moved_ice_cube, Tile::Ice);
-            self.box_cascade(moved_ice_cube + direction.vector(), direction);
+            self.box_cascade(&next_pos, direction);
         }
 
-        if self.map.at(moved_ice_cube + direction.vector()) == Tile::Box {
-            self.box_cascade(moved_ice_cube + direction.vector(), direction);
+        if self.map.at(&next_pos) == Tile::Box {
+            self.box_cascade(&next_pos, direction);
         }
     }
 
-    pub fn new_random() -> Option<Self> {
+    pub fn new_random() -> Result<Self, String> {
         let mut rng = rand::rng();
-        let width = (7..15).choose(&mut rng)?;
-        let height = (7..15).choose(&mut rng)?;
+        let width = (7..15).choose(&mut rng).unwrap();
+        let height = (7..15).choose(&mut rng).unwrap();
 
-        let start_side = (0..3).choose(&mut rng)?;
-        let end_side = ((1..3).choose(&mut rng)? + start_side) % 4;
+        let start_side = (0..3).choose(&mut rng).unwrap();
+        let end_side = ((1..3).choose(&mut rng).unwrap() + start_side) % 4;
 
         let gate_range_horizontal = &(3..height - 3);
         let gate_range_vertical = &(3..width - 3);
 
         let (start, start_direction) = match start_side {
             0 => (
-                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng)?),
+                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng).unwrap()),
                 Direction::West,
             ),
             1 => (
-                Pos::new(width - 1, gate_range_horizontal.clone().choose(&mut rng)?),
+                Pos::new(
+                    width - 1,
+                    gate_range_horizontal.clone().choose(&mut rng).unwrap(),
+                ),
                 Direction::East,
             ),
             2 => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, 0),
+                Pos::new(gate_range_vertical.clone().choose(&mut rng).unwrap(), 0),
                 Direction::South,
             ),
             _ => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, height - 1),
+                Pos::new(
+                    gate_range_vertical.clone().choose(&mut rng).unwrap(),
+                    height - 1,
+                ),
                 Direction::North,
             ),
         };
 
         let (end, end_direction) = match end_side {
             0 => (
-                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng)?),
+                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng).unwrap()),
                 Direction::West,
             ),
             1 => (
-                Pos::new(width - 1, gate_range_horizontal.clone().choose(&mut rng)?),
+                Pos::new(
+                    width - 1,
+                    gate_range_horizontal.clone().choose(&mut rng).unwrap(),
+                ),
                 Direction::East,
             ),
             2 => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, 0),
+                Pos::new(gate_range_vertical.clone().choose(&mut rng).unwrap(), 0),
                 Direction::South,
             ),
             _ => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng)?, height - 1),
+                Pos::new(
+                    gate_range_vertical.clone().choose(&mut rng).unwrap(),
+                    height - 1,
+                ),
                 Direction::North,
             ),
         };
@@ -129,45 +134,51 @@ impl Board {
             }
         }
 
-        let pilars = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
-
-        for _ in 0..pilars {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
-
-            map[y][x] = Tile::Wall;
-        }
-
-        let weak_walls = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+        let weak_walls = ((width * height) / 20..(width * height) / 10)
+            .choose(&mut rng)
+            .unwrap();
 
         for _ in 0..weak_walls {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
+            let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
+            let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
 
             map[y][x] = Tile::WeakWall;
         }
 
-        // let boxes = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+        let pilars = ((width * height) / 20..(width * height) / 10)
+            .choose(&mut rng)
+            .unwrap();
+
+        for _ in 0..pilars {
+            let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
+            let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
+
+            map[y][x] = Tile::Wall;
+        }
+
+        // let boxes = ((width * height) / 10..(width * height) / 5).choose(&mut rng).unwrap();
 
         // for _ in 0..boxes {
-        //     let x = (1..(width - 1) as usize).choose(&mut rng)?;
-        //     let y = (1..(height - 1) as usize).choose(&mut rng)?;
+        //     let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
+        //     let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
 
         //     map[y][x] = Tile::Box;
         // }
 
-        let vignet = ((width * height) / 10..(width * height) / 5).choose(&mut rng)?;
+        let vignet = ((width * height) / 10..(width * height) / 5)
+            .choose(&mut rng)
+            .unwrap();
 
         for _ in 0..vignet {
-            let x = (1..(width - 1) as usize).choose(&mut rng)?;
-            let y = (1..(height - 1) as usize).choose(&mut rng)?;
+            let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
+            let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
 
             let normal_x = (x as f32 / width as f32) - 0.5;
             let normal_y = (y as f32 / height as f32) - 0.5;
 
             let normal_d = normal_x * normal_x + normal_y * normal_y;
 
-            if random::<f32>() > normal_d {
+            if random::<f32>() > normal_d * 2. {
                 map[y][x] = Tile::Wall;
             }
 
@@ -194,11 +205,7 @@ impl Board {
             end_direction,
         };
 
-        if is_board_valid(&ret) {
-            Some(ret)
-        } else {
-            None
-        }
+        Ok(ret)
     }
 
     pub(crate) fn print(&self, highlight: Vec<Pos>) {
@@ -220,26 +227,23 @@ impl Board {
         }
     }
 
-    pub fn at(&self, p: Pos)-> Tile{
+    pub fn at(&self, p: &Pos) -> Tile {
         self.map.at(p)
     }
-    
- 
 }
 
-
-pub struct BoardWrap<'a>{
-    pub base: &'a Board,
+pub struct TileMapWrap<'a> {
+    pub base: &'a TileMap,
     pub p: Pos,
     pub tile: Tile,
 }
 
-impl<'a> BoardWrap<'a>{
-    pub fn at(&self, p: Pos) -> Tile{
-        if p == self.p{
+impl<'a> TileMapWrap<'a> {
+    pub fn at(&self, p: &Pos) -> Tile {
+        if *p == self.p {
             self.tile
-        }else{
-            self.base.map.at(p)
+        } else {
+            self.base.at(p)
         }
     }
 }

@@ -1,13 +1,13 @@
-use std::{
-    collections::{HashSet, VecDeque},
-    vec,
-};
+use std::{collections::VecDeque, vec};
+
+use rand::random;
 
 use crate::{
     api::main::{Direction, Pos, Tile},
     logic::{
-        board::{Board, BoardWrap},
+        board::{Board, TileMapWrap},
         tile_map::TileMap,
+        visitations::Visitations,
     },
 };
 
@@ -95,7 +95,7 @@ pub fn map_noise_cleanup(
     if start.x == end.x || start.y == end.y {
         let mean = (*start + *end) / 2;
 
-        map.set(mean, Tile::Wall);
+        map.set(&mean, Tile::Wall);
     }
 
     // remove_awkward_corners(&mut map);
@@ -117,47 +117,49 @@ pub fn map_noise_cleanup(
 
     // remove_sorrounded_spaces(&mut map, [(0, 1), (0, -1), (-1, 0), (1, 0)], 3);
 
-    map.set(*start, Tile::Entrance);
+    remove_rooms(map, &start, &start_direction);
 
-    map.set(*start + start_direction.vector(), Tile::Ice);
+    map.set(start, Tile::Entrance);
+
+    map.set(&(*start + start_direction.vector()), Tile::Ice);
     map.set(
-        *start + start_direction.vector() + start_direction.left().vector(),
+        &(*start + start_direction.vector() + start_direction.left().vector()),
         Tile::Wall,
     );
     map.set(
-        *start + start_direction.vector() + start_direction.right().vector(),
+        &(*start + start_direction.vector() + start_direction.right().vector()),
         Tile::Wall,
     );
 
-    map.set(*start + start_direction.vector() * 2, Tile::Ice);
+    map.set(&(*start + start_direction.vector() * 2), Tile::Ice);
     map.set(
-        *start + start_direction.vector() * 2 + start_direction.left().vector(),
+        &(*start + start_direction.vector() * 2 + start_direction.left().vector()),
         Tile::Ice,
     );
     map.set(
-        *start + start_direction.vector() * 2 + start_direction.right().vector(),
-        Tile::Ice,
-    );
-
-    map.set(*end, Tile::Gate);
-
-    map.set(*end + end_direction.vector(), Tile::Ice);
-    map.set(
-        *end + end_direction.vector() + end_direction.left().vector(),
-        Tile::Ice,
-    );
-    map.set(
-        *end + end_direction.vector() + end_direction.right().vector(),
+        &(*start + start_direction.vector() * 2 + start_direction.right().vector()),
         Tile::Ice,
     );
 
-    map.set(*end + end_direction.vector() * 2, Tile::Ice);
+    map.set(end, Tile::Gate);
+
+    map.set(&(*end + end_direction.vector()), Tile::Ice);
     map.set(
-        *end + end_direction.vector() * 2 + end_direction.left().vector(),
+        &(*end + end_direction.vector() + end_direction.left().vector()),
         Tile::Ice,
     );
     map.set(
-        *end + end_direction.vector() * 2 + end_direction.right().vector(),
+        &(*end + end_direction.vector() + end_direction.right().vector()),
+        Tile::Ice,
+    );
+
+    map.set(&(*end + end_direction.vector() * 2), Tile::Ice);
+    map.set(
+        &(*end + end_direction.vector() * 2 + end_direction.left().vector()),
+        Tile::Ice,
+    );
+    map.set(
+        &(*end + end_direction.vector() * 2 + end_direction.right().vector()),
         Tile::Ice,
     );
 }
@@ -183,19 +185,19 @@ impl PartialOrd for ConnectedSearchState {
     }
 }
 
-pub fn connected(seed1: Pos, seed2: Pos, board1: &BoardWrap, board2: &BoardWrap) -> bool {
+pub fn connected(seed1: Pos, seed2: Pos, board1: &TileMapWrap, board2: &TileMapWrap) -> bool {
     let mut search1 = BinaryHeap::new();
     let mut search2 = BinaryHeap::new();
 
-    let mut found1 = HashSet::<Pos>::new();
-    let mut found2 = HashSet::<Pos>::new();
+    let mut found1 = Visitations::new(board1.base.get_width(), board1.base.get_height());
+    let mut found2 = Visitations::new(board2.base.get_width(), board2.base.get_height());
 
     // Push the initial positions with 0 cost and heuristic distance
     search1.push(ConnectedSearchState {
         pos: seed1,
         heuristic: heuristic_distance(seed1, seed2),
     });
-    found1.insert(seed1);
+    found1.insert(&seed1);
 
     search2.push(ConnectedSearchState {
         pos: seed2,
@@ -211,11 +213,11 @@ pub fn connected(seed1: Pos, seed2: Pos, board1: &BoardWrap, board2: &BoardWrap)
             let next_pos1 = direction.vector() + p1.pos;
 
             if !found1.contains(&next_pos1) {
-                if board1.at(next_pos1) == Tile::Ice {
+                if !board1.at(&next_pos1).stops_player_during_gameplay() {
                     if found2.contains(&next_pos1) {
                         return true;
                     }
-                    found1.insert(next_pos1);
+                    found1.insert(&next_pos1);
                     search1.push(ConnectedSearchState {
                         pos: next_pos1,
                         heuristic: heuristic_distance(next_pos1, seed2),
@@ -226,13 +228,11 @@ pub fn connected(seed1: Pos, seed2: Pos, board1: &BoardWrap, board2: &BoardWrap)
             let next_pos2 = direction.vector() + p2.pos;
 
             if !found2.contains(&next_pos2) {
-                if board2.at(next_pos2) == Tile::Ice {
+                if !board2.at(&next_pos2).stops_player_during_gameplay() {
                     if found1.contains(&next_pos2) {
-                        
                         return true;
-
                     }
-                    found2.insert(next_pos2);
+                    found2.insert(&next_pos2);
                     search2.push(ConnectedSearchState {
                         pos: next_pos2,
                         heuristic: heuristic_distance(next_pos2, seed1),
@@ -253,84 +253,89 @@ fn heuristic_distance(pos1: Pos, pos2: Pos) -> usize {
         .unwrap()
 }
 
-pub fn room_at(p1: Pos, p2: Pos, board: &Board) -> bool {
-    let entrance_corridor = board.start + board.start_direction.vector();
+pub fn remove_rooms(board: &mut TileMap, start: &Pos, start_direction: &Direction) {
+    let all_pos = board.all_inner_pos().collect::<Vec<_>>();
+    let entrance_corridor = *start + start_direction.vector();
 
-    if entrance_corridor == p1 || entrance_corridor == p2 {
-        return false;
-    }
+    let mut rep = true;
 
-    !connected(
-        p1,
-        p2,
-        &BoardWrap {
-            base: &board,
-            p: p2,
-            tile: Tile::Wall,
-        },
-        &BoardWrap {
-            base: &board,
-            p: p1,
-            tile: Tile::Wall,
-        },
-    )
-}
+    while rep {
+        rep = false;
 
-pub fn has_rooms(board: &Board) -> bool {
-    for p1 in board.map.all_inner_pos() {
-        if board.map.at(p1) != Tile::Ice {
-            continue;
+        for p1 in &all_pos {
+            if board.at(&p1).stops_player_during_gameplay() {
+                continue;
+            }
+
+            for (dx, dy) in [(0, 1), (1, 0)] {
+                let p2 = *p1 + Pos::new(dx, dy);
+
+                if board.at(&p2).stops_player_during_gameplay() {
+                    continue;
+                }
+
+                let direction = Pos { x: dx, y: dy };
+                let normal_direction = direction.rotate_left(1);
+
+                if board.at(&(*p1 + normal_direction)) == Tile::Ice
+                    && board.at(&(p2 + normal_direction)) == Tile::Ice
+                {
+                    continue;
+                }
+
+                if board.at(&(*p1 - normal_direction)) == Tile::Ice
+                    && board.at(&(p2 - normal_direction)) == Tile::Ice
+                {
+                    continue;
+                }
+
+                if entrance_corridor == *p1 || entrance_corridor == p2 {
+                    continue;
+                }
+
+                if !connected(
+                    *p1,
+                    p2,
+                    &TileMapWrap {
+                        base: &board,
+                        p: p2,
+                        tile: Tile::Wall,
+                    },
+                    &TileMapWrap {
+                        base: &board,
+                        p: *p1,
+                        tile: Tile::Wall,
+                    },
+                ) {
+                    if random::<f32>() > 0.5 {
+                        board.set(&p1, Tile::Wall);
+                    } else {
+                        board.set(&p2, Tile::Wall);
+                    }
+
+                    rep = true;
+                }
+            }
         }
-
-        for (dx, dy) in [(0, 1), (1, 0)] {
-            let p2 = p1 + Pos::new(dx, dy);
-
-            if board.map.at(p2) != Tile::Ice {
-                continue;
-            }
-
-            let direction = Pos { x: dx, y: dy };
-            let normal_direction = direction.rotate_left(1);
-
-            if board.map.at(p1 + normal_direction) == Tile::Ice
-                && board.map.at(p2 + normal_direction) == Tile::Ice
-            {
-                continue;
-            }
-
-            if board.map.at(p1 - normal_direction) == Tile::Ice
-                && board.map.at(p2 - normal_direction) == Tile::Ice
-            {
-                continue;
-            }
-
-            if room_at(p1, p2, board) {
-                // board.print(vec![(x1, y1), (x2, y2)]);
-                return true;
-            }
-        }
     }
-    false
 }
 
-pub fn is_board_valid(board: &Board) -> bool {
-    !has_rooms(board)
-}
-
-pub fn flood(starting_positions: Vec<Pos>, board: &Board, traversable_tiles: Vec<Tile>) -> Vec<Vec<bool>> {
-    let mut reachability =
-        vec![vec![false; board.map.get_width() as usize]; board.map.get_height() as usize];
+pub fn flood(
+    starting_positions: Vec<Pos>,
+    board: &TileMap,
+    traversable_tiles: Vec<Tile>,
+) -> Visitations {
+    let mut reachability = Visitations::new(board.get_width(), board.get_height());
     let mut flood_edge: VecDeque<Pos> = VecDeque::from(starting_positions);
 
     while let Some(next_check) = flood_edge.pop_front() {
-        if !board.map.in_bounds(next_check) {
+        if !board.in_bounds(&next_check) {
             continue;
         }
 
-        if reachability[next_check.y as usize][next_check.x as usize] == false
-            && traversable_tiles.contains(&board.map.at(next_check))
+        if !reachability.contains(&next_check) && traversable_tiles.contains(&board.at(&next_check))
         {
-            reachability[next_check.y as usize][next_check.x as usize] = true;
+            reachability.insert(&next_check);
 
             for dir in [
                 Direction::North,
@@ -351,22 +356,27 @@ pub fn asthetic_cleanup(mut ret: Board) -> Board {
             ret.start + ret.start_direction.vector(),
             ret.end + ret.end_direction.vector(),
         ],
-        &ret,
-        vec![Tile::Ice, Tile::WeakWall, Tile::Box, Tile::Entrance, Tile::Gate]
+        &ret.map,
+        vec![
+            Tile::Ice,
+            Tile::WeakWall,
+            Tile::Box,
+            Tile::Entrance,
+            Tile::Gate,
+        ],
     );
+    let inner_pos = ret.map.all_pos().collect::<Vec<_>>();
 
-    for (y, row) in reachability.iter().enumerate() {
-        for (x, reacheable) in row.iter().enumerate() {
-            if ret.end.x == x as isize && ret.end.y == y as isize {
-                continue;
-            }
+    for p in inner_pos {
+        if ret.end == p {
+            continue;
+        }
 
-            if ret.start.x == x as isize && ret.start.y == y as isize {
-                continue;
-            }
-            if !*reacheable{
-                ret.map.set(Pos::new(x as isize, y as isize), Tile::Wall);
-            }
+        if ret.start == p {
+            continue;
+        }
+        if !reachability.contains(&p) {
+            ret.map.set(&p, Tile::Wall);
         }
     }
 

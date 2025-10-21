@@ -125,8 +125,8 @@ impl Direction {
         self.left().reverse()
     }
     
-    pub(crate) fn all() -> [Direction;4] {
-        [Direction::North, Direction::East, Direction::South, Direction::West]
+    pub(crate) fn all() -> Vec<Direction> {
+        vec![Direction::North, Direction::East, Direction::South, Direction::West]
     }
 }
 
@@ -256,11 +256,11 @@ impl Room {
         self.get_board().map.all_pos().collect()
     }
 
-    pub fn at(&self, pos: Pos) -> Tile{
+    pub fn at(&self, pos: &Pos) -> Tile{
         self.get_map().at(pos)
     }
 
-    pub fn set_tile_at(&self, pos: Pos, tile: Tile) -> Self{
+    pub fn set_tile_at(&self, pos: &Pos, tile: Tile) -> Self{
         let mut ret = self.to_owned();
         match ret {
             Room::Lobby(ref mut board) => { board.map.set(pos, tile);},

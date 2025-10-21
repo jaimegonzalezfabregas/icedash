@@ -4,7 +4,7 @@ use crate::api::main::{Pos, Tile};
 pub struct TileMap(pub Vec<Vec<Tile>>);
 
 impl TileMap {
-    pub fn at_mut(&mut self, p: Pos) -> &mut Tile {
+    pub fn at_mut(&mut self, p: &Pos) -> &mut Tile {
         self.0
             .get_mut(p.y as usize)
             .unwrap()
@@ -12,7 +12,7 @@ impl TileMap {
             .unwrap()
     }
 
-    pub fn at(&self, p: Pos) -> Tile {
+    pub fn at(&self, p: &Pos) -> Tile {
         if self.in_bounds(p) {
             self.0
                 .get(p.y as usize)
@@ -34,7 +34,7 @@ impl TileMap {
             .clone()
     }
 
-    pub fn set(&mut self, p: Pos, val: Tile) {
+    pub fn set(&mut self, p: &Pos, val: Tile) {
         *self.at_mut(p) = val;
     }
 
@@ -75,7 +75,7 @@ impl TileMap {
         }
     }
 
-    pub fn in_bounds(&self, p: Pos) -> bool {
+    pub fn in_bounds(&self, p: &Pos) -> bool {
         p.x >= 0 && p.y >= 0 && p.x < self.get_width() && p.y < self.get_height()
     }
 
@@ -86,7 +86,7 @@ impl TileMap {
         ]);
 
         for p in self.all_pos() {
-            ret.set(p.rotate_left(self.get_height()), self.at(p));
+            ret.set(&p.rotate_left(self.get_height()), self.at(&p));
         }
 
         // ret.print(vec![]);
