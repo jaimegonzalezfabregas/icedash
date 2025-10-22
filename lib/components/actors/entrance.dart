@@ -9,12 +9,13 @@ class Entrance extends Actor {
 
   @override
   FutureOr<void> onLoad() async {
-
     super.opacity = 0;
     add(OpacityEffect.fadeIn(EffectController(duration: 1, startDelay: 1)));
     return super.onLoad();
   }
 
   @override
-  void hit(Direction dir) {}
+  bool hit(Direction dir) {
+    return false;
+  }
 }

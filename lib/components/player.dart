@@ -84,6 +84,9 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       }
 
       if (!game.idWorld.canWalkInto(position, position + delta)) {
+      bool consecuences = game.idWorld.hit(position + delta, dir);
+
+        if(movementLenght != 0 || consecuences){
        
           if (remainingMoves != null) {
             remainingMoves = remainingMoves! - 1;
@@ -92,9 +95,9 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
               reset();
             }
           }
+          }
         
 
-        game.idWorld.hit(position + delta, dir);
 
         movementLenght = 0;
 

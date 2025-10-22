@@ -11,7 +11,7 @@ abstract class Actor extends SpriteComponent {
   }
 
   bool colision = true;
-  void hit(Direction dir);
+  bool hit(Direction dir);
 
   @override
   FutureOr<void> onLoad() async {

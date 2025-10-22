@@ -174,6 +174,18 @@ class RoomComponent extends Component {
 
               onComplete: () {
                 actorList.add(entrance);
+
+                SpriteComponent gate_ice = tileSpriteGrid[pos]!;
+
+                gate_ice.add(
+                  OpacityEffect.fadeOut(
+                    EffectController(duration: 0.1),
+                    onComplete: () {
+                      gate_ice.removeFromParent();
+                    },
+                  ),
+                );
+                tileSpriteGrid.remove(pos);
               },
             ),
           );
@@ -210,15 +222,14 @@ class RoomComponent extends Component {
     return canWalk;
   }
 
-  bool canBoxWalkInto(Vector2 dst, Direction dir){
+  bool canBoxWalkInto(Vector2 dst, Direction dir) {
     Tile dstTile = getTile(dst);
     var canWalk = !dstTile.stopsBoxDuringGameplay();
 
     if (canWalk == true) {
       for (var actor in actorList) {
         if (actor.colision && worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
-
-          if(actor is Box){
+          if (actor is Box) {
             actor.hit(dir);
           }
 
@@ -230,12 +241,14 @@ class RoomComponent extends Component {
     return canWalk;
   }
 
-  void hit(Vector2 pos, Direction dir) {
+  bool hit(Vector2 pos, Direction dir) {
+    var consecuences = false;
     for (var actor in actorList) {
       if (worldVector2MapPos(actor.position) == worldVector2MapPos(pos)) {
-        actor.hit(dir);
+        consecuences |= actor.hit(dir);
       }
     }
+    return consecuences;
   }
 
   Tile getTile(Vector2 worldPos) {

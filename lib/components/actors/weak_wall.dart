@@ -5,9 +5,10 @@ class WeakWall extends Actor {
   WeakWall({super.position}) : super("weakwall.png");
   
   @override
-  void hit(Direction dir) {
+  bool hit(Direction dir) {
     removeFromParent();
     super.colision = false;
+    return true;
   }
 
 

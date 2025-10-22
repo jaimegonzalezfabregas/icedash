@@ -11,17 +11,24 @@ class Box extends Actor {
   Box(this.room, {super.position}) : super("box.png");
 
   @override
-  void hit(Direction dir) {
-    while (room.canBoxWalkInto(position + Vector2.array(dir.dartVector()), dir)) {
-      add(
-        MoveEffect.by(
-          Vector2.array(dir.dartVector()),
-          LinearEffectController(timePerStep),
-          onComplete: () {
-            hit(dir);
-          },
-        ),
-      );
+  bool hit(Direction dir) {
+    if (!room.canBoxWalkInto(position + Vector2.array(dir.dartVector()), dir)) {
+      return false;
     }
+
+    super.colision = false;
+    add(
+      MoveByEffect(
+        Vector2.array(dir.dartVector()),
+        LinearEffectController(timePerStep),
+        onComplete: () {
+          super.colision = true;
+
+          hit(dir);
+        },
+      ),
+    );
+
+    return true;
   }
 }
