@@ -1,4 +1,6 @@
-use crate::api::main::{Pos, Tile};
+use crate::api::main::{Direction, Neighbour, Pos, Tile};
+
+
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct TileMap(pub Vec<Vec<Tile>>);
@@ -22,6 +24,21 @@ impl TileMap {
                 .clone()
         } else {
             Tile::Outside
+        }
+    }
+
+    pub fn neighbour_at(&self, p: &Pos) -> Neighbour {
+        use Direction::*;
+        Neighbour {
+            center: self.at(p),
+            north: self.at(&(*p + North.vector())),
+            south: self.at(&(*p + South.vector())),
+            east: self.at(&(*p + East.vector())),
+            west: self.at(&(*p + West.vector())),
+            northwest: self.at(&(*p + North.vector() + West.vector())),
+            northeast: self.at(&(*p + North.vector() + East.vector())),
+            southwest: self.at(&(*p + South.vector() + West.vector())),
+            southeast: self.at(&(*p + South.vector() + East.vector())),
         }
     }
 
@@ -86,7 +103,7 @@ impl TileMap {
         ]);
 
         for p in self.all_pos() {
-            ret.set(&p.rotate_left(self.get_height()), self.at(&p));
+            ret.set(&p.rotate_left(self.get_width()), self.at(&p));
         }
 
         // ret.print(vec![]);
@@ -101,7 +118,7 @@ impl TileMap {
             let mut line = line.as_bytes();
             let mut row = vec![];
 
-            while (line.len() != 0) {
+            while line.len() != 0 {
                 row.push(Tile::from_symbol(line[0]));
 
                 line = &line[2..];

@@ -19,8 +19,8 @@ impl Creature {
         let analysis = analyze(&b)?;
 
         Ok(Self {
+            fitness : analysis.compute_fitness(&b.map),
             board: b,
-            fitness : analysis.compute_fitness(),
             analysis,
             mutation_count: 0,
         })

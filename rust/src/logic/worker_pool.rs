@@ -8,9 +8,6 @@ use std::{
     time::{self, Duration},
 };
 
-use rand::seq::IndexedRandom;
-use sorted_vec::partial::ReverseSortedVec;
-
 use crate::{
     api::main::Room,
     logic::{board::Board, creature::Creature, noise_reduction::asthetic_cleanup},
@@ -83,12 +80,13 @@ pub fn worker_halt(millis: usize) {
 pub fn start_search() {
     let mut ret = G_WORKER.lock().unwrap();
 
-    // while ret.len()
-    //     < (available_parallelism()
-    //         .expect("couldnt get available parallelism")
-    //         .get()
-    //         - 3)
-    while ret.len() < 1 {
+    while ret.len()
+        < (available_parallelism()
+            .expect("couldnt get available parallelism")
+            .get()
+            - 3)
+    {
+        // while ret.len() < 1 {
         let (ctrl_tx, ctrl_rx) = mpsc::channel();
         let (ret_tx, ret_rx) = mpsc::channel();
         ret.push_back(Worker {
@@ -105,17 +103,12 @@ pub fn random_creature() -> Result<Creature, String> {
 }
 
 pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
-    let mut rng = rand::rng();
-
-    let mut population: ReverseSortedVec<Creature> = ReverseSortedVec::new();
-
-    let mut generations = 1;
-
     let mut best_so_far = 0.;
     let mut iter = 0;
     let mut successes: i32 = 0;
 
     loop {
+        iter += 1;
         match messenger.try_recv() {
             Ok(CtrlMsg::Halt(time)) => {
                 println!("halting");
@@ -124,61 +117,27 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
                 continue;
             }
             Ok(CtrlMsg::Kill) => {
-                println!("reached {generations} generations with {iter} iter and {successes} successes (ratio of {})", successes as f32 / iter as f32);
+                println!(
+                    "reached {iter} iter and {successes} successes (ratio of {})",
+                    successes as f32 / iter as f32
+                );
 
                 return;
             }
             Err(_) => {}
         }
 
-        if population.len() < generations * 3 {
-            iter += 1;
-
-            match random_creature() {
-                Ok(new_creature) => {
-                    population.insert(new_creature);
-                    successes += 1;
-                    if population[0].fitness > best_so_far {
-                        best_so_far = population[0].fitness;
-                        returns
-                            .send(population[0].clone())
-                            .expect("unable to send best so far");
-                    }
-                }
-                Err(_) => {}
-            }
-        } else if population.len() < generations * 9 {
-            if let Ok(new_creature) =
-                (population[0..generations * 2].choose(&mut rng).unwrap()).mutate(0.3)
-            {
-                iter += 1;
-
-                population.insert(new_creature);
+        match random_creature() {
+            Ok(new_creature) => {
                 successes += 1;
-
-                if population[0].fitness > best_so_far {
-                    best_so_far = population[0].fitness;
+                if new_creature.fitness > best_so_far {
+                    best_so_far = new_creature.fitness;
                     returns
-                        .send(population[0].clone())
+                        .send(new_creature.clone())
                         .expect("unable to send best so far");
                 }
             }
-        } else {
-            population = population[0..generations * 2]
-                .into_iter()
-                .cloned()
-                .collect();
-
-            let mean_fitness =
-                population.iter().map(|cre| (*cre).fitness).sum::<f32>() / population.len() as f32;
-
-            population = population
-                .iter()
-                .filter(|e| e.fitness > mean_fitness)
-                .cloned()
-                .collect();
-
-            generations += 1;
+            Err(_) => {}
         }
     }
 }

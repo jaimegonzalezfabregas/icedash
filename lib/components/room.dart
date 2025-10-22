@@ -37,9 +37,13 @@ class RoomComponent extends Component {
   }
 
   RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room) {
+    print("room component entrance direction is $entranceDirection");
     while (room.getStartDirection() != entranceDirection) {
+      print("room entrance direction is ${room.getStartDirection()}");
+
       room = room.rotateLeft();
     }
+    print("room entrance direction is ${room.getStartDirection()}");
 
     entranceRoomPos = Vector2.array(room.getStart().dartVector());
 
@@ -54,36 +58,73 @@ class RoomComponent extends Component {
   }
 
   Future fadeIn() async {
-    var fadeSpeed = 0.05;
-    var rippleSpeed = 0.05;
+    var fadeDuration = 0.5;
+    var rippleDuration = 0.1;
     for (var sprite in tileSpriteGrid.values) {
       sprite.opacity = 0;
     }
 
-    for (var sprite in tileSpriteGrid.values) {
-      double d = (sprite.position - entranceWorldPos).length * rippleSpeed;
+    for (var sprite in actorList) {
+      sprite.opacity = 0;
+    }
 
-      await sprite.add(OpacityEffect.fadeIn(EffectController(duration: fadeSpeed + d, startDelay: d)));
+    for (var sprite in tileSpriteGrid.values) {
+      double d = (sprite.position - entranceWorldPos).length * rippleDuration;
+
+      await sprite.add(OpacityEffect.fadeIn(EffectController(duration: fadeDuration, startDelay: d)));
+    }
+
+    for (var actor in actorList) {
+      double d = (actor.position - entranceWorldPos).length * rippleDuration;
+
+      await actor.add(OpacityEffect.fadeIn(EffectController(duration: fadeDuration, startDelay: d)));
     }
   }
 
   Future fadeOut(onDone) async {
-    var fadeSpeed = 0.05;
-    var rippleSpeed = 0.05;
+    var fadeDuration = 0.5;
+    var rippleDuration = 0.1;
 
     double maxDelay = 0;
     for (var sprite in tileSpriteGrid.values) {
-      double d = (sprite.position - exitWorldPos).length * rippleSpeed;
+      double d = (sprite.position - exitWorldPos).length * rippleDuration;
       sprite.opacity = 1;
 
-      maxDelay = max(maxDelay, fadeSpeed + d);
+      maxDelay = max(maxDelay, fadeDuration + d);
     }
-    for (var sprite in tileSpriteGrid.values) {
-      double d = (sprite.position - exitWorldPos).length * rippleSpeed;
 
-      await sprite.add(OpacityEffect.fadeOut(EffectController(duration: maxDelay - d + fadeSpeed, startDelay: maxDelay - d)));
+    print("max delay $maxDelay");
+
+    for (var actor in actorList) {
+      double d = (actor.position - exitWorldPos).length * rippleDuration;
+      actor.opacity = 1;
+
+      maxDelay = max(maxDelay, fadeDuration + d);
     }
-    add(FunctionEffect((_, __) => onDone, EffectController(duration: maxDelay)));
+
+    for (var sprite in tileSpriteGrid.values) {
+      double d = (sprite.position - exitWorldPos).length * rippleDuration;
+
+      await sprite.add(OpacityEffect.fadeOut(EffectController(duration: fadeDuration, startDelay: maxDelay - d)));
+    }
+
+    for (var actor in actorList) {
+      double d = (actor.position - exitWorldPos).length * rippleDuration;
+
+      await actor.add(OpacityEffect.fadeOut(EffectController(duration: fadeDuration, startDelay: maxDelay - d)));
+    }
+
+    add(
+      FunctionEffect(
+        (_, __) {},
+        onComplete: () {
+          clean();
+
+          onDone();
+        },
+        EffectController(duration: maxDelay + fadeDuration),
+      ),
+    );
   }
 
   @override
@@ -92,7 +133,7 @@ class RoomComponent extends Component {
     fadeIn();
   }
 
-  Future<void> buildSpriteGrid() async {
+  void clean() {
     for (var e in tileSpriteGrid.values) {
       e.removeFromParent();
     }
@@ -100,13 +141,17 @@ class RoomComponent extends Component {
     for (var actor in actorList) {
       actor.removeFromParent();
     }
+  }
+
+  Future<void> buildSpriteGrid() async {
+    clean();
 
     tileSpriteGrid = {};
     actorList = [];
 
     for (var pos in room.getAllPositions()) {
       var tile = room.at(pos: pos);
-      String? bgImg = tile.getAsset();
+      String? bgImg = room.neighbourAt(pos: pos).getAsset();
 
       if (bgImg != null) {
         SpriteComponent img = SpriteComponent(priority: 0, size: Vector2.all(1), position: mapPos2WorldVector(pos));
@@ -118,11 +163,24 @@ class RoomComponent extends Component {
       }
 
       if (tile == Tile.entrance) {
-        var entrance = Entrance(position: mapPos2WorldVector(pos));
-        actorList.add(entrance);
-        add(entrance);
-      }
+        String? asset = room.neighbourAt(pos: pos).maskCenter(tile: Tile.wall).getAsset();
 
+        if (asset != null) {
+          var entrance = Entrance(asset, position: mapPos2WorldVector(pos));
+          add(
+            FunctionEffect(
+              (_, _) {},
+              EffectController(duration: 1, startDelay: 1),
+
+              onComplete: () {
+                actorList.add(entrance);
+              },
+            ),
+          );
+
+          add(entrance);
+        }
+      }
       if (tile == Tile.box) {
         var box = Box(this, position: mapPos2WorldVector(pos));
         actorList.add(box);
@@ -137,7 +195,7 @@ class RoomComponent extends Component {
     }
   }
 
-  bool canWalkInto(Vector2 origin, Vector2 dst) {
+  bool canWalkInto(Vector2 dst) {
     Tile dstTile = getTile(dst);
     var canWalk = !dstTile.stopsPlayerDuringGameplay();
 
@@ -152,8 +210,27 @@ class RoomComponent extends Component {
     return canWalk;
   }
 
-  void hit(Vector2 pos, Direction dir) {
+  bool canBoxWalkInto(Vector2 dst, Direction dir){
+    Tile dstTile = getTile(dst);
+    var canWalk = !dstTile.stopsBoxDuringGameplay();
 
+    if (canWalk == true) {
+      for (var actor in actorList) {
+        if (actor.colision && worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
+
+          if(actor is Box){
+            actor.hit(dir);
+          }
+
+          return false;
+        }
+      }
+    }
+
+    return canWalk;
+  }
+
+  void hit(Vector2 pos, Direction dir) {
     for (var actor in actorList) {
       if (worldVector2MapPos(actor.position) == worldVector2MapPos(pos)) {
         actor.hit(dir);
@@ -163,9 +240,9 @@ class RoomComponent extends Component {
 
   Tile getTile(Vector2 worldPos) {
     try {
-      Vector2 localPos = worldPos - entranceWorldPos + entranceRoomPos;
+      Pos localPos = worldVector2MapPos(worldPos);
 
-      return room.getMap().field0[(localPos.y).round()][(localPos.x).round()];
+      return room.at(pos: localPos);
     } catch (_) {
       return Tile.outside;
     }

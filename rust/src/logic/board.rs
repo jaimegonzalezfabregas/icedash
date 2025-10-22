@@ -79,14 +79,14 @@ impl Board {
         let (start, start_direction) = match start_side {
             0 => (
                 Pos::new(0, gate_range_horizontal.clone().choose(&mut rng).unwrap()),
-                Direction::West,
+                Direction::East,
             ),
             1 => (
                 Pos::new(
                     width - 1,
                     gate_range_horizontal.clone().choose(&mut rng).unwrap(),
                 ),
-                Direction::East,
+                Direction::West,
             ),
             2 => (
                 Pos::new(gate_range_vertical.clone().choose(&mut rng).unwrap(), 0),
@@ -115,14 +115,14 @@ impl Board {
             ),
             2 => (
                 Pos::new(gate_range_vertical.clone().choose(&mut rng).unwrap(), 0),
-                Direction::South,
+                Direction::North,
             ),
             _ => (
                 Pos::new(
                     gate_range_vertical.clone().choose(&mut rng).unwrap(),
                     height - 1,
                 ),
-                Direction::North,
+                Direction::South,
             ),
         };
 
@@ -134,7 +134,7 @@ impl Board {
             }
         }
 
-        let weak_walls = ((width * height) / 20..(width * height) / 10)
+        let weak_walls = ((width * height) / 40..=(width * height) / 30)
             .choose(&mut rng)
             .unwrap();
 
@@ -156,14 +156,14 @@ impl Board {
             map[y][x] = Tile::Wall;
         }
 
-        // let boxes = ((width * height) / 10..(width * height) / 5).choose(&mut rng).unwrap();
+        let boxes = ((width * height) / 40..=(width * height) / 30).choose(&mut rng).unwrap();
 
-        // for _ in 0..boxes {
-        //     let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
-        //     let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
+        for _ in 0..boxes {
+            let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
+            let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
 
-        //     map[y][x] = Tile::Box;
-        // }
+            map[y][x] = Tile::Box;
+        }
 
         let vignet = ((width * height) / 10..(width * height) / 5)
             .choose(&mut rng)
@@ -219,8 +219,8 @@ impl Board {
 
     pub fn rotate_left(self) -> Self {
         Board {
-            start: self.start.rotate_left(self.map.get_height()),
-            end: self.end.rotate_left(self.map.get_height()),
+            start: self.start.rotate_left(self.map.get_width()),
+            end: self.end.rotate_left(self.map.get_width()),
             start_direction: self.start_direction.left(),
             end_direction: self.end_direction.left(),
             map: self.map.rotate_left(),

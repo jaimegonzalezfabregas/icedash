@@ -29,20 +29,19 @@ flutter:
   assets:
     - assets/images/player.png
     - assets/images/box.png
-    - assets/images/wall.png
+    - assets/images/wall_e_nw.png
+    - assets/images/wall_e.png
+    - assets/images/wall_ew.png
+    - assets/images/wall__ne-nw.png
+    - assets/images/wall__ne.png
+    - assets/images/wall_ne.png
+    - assets/images/wall_new.png
+    - assets/images/wall_n.png
+    - assets/images/wall__nw.png
+    - assets/images/wall_nw.png
+    - assets/images/wall_s.png
+    - assets/images/wall_w_ne.png
+    - assets/images/wall_w.png
     - assets/images/weakwall.png
-    # - assets/images/wall0.png
-    # - assets/images/wall1.png
-    # - assets/images/wall3.png
-    # - assets/images/wall4.png
-    # - assets/images/wall5.png
-    # - assets/images/wall6.png
-    # - assets/images/wall7.png
-    # - assets/images/wall8.png
-    # - assets/images/wall9.png
-    # - assets/images/wall10.png
-    # - assets/images/wall11.png
-    # - assets/images/wall12.png
-    # - assets/images/wall13.png
-    # - assets/images/wall14.png
+  
     - assets/images/ice.png

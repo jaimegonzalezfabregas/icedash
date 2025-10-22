@@ -1,6 +1,139 @@
 use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
-use crate::logic::{board::Board, creature::Creature, tile_map::TileMap, worker_pool::{get_new_room, start_search, worker_halt}};
+use crate::logic::{
+    board::Board,
+    creature::Creature,
+    tile_map::TileMap,
+    worker_pool::{get_new_room, start_search, worker_halt},
+};
+#[derive(Clone)]
+pub struct Neighbour {
+    pub center: Tile,
+    pub north: Tile,
+    pub south: Tile,
+    pub east: Tile,
+    pub west: Tile,
+    pub northwest: Tile,
+    pub northeast: Tile,
+    pub southwest: Tile,
+    pub southeast: Tile,
+}
+
+pub struct NeighbourBool {
+    pub center: bool,
+    pub north: bool,
+    pub south: bool,
+    pub east: bool,
+    pub west: bool,
+    pub northwest: bool,
+    pub northeast: bool,
+    pub southwest: bool,
+    pub southeast: bool,
+}
+
+impl Neighbour {
+    pub fn mask_center(&self, tile: Tile) -> Self {
+        let mut ret = self.clone();
+        ret.center = tile;
+        ret
+    }
+
+    pub fn to_stops_player_during_gameplay(&self) -> NeighbourBool {
+        NeighbourBool {
+            center: self.center.stops_player_during_gameplay(),
+            north: self.north.stops_player_during_gameplay(),
+            south: self.south.stops_player_during_gameplay(),
+            east: self.east.stops_player_during_gameplay(),
+            west: self.west.stops_player_during_gameplay(),
+            northwest: self.northwest.stops_player_during_gameplay(),
+            northeast: self.northeast.stops_player_during_gameplay(),
+            southwest: self.southwest.stops_player_during_gameplay(),
+            southeast: self.southeast.stops_player_during_gameplay(),
+        }
+    }
+
+    pub fn get_asset(&self) -> Option<String> {
+        match self.center {
+            Tile::Entrance => Some("ice.png".into()),
+            Tile::Gate => Some("ice.png".into()),
+            Tile::Ice => Some("ice.png".into()),
+            Tile::WeakWall => Some("ice.png".into()),
+            Tile::Box => Some("ice.png".into()),
+            Tile::Outside => None,
+            Tile::Wall => match self.to_stops_player_during_gameplay() {
+                NeighbourBool {
+                    north: true,
+                    south: true,
+                    east: true,
+                    west: true,
+                    northwest: true,
+                    northeast: true,
+                    southwest: true,
+                    southeast: true,
+                    ..
+                } => None,
+                NeighbourBool {
+                    north: false,
+                    south: false,
+                    ..
+                } => Some("wall_s.png".into()),
+                NeighbourBool {
+                    north: false,
+                    south: _,
+                    east: false,
+                    west: false,
+                    ..
+                } => Some("wall_new.png".into()),
+                NeighbourBool {
+                    north: false,
+                    east: false,
+                    ..
+                } => Some("wall_ne.png".into()),
+                NeighbourBool {
+                    north: false,
+                    west: false,
+                    ..
+                } => Some("wall_nw.png".into()),
+                NeighbourBool { north: false, .. } => Some("wall_n.png".into()),
+                NeighbourBool { south: false, .. } => Some("wall_s.png".into()),
+                NeighbourBool { east: false, .. } => Some("wall_e.png".into()),
+                NeighbourBool { west: false, .. } => Some("wall_w.png".into()),
+                NeighbourBool {
+                    south: true,
+                    east: true,
+                    southeast: false,
+                    ..
+                } => Some("wall_e.png".into()),
+                NeighbourBool {
+                    south: true,
+                    west: true,
+                    southwest: false,
+                    ..
+                } => Some("wall_w.png".into()),
+                NeighbourBool {
+                    north: true,
+                    east: true,
+                    west: true,
+                    northwest: false,
+                    northeast: false,
+                    ..
+                } => Some("wall__ne-nw.png".into()),
+                NeighbourBool {
+                    north: true,
+                    west: true,
+                    northwest: false,
+                    ..
+                } => Some("wall__nw.png".into()),
+                NeighbourBool {
+                    north: true,
+                    east: true,
+                    northeast: false,
+                    ..
+                } => Some("wall__ne.png".into()),
+            }
+        }
+    }
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Copy)]
 pub struct Pos {
@@ -17,15 +150,13 @@ impl Pos {
         vec![self.x as f32, self.y as f32]
     }
 
-    pub(crate) fn rotate_left(self, height: isize) -> Pos {
+    pub(crate) fn rotate_left(self, width: isize) -> Pos {
         // (1,1), (-1,1)
         Self {
-            x: -self.y + height - 1,
-            y: self.x,
+            x: self.y,
+            y: -self.x + width - 1,
         }
     }
-
-    
 }
 
 impl Add<Pos> for Pos {
@@ -50,7 +181,7 @@ impl SubAssign for Pos {
     }
 }
 
-impl Sub<Pos> for Pos{
+impl Sub<Pos> for Pos {
     type Output = Self;
 
     fn sub(mut self, rhs: Pos) -> Self::Output {
@@ -85,23 +216,21 @@ pub enum Direction {
 }
 
 impl Direction {
-
-    pub fn icon(&self) -> &str{
-        match self{
+    pub fn icon(&self) -> &str {
+        match self {
             Direction::North => "^",
             Direction::South => "v",
-            Direction::East => "<",
-            Direction::West => ">",
+            Direction::East => ">",
+            Direction::West => "<",
         }
     }
-
 
     pub(crate) fn vector(&self) -> Pos {
         match self {
             Direction::North => Pos::new(0, -1),
             Direction::South => Pos::new(0, 1),
-            Direction::East => Pos::new(-1, 0),
-            Direction::West => Pos::new(1, 0),
+            Direction::East => Pos::new(1, 0),
+            Direction::West => Pos::new(-1, 0),
         }
     }
 
@@ -109,8 +238,8 @@ impl Direction {
         match self {
             Direction::North => vec![0., -1.],
             Direction::South => vec![0., 1.],
-            Direction::East => vec![-1., 0.],
-            Direction::West => vec![1., 0.],
+            Direction::East => vec![1., 0.],
+            Direction::West => vec![-1., 0.],
         }
     }
 
@@ -135,9 +264,14 @@ impl Direction {
     pub fn right(&self) -> Self {
         self.left().reverse()
     }
-    
+
     pub(crate) fn all() -> Vec<Direction> {
-        vec![Direction::North, Direction::East, Direction::South, Direction::West]
+        vec![
+            Direction::North,
+            Direction::East,
+            Direction::South,
+            Direction::West,
+        ]
     }
 }
 
@@ -177,7 +311,7 @@ impl Tile {
         }
     }
 
-      pub fn stops_player_during_gameplay(&self) -> bool {
+    pub fn stops_player_during_gameplay(&self) -> bool {
         match self {
             Tile::Entrance => true,
             Tile::Gate => false,
@@ -189,20 +323,18 @@ impl Tile {
         }
     }
 
-    
-
-    pub fn get_asset(&self) -> Option<String>{
+    pub fn stops_box_during_gameplay(&self) -> bool{
         match self{
-            Tile::Entrance => Some("ice.png".into()),
-            Tile::Gate => Some("ice.png".into()),
-            Tile::Wall => Some("wall.png".into()),
-            Tile::Ice => Some("ice.png".into()),
-            Tile::WeakWall => Some("ice.png".into()),
-            Tile::Box =>  Some("ice.png".into()),
-            Tile::Outside => None,
+            Tile::Entrance => true,
+            Tile::Gate => true,
+            Tile::Wall => true,
+            Tile::Ice => false,
+            Tile::WeakWall => false,
+            Tile::Outside => true,
+            Tile::Box => false,
         }
     }
-    
+
     pub(crate) fn from_symbol(symbol: u8) -> Tile {
         match symbol {
             b'E' => Tile::Entrance,
@@ -235,6 +367,7 @@ impl Room {
             Room::Lobby(board) => Room::Lobby(board.rotate_left()),
             Room::Trial(mut creature) => {
                 creature.board = creature.board.rotate_left();
+                creature.board.print(vec![]);
                 Room::Trial(creature)
             }
         }
@@ -275,43 +408,48 @@ impl Room {
         self.get_board().end
     }
 
-    pub fn get_all_positions(&self) -> Vec<Pos>{
+    pub fn get_all_positions(&self) -> Vec<Pos> {
         self.get_board().map.all_pos().collect()
     }
 
-    pub fn at(&self, pos: &Pos) -> Tile{
+    pub fn at(&self, pos: &Pos) -> Tile {
         self.get_map().at(pos)
     }
 
-    pub fn set_tile_at(&self, pos: &Pos, tile: Tile) -> Self{
+    pub fn neighbour_at(&self, pos: &Pos) -> Neighbour {
+        self.get_map().neighbour_at(pos)
+    }
+
+    pub fn set_tile_at(&self, pos: &Pos, tile: Tile) -> Self {
         let mut ret = self.to_owned();
         match ret {
-            Room::Lobby(ref mut board) => { board.map.set(pos, tile);},
-            Room::Trial(ref mut creature) => { creature.board.map.set(pos,tile);},
+            Room::Lobby(ref mut board) => {
+                board.map.set(pos, tile);
+            }
+            Room::Trial(ref mut creature) => {
+                creature.board.map.set(pos, tile);
+            }
         }
         ret
     }
-
 }
 
 pub fn dart_get_new_board() -> Room {
     get_new_room()
 }
 
-pub fn dart_worker_halt(millis: usize){
+pub fn dart_worker_halt(millis: usize) {
     worker_halt(millis)
 }
 
-
-use std::alloc;
 use cap::Cap;
+use std::alloc;
 
 #[global_allocator]
 static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
 
 #[flutter_rust_bridge::frb(init)]
 pub fn init_app() {
-
     ALLOCATOR.set_limit(5 * 1024 * 1024 * 1024).unwrap();
 
     flutter_rust_bridge::setup_default_user_utils();

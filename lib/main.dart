@@ -129,7 +129,7 @@ class IceDashWorld extends World {
   }
 
   bool canWalkInto(Vector2 origin, Vector2 dst) {
-    bool ret = _currentRoom!.canWalkInto(origin, dst);
+    bool ret = _currentRoom!.canWalkInto(dst);
     return ret;
   }
 

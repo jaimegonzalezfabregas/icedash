@@ -8,7 +8,7 @@ use crate::{
 };
 
 const EXTRA_MOVES_SEARCH_MARGIN: usize = 3;
-const TOP_SOLUTION_SIZE: usize = 20;
+const TOP_SOLUTION_SIZE: usize = 10;
 
 #[derive(Clone, Debug)]
 
@@ -18,11 +18,11 @@ pub struct Analysis {
 }
 
 impl Analysis {
-    pub fn compute_fitness(&self) -> f32 {
-        let mut good_route_fitness = self.routes[0][0].fitness();
+    pub fn compute_fitness(&self, tile_map: &TileMap) -> f32 {
+        let mut good_route_fitness = self.routes[0][0].fitness(tile_map);
 
         for analysis in self.routes[0].iter() {
-            good_route_fitness = good_route_fitness.min(analysis.fitness())
+            good_route_fitness = good_route_fitness.min(analysis.fitness(tile_map))
         }
 
         let solution_distribution = (self.routes[1].len() as f32 + self.routes[2].len() as f32)
@@ -37,46 +37,70 @@ impl Analysis {
         ret
     }
 
-    pub fn print(&self){
+    pub fn print(&self) {
         println!("analisis:");
-    
-        for (tier, routes) in self.routes.iter().enumerate(){
 
+        for (tier, routes) in self.routes.iter().enumerate() {
             println!("tier {tier}");
             for route in routes {
                 print!(":");
-                for (step,_) in &route.solution{
+                for (step, _) in &route.solution {
                     print!(" {}", step.icon());
                 }
-                println!("");    
+                println!("");
             }
-            
         }
-    
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct Route {
     pub solution: Vec<(Direction, Pos)>,
-    pub move_sizes: Vec<isize>,
-    pub hitted_boxes: usize,
-    pub broken_walls: usize,
-    pub weakwalls_in_the_way: usize,
-    pub boxes_in_the_way: usize,
 }
 
 impl Route {
-    pub fn fitness(&self) -> f32 {
-        let move_size_mean = self.move_sizes.iter().fold(0, |acc, e| acc + e);
+    pub fn fitness(&self, tile_map: &TileMap) -> f32 {
+        let mut move_sizes = vec![];
+
+        for (start, end) in self.solution.iter().tuple_windows() {
+            let size = (start.1.y - end.1.y).abs() + (start.1.x - end.1.x).abs();
+
+            move_sizes.push(size);
+        }
+
+        let move_size_mean = move_sizes.iter().fold(0, |acc, e| acc + e);
+
+        let mut boxes_in_the_way = 0;
+        let mut weakwalls_in_the_way = 0;
+        for (start, end) in self.solution.iter().tuple_windows() {
+            if start.0 == end.0 {
+                if tile_map.at(&(start.1 + end.0.vector())) == Tile::WeakWall {
+                    weakwalls_in_the_way += 1;
+                }
+                if tile_map.at(&(start.1 + end.0.vector())) == Tile::Box {
+                    boxes_in_the_way += 1;
+                }
+            }
+        }
+
+        let mut decision_positions = 0;
+        for (start, end) in self.solution.iter().tuple_windows() {
+            if !tile_map.at(&(start.1 + end.0.right().vector())).stops_player_during_gameplay() && !tile_map.at(&(start.1 + end.0.right().vector()*2)).stops_player_during_gameplay(){
+                decision_positions +=1;
+            }
+            if !tile_map.at(&(start.1 + end.0.left().vector())).stops_player_during_gameplay() && !tile_map.at(&(start.1 + end.0.left().vector()*2)).stops_player_during_gameplay(){
+                decision_positions +=1;
+            }            
+        }
 
         let positive_factors = [
-            self.move_sizes.iter().filter(|e| **e > 3).count() as f32 * 10.,
+            decision_positions as f32 * 100.,
+            move_sizes.iter().filter(|e| **e > 3).count() as f32 * 10.,
             move_size_mean as f32 * 10.,
             self.solution.len() as f32,
         ];
 
-        let negative_factors = [self.boxes_in_the_way as f32];
+        let negative_factors = [weakwalls_in_the_way as f32];
 
         positive_factors.iter().sum::<f32>() / (negative_factors.iter().sum::<f32>() + 1.)
     }
@@ -121,7 +145,6 @@ impl PathNode {
     }
 
     fn next_posible_directions(&self) -> Vec<Direction> {
-        return Direction::all();
         match self {
             PathNode::Node {
                 board_change,
@@ -158,7 +181,6 @@ pub fn step(map: &TileMap, start: &Pos, direction: &Direction) -> StepResult {
 
 #[derive(Debug)]
 struct SearchState {
-    // score: f32,
     board: Rc<Board>,
     tile_length: isize,
     path: Rc<PathNode>,
@@ -169,16 +191,12 @@ struct SearchState {
 }
 
 impl SearchState {
-    fn step(&self, direction: &Direction) -> Result<Self, &str> {
+    fn step(&self, direction: &Direction) -> Result<Self, String> {
         let step_start = self.path.get_position();
 
         let new_step = step(&self.board.map, &step_start, direction);
         let step_length =
             (new_step.pos.x - step_start.x).abs() + (new_step.pos.y - step_start.y).abs();
-
-        if self.visitations.contains(&new_step.pos) {
-            return Err("Went into a loop");
-        }
 
         let mut new_board = Rc::clone(&self.board);
         let mut new_board_changed = false;
@@ -201,6 +219,10 @@ impl SearchState {
             new_broken_walls += 1;
             new_visitations = Visitations::new(self.board.get_width(), self.board.get_height());
             new_board_changed = true;
+        }
+
+        if new_visitations.contains(&new_step.pos) {
+            return Err(format!("Went into a loop at {:?}", &new_step.pos));
         }
 
         let new_path = PathNode::Node {
@@ -255,12 +277,14 @@ pub fn analyze(initial_board: &Board) -> Result<Analysis, String> {
     let mut best_movement_count = None;
 
     while let Some(state) = states.pop_front() {
+        // println!("considering {:?}", state.path.into_vector());
         for dir in state.path.next_posible_directions() {
             let new_state = state.step(&dir);
 
             let new_state = if let Ok(new_state) = new_state {
                 new_state
             } else {
+                // println!("{:?} going to {dir:?}", new_state);
                 continue;
             };
 
@@ -274,7 +298,7 @@ pub fn analyze(initial_board: &Board) -> Result<Analysis, String> {
                 };
 
                 solution_states[new_state.path_len - best_movement_count]
-                    .push(state2analysis(new_state, &initial_board.map));
+                    .push(state2analysis(new_state));
             } else {
                 if let Some(best_movement_count) = best_movement_count {
                     if new_state.path_len < (best_movement_count + EXTRA_MOVES_SEARCH_MARGIN - 1) {
@@ -297,34 +321,8 @@ pub fn analyze(initial_board: &Board) -> Result<Analysis, String> {
     }
 }
 
-fn state2analysis(state: SearchState, starting_tilemap: &TileMap) -> Route {
-    let mut move_sizes = vec![];
-    let mut weakwalls_in_the_way = 0;
-    let mut boxes_in_the_way = 0;
-
-    for (start, end) in state.path.into_vector().iter().tuple_windows() {
-        let size = (start.1.y - end.1.y).abs() + (start.1.x - end.1.x).abs();
-
-        move_sizes.push(size);
-    }
-
-    for (start, end) in state.path.into_vector().iter().tuple_windows() {
-        if start.0 == end.0 {
-            if starting_tilemap.at(&(start.1 + end.0.vector())) == Tile::WeakWall {
-                weakwalls_in_the_way += 1;
-            }
-            if starting_tilemap.at(&(start.1 + end.0.vector())) == Tile::Box {
-                boxes_in_the_way += 1;
-            }
-        }
-    }
-
+fn state2analysis(state: SearchState) -> Route {
     Route {
-        move_sizes: move_sizes,
         solution: state.path.into_vector(),
-        broken_walls: state.broken_walls,
-        hitted_boxes: state.hitted_boxes,
-        weakwalls_in_the_way,
-        boxes_in_the_way,
     }
 }

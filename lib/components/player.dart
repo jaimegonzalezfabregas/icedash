@@ -22,11 +22,11 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       KeyboardListenerComponent(
         keyDown: {
           LogicalKeyboardKey.keyA: (keysPressed) {
-            push(Direction.east);
+            push(Direction.west);
             return true;
           },
           LogicalKeyboardKey.keyD: (keysPressed) {
-            push(Direction.west);
+            push(Direction.east);
             return true;
           },
           LogicalKeyboardKey.keyW: (keysPressed) {

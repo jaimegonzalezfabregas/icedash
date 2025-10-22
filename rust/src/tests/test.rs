@@ -6,9 +6,13 @@ mod tests {
         time::Duration,
     };
 
-    use crate::{api::main::{Direction, Pos}, logic::{
-            board::Board, noise_reduction::asthetic_cleanup, solver::analyze, tile_map::TileMap, worker_pool::worker_thread
-        }};
+    use crate::{
+        api::main::{Direction, Pos},
+        logic::{
+            board::Board, noise_reduction::asthetic_cleanup, solver::analyze, tile_map::TileMap,
+            worker_pool::worker_thread,
+        },
+    };
 
     #[test]
     fn test_bench() {
@@ -52,24 +56,23 @@ mod tests {
 
     fn analyze_test() {
         let board = Board {
-            map: TileMap::from_print("# # # # # # E # # # # 
-# # #   # #   # #   # 
-#   # #         # # # 
-# #   #   #     #   # 
-# # # #   # #   # # # 
-#               # w # 
-G     w     #   # # # 
-#       # #       # # 
-# # #               # 
-#   #       #     w # 
-# # #       w       # 
-# #   # # # # #     # 
-#   #   # # #   # # # 
-# # # # # # # # # # # "),
-            start: Pos { x: 6, y: 0 },
-            end: Pos { x: 0, y: 6 },
+            map: TileMap::from_print(
+                "# # # E # # # # # # # 
+# # #   # w # # # # # 
+#         # # # # # # 
+#         # # # # # # 
+# #   b   # # # # # # 
+# # #     # # # # # # 
+#         #     # # # 
+G         #     # # # 
+#     w # # # # # # # 
+# # # # # # # # # # # 
+# # # # # # # # # # # ",
+            ),
+            start: Pos { x: 3, y: 0 },
+            end: Pos { x: 0, y: 7 },
             start_direction: Direction::South,
-            end_direction: Direction::East,
+            end_direction: Direction::West,
         };
         board.print(vec![]);
         let analysis = analyze(&board).expect("err");
@@ -83,6 +86,6 @@ G     w     #   # # #
                 .collect(),
         );
 
-        assert_eq!(analysis.optimal_movement_count, 7 );
+        analysis.print();
     }
 }

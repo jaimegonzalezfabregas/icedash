@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, vec};
 
-use rand::random;
+use rand::{random};
 
 use crate::{
     api::main::{Direction, Pos, Tile},
@@ -10,80 +10,6 @@ use crate::{
         visitations::Visitations,
     },
 };
-
-// pub fn remove_awkward_corners(map: &mut TileMap) {
-//     let mut rng = rand::rng();
-
-//     let mut rep = true;
-//     let width = map.get_width();
-//     let height = map.get_height();
-
-//     while rep {
-//         rep = false;
-//         for y in 1..height - 2 {
-//             for x in 1..width - 2 {
-//                 let a = map.atxy(x, y);
-//                 let b = map.atxy(x, y + 1);
-//                 let c = map.atxy(x + 1, y);
-//                 let d = map.atxy(x + 1, y + 1);
-
-//                 let cuad = (a, b, c, d);
-
-//                 match cuad {
-//                     (Tile::Ice, Tile::Wall, Tile::Wall, Tile::Ice) => {
-//                         rep = true;
-//                         if *([true, false].choose(&mut rng).unwrap()) {
-//                             *map.at_mut(Pos::new(x, y)) = Tile::Wall;
-//                         } else {
-//                             *map.at_mut(Pos::new(x + 1, y + 1)) = Tile::Wall;
-//                         }
-//                     }
-//                     (Tile::Wall, Tile::Ice, Tile::Ice, Tile::Wall) => {
-//                         rep = true;
-//                         if *([true, false].choose(&mut rng).unwrap()) {
-//                             *map.at_mut(Pos::new(x + 1, y)) = Tile::Wall;
-//                         } else {
-//                             *map.at_mut(Pos::new(x + 1, y)) = Tile::Wall;
-//                         }
-//                     }
-
-//                     _ => {}
-//                 }
-//             }
-//         }
-//     }
-// }
-
-// fn remove_sorrounded_spaces<const N: usize>(
-//     map: &mut TileMap,
-//     vector_list: [(isize, isize); N],
-//     threshold: usize,
-// ) {
-//     let mut to_check = map.all_inner_pos().collect::<Vec<_>>();
-//     while let Some(p) = to_check.pop() {
-//         if map.in_bounds(p) {
-//             if map.at(p) != Tile::Wall {
-//                 let mut neigh_count = 0;
-//                 for (dx, dy) in vector_list {
-//                     if map.in_bounds(p + Pos::new(dx, dy)) {
-//                         let neigh = map.at(p + Pos::new(dx, dy));
-//                         if neigh.is_solid() {
-//                             neigh_count += 1;
-//                         }
-//                     }
-//                 }
-
-//                 if neigh_count >= threshold {
-//                     map.set(p, Tile::Wall);
-
-//                     let new_to_check = vector_list.map(|(dx, dy)| p - Pos { x: dx, y: dy });
-
-//                     to_check.append(&mut new_to_check.into());
-//                 }
-//             }
-//         }
-//     }
-// }
 
 pub fn map_noise_cleanup(
     map: &mut TileMap,
@@ -97,26 +23,6 @@ pub fn map_noise_cleanup(
 
         map.set(&mean, Tile::Wall);
     }
-
-    // remove_awkward_corners(&mut map);
-
-    // remove_sorrounded_spaces(
-    //     &mut map,
-    //     [
-    //         (0, 1),
-    //         (0, -1),
-    //         (-1, 0),
-    //         (1, 0),
-    //         (1, 1),
-    //         (1, -1),
-    //         (-1, -1),
-    //         (-1, 1),
-    //     ],
-    //     6,
-    // );
-
-    // remove_sorrounded_spaces(&mut map, [(0, 1), (0, -1), (-1, 0), (1, 0)], 3);
-
 
 
     map.set(&(*start + start_direction.vector()), Tile::Ice);
@@ -139,33 +45,30 @@ pub fn map_noise_cleanup(
         Tile::Ice,
     );
 
+    remove_rooms(map, &start, &start_direction);
 
-    map.set(&(*end + end_direction.vector()), Tile::Ice);
+    map.set(&(*end - end_direction.vector()), Tile::Ice);
     map.set(
-        &(*end + end_direction.vector() + end_direction.left().vector()),
+        &(*end - end_direction.vector() + end_direction.left().vector()),
         Tile::Ice,
     );
     map.set(
-        &(*end + end_direction.vector() + end_direction.right().vector()),
+        &(*end - end_direction.vector() + end_direction.right().vector()),
         Tile::Ice,
     );
 
-    map.set(&(*end + end_direction.vector() * 2), Tile::Ice);
+    map.set(&(*end - end_direction.vector() * 2), Tile::Ice);
     map.set(
-        &(*end + end_direction.vector() * 2 + end_direction.left().vector()),
+        &(*end - end_direction.vector() * 2 + end_direction.left().vector()),
         Tile::Ice,
     );
     map.set(
-        &(*end + end_direction.vector() * 2 + end_direction.right().vector()),
+        &(*end - end_direction.vector() * 2 + end_direction.right().vector()),
         Tile::Ice,
     );
 
-        remove_rooms(map, &start, &start_direction);
-
-            map.set(end, Tile::Gate);
+    map.set(end, Tile::Gate);
     map.set(start, Tile::Entrance);
-
-
 }
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
