@@ -5,7 +5,7 @@ import 'package:icedash/components/actor.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 class Entrance extends Actor {
-  Entrance(super.asset, {super.position});
+  Entrance(super.asset, {super.position, super.angle});
 
   @override
   FutureOr<void> onLoad() async {

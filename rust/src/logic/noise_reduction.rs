@@ -6,7 +6,7 @@ use crate::{
     api::main::{Direction, Pos, Tile},
     logic::{
         board::{Board, TileMapWrap},
-        tile_map::TileMap,
+        matrix::TileMap,
         visitations::Visitations,
     },
 };

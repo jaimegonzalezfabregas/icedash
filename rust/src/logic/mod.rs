@@ -1,7 +1,6 @@
 pub mod noise_reduction;
-pub mod creature;
 pub mod solver;
-pub mod tile_map;
+pub mod matrix;
 pub mod board;
 pub mod worker_pool;
 mod visitations;

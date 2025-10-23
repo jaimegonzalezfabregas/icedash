@@ -65,7 +65,7 @@ class IceDashWorld extends World {
     setCurrentRoom(board, entrancePostion, exitDirection);
   }
 
-  void setCurrentRoom(Room room, Vector2 worldEntrancePosition, Direction stichDirection) {
+  void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection) {
     _lastRoom = _currentRoom;
     _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room);
 
@@ -91,22 +91,20 @@ class IceDashWorld extends World {
     add(_currentRoom!);
     player.push(stichDirection, force: true);
 
-    if (room is Room_Trial) {
-      player.remainingMoves = room.getMaxMovementCount()!;
-      player.remainingMovesReset = room.getMaxMovementCount()!;
-    } else {
-      player.remainingMoves = null;
-      player.remainingMovesReset = null;
-    }
+    player.remainingMoves = room.getMaxMovementCount();
+    player.remainingMovesReset = room.getMaxMovementCount();
   }
 
   zoomTransition(double duration, double endValue) {
     var zoomOutEfect = CurvedEffectController(duration / 2, Curves.easeInOut);
     var zoomInEffect = CurvedEffectController(duration / 2, Curves.easeInOut);
 
+    // var startValue = camera.viewfinder.zoom;
+    var middlePoint = endValue  * 0.7;
+
     camera.viewfinder.add(
       ScaleEffect.to(
-        Vector2.all(endValue * 0.8),
+        Vector2.all(middlePoint),
         zoomOutEfect,
         onComplete: () {
           camera.viewfinder.add(ScaleEffect.to(Vector2.all(endValue), zoomInEffect));
@@ -133,7 +131,7 @@ class IceDashWorld extends World {
     return ret;
   }
 
-  bool hit(Vector2 pos, Direction dir){
+  bool hit(Vector2 pos, Direction dir) {
     return _currentRoom!.hit(pos, dir);
   }
 

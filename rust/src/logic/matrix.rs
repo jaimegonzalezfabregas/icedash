@@ -1,33 +1,36 @@
+use flutter_rust_bridge::frb;
+
 use crate::api::main::{Direction, Neighbour, Pos, Tile};
 
-
+pub(crate) type TileMap = Matrix<Tile>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct TileMap(pub Vec<Vec<Tile>>);
+#[frb(opaque)]
+pub struct Matrix<T: Clone>(pub Vec<Vec<T>>);
 
-impl TileMap {
-    pub fn at_mut(&mut self, p: &Pos) -> &mut Tile {
-        self.0
-            .get_mut(p.y as usize)
-            .unwrap()
-            .get_mut(p.x as usize)
-            .unwrap()
-    }
-
-    pub fn at(&self, p: &Pos) -> Tile {
+impl<T: Clone> Matrix<T> {
+    pub fn at(&self, p: &Pos) -> T
+    where
+        T: Default,
+    {
         if self.in_bounds(p) {
-            self.0
-                .get(p.y as usize)
-                .unwrap()
-                .get(p.x as usize)
-                .unwrap()
-                .clone()
+            self.0[p.y as usize][p.x as usize].clone()
         } else {
-            Tile::Outside
+            T::default()
         }
     }
 
-    pub fn neighbour_at(&self, p: &Pos) -> Neighbour {
+    pub fn new(width: isize, height: isize) -> Matrix<T>
+    where
+        T: Default,
+    {
+       Matrix( vec![vec![T::default(); width as usize]; height as usize])
+    }
+
+    pub fn neighbour_at(&self, p: &Pos) -> Neighbour<T>
+    where
+        T: Default,
+    {
         use Direction::*;
         Neighbour {
             center: self.at(p),
@@ -42,7 +45,7 @@ impl TileMap {
         }
     }
 
-    pub fn atxy(&self, x: isize, y: isize) -> Tile {
+    pub fn atxy(&self, x: isize, y: isize) -> T {
         self.0
             .get(y as usize)
             .unwrap()
@@ -51,8 +54,8 @@ impl TileMap {
             .clone()
     }
 
-    pub fn set(&mut self, p: &Pos, val: Tile) {
-        *self.at_mut(p) = val;
+    pub fn set(&mut self, p: &Pos, val: T) {
+        self.0[p.y as usize][p.x as usize] = val;
     }
 
     pub fn get_width(&self) -> isize {
@@ -63,7 +66,7 @@ impl TileMap {
         self.0.len() as isize
     }
 
-    pub fn all_inner_pos<'a>(&'a self) -> impl Iterator<Item = Pos> + use<'a> {
+    pub fn all_inner_pos<'a>(&'a self) -> impl Iterator<Item = Pos> + use<'a, T> {
         (1..self.get_width() - 1).into_iter().flat_map(|x| {
             (1..self.get_height() - 1)
                 .into_iter()
@@ -71,12 +74,56 @@ impl TileMap {
         })
     }
 
-    pub fn all_pos<'a>(&'a self) -> impl Iterator<Item = Pos> + use<'a> {
+    pub fn all_pos<'a>(&'a self) -> impl Iterator<Item = Pos> + use<'a, T> {
         (0..self.get_width()).into_iter().flat_map(|x| {
             (0..self.get_height())
                 .into_iter()
                 .map(move |y| Pos::new(x as isize, y as isize))
         })
+    }
+
+    pub fn in_bounds(&self, p: &Pos) -> bool {
+        p.x >= 0 && p.y >= 0 && p.x < self.get_width() && p.y < self.get_height()
+    }
+
+    pub(crate) fn rotate_left(self) -> Matrix<T>
+    where
+        T: Default,
+    {
+        let mut ret = Matrix(vec![
+            vec![T::default(); self.get_height() as usize];
+            self.get_width() as usize
+        ]);
+
+        for p in self.all_pos() {
+            ret.set(&p.rotate_left(self.get_width()), self.at(&p));
+        }
+
+        // ret.print(vec![]);
+
+        ret
+    }
+}
+
+impl TileMap {
+    pub(crate) fn from_print(arg: &str) -> TileMap {
+        let mut ret = vec![];
+
+        for line in arg.split("\n") {
+            let mut line = line.as_bytes();
+            let mut row = vec![];
+
+            while line.len() != 0 {
+                row.push(Tile::from_symbol(line[0]));
+
+                line = &line[2..];
+            }
+            if row.len() != 0 {
+                ret.push(row)
+            }
+        }
+
+        Matrix(ret)
     }
 
     pub fn print(&self, highlight: Vec<Pos>) {
@@ -90,42 +137,5 @@ impl TileMap {
             }
             println!("");
         }
-    }
-
-    pub fn in_bounds(&self, p: &Pos) -> bool {
-        p.x >= 0 && p.y >= 0 && p.x < self.get_width() && p.y < self.get_height()
-    }
-
-    pub(crate) fn rotate_left(self) -> TileMap {
-        let mut ret = TileMap(vec![
-            vec![Tile::Wall; self.get_height() as usize];
-            self.get_width() as usize
-        ]);
-
-        for p in self.all_pos() {
-            ret.set(&p.rotate_left(self.get_width()), self.at(&p));
-        }
-
-        // ret.print(vec![]);
-
-        ret
-    }
-
-    pub(crate) fn from_print(arg: &str) -> TileMap {
-        let mut ret = vec![];
-
-        for line in arg.split("\n") {
-            let mut line = line.as_bytes();
-            let mut row = vec![];
-
-            while line.len() != 0 {
-                row.push(Tile::from_symbol(line[0]));
-
-                line = &line[2..];
-            }
-            ret.push(row)
-        }
-
-        TileMap(ret)
     }
 }

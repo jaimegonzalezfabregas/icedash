@@ -1,45 +1,33 @@
-use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Deref, Div, Mul, Sub, SubAssign};
 
 use crate::logic::{
     board::Board,
-    creature::Creature,
-    tile_map::TileMap,
+    solver::Analysis,
+    matrix::{Matrix, TileMap},
     worker_pool::{get_new_room, start_search, worker_halt},
 };
 #[derive(Clone)]
-pub struct Neighbour {
-    pub center: Tile,
-    pub north: Tile,
-    pub south: Tile,
-    pub east: Tile,
-    pub west: Tile,
-    pub northwest: Tile,
-    pub northeast: Tile,
-    pub southwest: Tile,
-    pub southeast: Tile,
+pub struct Neighbour<T> {
+    pub center: T,
+    pub north: T,
+    pub south: T,
+    pub east: T,
+    pub west: T,
+    pub northwest: T,
+    pub northeast: T,
+    pub southwest: T,
+    pub southeast: T,
 }
 
-pub struct NeighbourBool {
-    pub center: bool,
-    pub north: bool,
-    pub south: bool,
-    pub east: bool,
-    pub west: bool,
-    pub northwest: bool,
-    pub northeast: bool,
-    pub southwest: bool,
-    pub southeast: bool,
-}
-
-impl Neighbour {
+impl Neighbour<Tile> {
     pub fn mask_center(&self, tile: Tile) -> Self {
         let mut ret = self.clone();
         ret.center = tile;
         ret
     }
 
-    pub fn to_stops_player_during_gameplay(&self) -> NeighbourBool {
-        NeighbourBool {
+    pub fn to_stops_player_during_gameplay(&self) -> Neighbour<bool> {
+        Neighbour {
             center: self.center.stops_player_during_gameplay(),
             north: self.north.stops_player_during_gameplay(),
             south: self.south.stops_player_during_gameplay(),
@@ -52,85 +40,71 @@ impl Neighbour {
         }
     }
 
-    pub fn get_asset(&self) -> Option<String> {
+    pub fn get_asset(&self) -> Option<(String, isize)> {
         match self.center {
-            Tile::Entrance => Some("ice.png".into()),
-            Tile::Gate => Some("ice.png".into()),
-            Tile::Ice => Some("ice.png".into()),
-            Tile::WeakWall => Some("ice.png".into()),
-            Tile::Box => Some("ice.png".into()),
+            Tile::Entrance => Some(("ice.png".into(), 0)),
+            Tile::Gate => Some(("ice.png".into(), 0)),
+            Tile::Ice => Some(("ice.png".into(), 0)),
+            Tile::WeakWall => Some(("ice.png".into(), 0)),
+            Tile::Box => Some(("ice.png".into(), 0)),
             Tile::Outside => None,
-            Tile::Wall => match self.to_stops_player_during_gameplay() {
-                NeighbourBool {
-                    north: true,
-                    south: true,
-                    east: true,
-                    west: true,
-                    northwest: true,
-                    northeast: true,
-                    southwest: true,
-                    southeast: true,
-                    ..
-                } => None,
-                NeighbourBool {
-                    north: false,
-                    south: false,
-                    ..
-                } => Some("wall_s.png".into()),
-                NeighbourBool {
-                    north: false,
-                    south: _,
-                    east: false,
-                    west: false,
-                    ..
-                } => Some("wall_new.png".into()),
-                NeighbourBool {
-                    north: false,
-                    east: false,
-                    ..
-                } => Some("wall_ne.png".into()),
-                NeighbourBool {
-                    north: false,
-                    west: false,
-                    ..
-                } => Some("wall_nw.png".into()),
-                NeighbourBool { north: false, .. } => Some("wall_n.png".into()),
-                NeighbourBool { south: false, .. } => Some("wall_s.png".into()),
-                NeighbourBool { east: false, .. } => Some("wall_e.png".into()),
-                NeighbourBool { west: false, .. } => Some("wall_w.png".into()),
-                NeighbourBool {
-                    south: true,
-                    east: true,
-                    southeast: false,
-                    ..
-                } => Some("wall_e.png".into()),
-                NeighbourBool {
-                    south: true,
-                    west: true,
-                    southwest: false,
-                    ..
-                } => Some("wall_w.png".into()),
-                NeighbourBool {
-                    north: true,
-                    east: true,
-                    west: true,
-                    northwest: false,
-                    northeast: false,
-                    ..
-                } => Some("wall__ne-nw.png".into()),
-                NeighbourBool {
-                    north: true,
-                    west: true,
-                    northwest: false,
-                    ..
-                } => Some("wall__nw.png".into()),
-                NeighbourBool {
-                    north: true,
-                    east: true,
-                    northeast: false,
-                    ..
-                } => Some("wall__ne.png".into()),
+            Tile::Wall => {
+                let mut rotator = self.clone();
+                let mut ret = None;
+                let mut ret_priority = 0;
+
+                for i in 0..4 {
+                    let (priority, new_ret) = match rotator.to_stops_player_during_gameplay() {
+                        Neighbour {
+                            southwest: false,
+                            south: true,
+                            west: true,
+                            north: true,
+                            east: true,
+                            ..
+                        } => (300, Some(("wall_corner_in.png".into(), i))),
+                        Neighbour {
+                            south: false,
+                            west: false,
+                            north: true,
+                            east: true,
+                            northeast: true,
+                            ..
+                        } => (200, Some(("wall_corner_out.png".into(), i))),
+                        Neighbour {
+                            south: false,
+                            north: true,
+                            ..
+                        } => (100, Some(("wall.png".into(), i))),
+
+                        _ => (0, None),
+                    };
+                    if priority > ret_priority {
+                        ret_priority = priority;
+                        ret = new_ret;
+                    }
+
+                    rotator = rotator.rotate_left();
+                }
+
+                return ret;
             }
+        }
+    }
+}
+
+impl<T: Copy> Neighbour<T> {
+    fn rotate_left(&self) -> Neighbour<T> {
+        Neighbour {
+            center: self.center,
+            north: self.east,
+            south: self.west,
+            east: self.south,
+            west: self.north,
+            northeast: self.southeast,
+            southeast: self.southwest,
+            northwest: self.northeast,
+            southwest: self.northwest,
         }
     }
 }
@@ -151,7 +125,6 @@ impl Pos {
     }
 
     pub(crate) fn rotate_left(self, width: isize) -> Pos {
-        // (1,1), (-1,1)
         Self {
             x: self.y,
             y: -self.x + width - 1,
@@ -286,6 +259,12 @@ pub enum Tile {
     Outside,
 }
 
+impl Default for Tile {
+    fn default() -> Self {
+        Tile::Outside
+    }
+}
+
 impl Tile {
     pub fn symbol(&self) -> &str {
         match self {
@@ -323,8 +302,8 @@ impl Tile {
         }
     }
 
-    pub fn stops_box_during_gameplay(&self) -> bool{
-        match self{
+    pub fn stops_box_during_gameplay(&self) -> bool {
+        match self {
             Tile::Entrance => true,
             Tile::Gate => true,
             Tile::Wall => true,
@@ -348,93 +327,116 @@ impl Tile {
     }
 }
 
-#[derive(Clone)]
-pub enum Room {
-    Lobby(Board),
-    Trial(Creature),
-}
+type AssetMap = Matrix<Option<(String, isize)>>;
 
-impl Room {
-    pub fn get_start_direction(&self) -> Direction {
-        match self {
-            Room::Lobby(board) => board.start_direction,
-            Room::Trial(creature) => creature.board.start_direction,
+impl Matrix<Option<(String, isize)>> {
+    fn from_tilemap(tilemap: &TileMap) -> Self {
+        let mut ret = Matrix::new(tilemap.get_width(), tilemap.get_height());
+
+        for p in tilemap.all_pos() {
+            ret.set(&p, tilemap.neighbour_at(&p).get_asset());
         }
-    }
 
-    pub fn rotate_left(self) -> Self {
-        match self {
-            Room::Lobby(board) => Room::Lobby(board.rotate_left()),
-            Room::Trial(mut creature) => {
-                creature.board = creature.board.rotate_left();
-                creature.board.print(vec![]);
-                Room::Trial(creature)
-            }
-        }
-    }
-
-    pub fn get_board(&self) -> Board {
-        match self {
-            Room::Lobby(board) => board,
-            Room::Trial(creature) => &creature.board,
-        }
-        .to_owned()
-    }
-
-    pub fn get_width(&self) -> isize {
-        self.get_board().get_width()
-    }
-
-    pub fn get_max_movement_count(&self) -> Option<isize> {
-        match self {
-            Room::Lobby(_) => None,
-            Room::Trial(creature) => Some(creature.analysis.optimal_movement_count as isize),
-        }
-    }
-
-    pub fn get_map(&self) -> TileMap {
-        self.get_board().map.clone()
-    }
-
-    pub fn get_height(&self) -> isize {
-        self.get_board().get_height()
-    }
-
-    pub fn get_start(&self) -> Pos {
-        self.get_board().start
-    }
-
-    pub fn get_end(&self) -> Pos {
-        self.get_board().end
-    }
-
-    pub fn get_all_positions(&self) -> Vec<Pos> {
-        self.get_board().map.all_pos().collect()
-    }
-
-    pub fn at(&self, pos: &Pos) -> Tile {
-        self.get_map().at(pos)
-    }
-
-    pub fn neighbour_at(&self, pos: &Pos) -> Neighbour {
-        self.get_map().neighbour_at(pos)
-    }
-
-    pub fn set_tile_at(&self, pos: &Pos, tile: Tile) -> Self {
-        let mut ret = self.to_owned();
-        match ret {
-            Room::Lobby(ref mut board) => {
-                board.map.set(pos, tile);
-            }
-            Room::Trial(ref mut creature) => {
-                creature.board.map.set(pos, tile);
-            }
-        }
         ret
     }
 }
 
-pub fn dart_get_new_board() -> Room {
+#[derive(Clone)]
+pub struct DartBoard {
+    pub board: Board,
+    pub asset_map: AssetMap,
+    pub analysis: Option<Analysis>,
+}
+
+impl Deref for DartBoard {
+    type Target = Board;
+
+    fn deref(&self) -> &Self::Target {
+        &self.board
+    }
+}
+
+impl DartBoard {
+    pub(crate) fn new(board: Board, analysis: Analysis) -> Self {
+        Self {
+            asset_map: AssetMap::from_tilemap(&board.map),
+            board,
+            analysis: Some(analysis),
+        }
+    }
+
+    pub fn new_lobby(
+        serialized: String,
+        start: Pos,
+        end: Pos,
+        start_direction: Direction,
+        end_direction: Direction,
+    ) -> Self {
+        Self {
+            asset_map: AssetMap::from_tilemap(&TileMap::from_print(&serialized)),
+            board: Board {
+                map: TileMap::from_print(&serialized),
+                start,
+                end,
+                start_direction,
+                end_direction,
+            },
+            analysis: None,
+        }
+    }
+
+    pub fn get_start_direction(&self) -> Direction {
+        self.start_direction
+    }
+
+    pub fn get_end_direction(&self) -> Direction {
+        self.start_direction
+    }
+
+    pub fn rotate_left(&self) -> Self {
+        Self {
+            board: self.board.clone().rotate_left(),
+            asset_map: self.asset_map.clone().rotate_left(),
+            analysis: self.analysis.clone(),
+        }
+    }
+
+    pub fn get_width(&self) -> isize {
+        self.map.get_width()
+    }
+
+    pub fn get_height(&self) -> isize {
+        self.map.get_height()
+    }
+
+    pub fn get_max_movement_count(&self) -> Option<isize> {
+        self.analysis
+            .clone()
+            .map(|analysis| analysis.optimal_movement_count as isize)
+    }
+
+    pub fn get_end(&self) -> Pos {
+        self.end
+    }
+
+    pub fn get_start(&self) -> Pos {
+        self.end
+    }
+
+    pub fn at(&self, p: &Pos) -> Tile {
+        self.map.at(p)
+    }
+
+    pub fn asset_at(&self, p: &Pos) -> Option<(String, isize)> {
+        self.asset_map.at(p)
+    }
+
+    pub fn get_all_positions(&self) -> Vec<Pos> {
+        self.map.all_pos().collect()
+    }
+}
+
+pub fn dart_get_new_board() -> DartBoard {
     get_new_room()
 }
 

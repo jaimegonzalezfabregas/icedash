@@ -9,8 +9,12 @@ use std::{
 };
 
 use crate::{
-    api::main::Room,
-    logic::{board::Board, creature::Creature, noise_reduction::asthetic_cleanup},
+    api::main::{DartBoard},
+    logic::{
+        board::Board,
+        noise_reduction::asthetic_cleanup,
+        solver::{analyze, Analysis},
+    },
 };
 
 pub enum CtrlMsg {
@@ -19,14 +23,14 @@ pub enum CtrlMsg {
 }
 
 struct Worker {
-    return_channel: mpsc::Receiver<Creature>,
+    return_channel: mpsc::Receiver<(Analysis, Board)>,
     crtl_channel: mpsc::Sender<CtrlMsg>,
 }
 
 static G_WORKER: Mutex<VecDeque<Worker>> = Mutex::new(VecDeque::new());
 
-pub fn get_new_room() -> Room {
-    let mut ret = {
+pub fn get_new_room() -> DartBoard {
+    let (analysis, board) = {
         let mut workers = G_WORKER.lock().unwrap();
         let workers = &mut (*workers);
         let worker = workers.pop_front().unwrap();
@@ -54,19 +58,13 @@ pub fn get_new_room() -> Room {
         start_search();
     });
 
-    ret.board.print(vec![]);
-    ret.board.print(
-        ret.analysis.routes[0][0]
-            .solution
-            .iter()
-            .map(|e| e.1)
-            .collect(),
-    );
+    board.print(vec![]);
+    board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
 
-    ret.board = asthetic_cleanup(ret.board);
-    ret.analysis.print();
+    let board = asthetic_cleanup(board);
+    analysis.print();
 
-    Room::Trial(ret)
+    DartBoard::new(board, analysis)
 }
 
 pub fn worker_halt(millis: usize) {
@@ -98,11 +96,7 @@ pub fn start_search() {
     }
 }
 
-pub fn random_creature() -> Result<Creature, String> {
-    Creature::board_to_creature(Board::new_random()?)
-}
-
-pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
+pub fn worker_thread(returns: Sender<(Analysis, Board)>, messenger: Receiver<CtrlMsg>) {
     let mut best_so_far = 0.;
     let mut iter = 0;
     let mut successes: i32 = 0;
@@ -127,17 +121,17 @@ pub fn worker_thread(returns: Sender<Creature>, messenger: Receiver<CtrlMsg>) {
             Err(_) => {}
         }
 
-        match random_creature() {
-            Ok(new_creature) => {
+        if let Ok(board) = Board::new_random() {
+            if let Ok(analysis) = analyze(&board) {
                 successes += 1;
-                if new_creature.fitness > best_so_far {
-                    best_so_far = new_creature.fitness;
+                let fitness = analysis.compute_fitness(&board.map);
+                if fitness > best_so_far {
+                    best_so_far = fitness;
                     returns
-                        .send(new_creature.clone())
+                        .send((analysis, board))
                         .expect("unable to send best so far");
                 }
             }
-            Err(_) => {}
         }
     }
 }

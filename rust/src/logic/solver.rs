@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use crate::{
     api::main::{Direction, Pos, Tile},
-    logic::{board::Board, tile_map::TileMap, visitations::Visitations},
+    logic::{board::Board, matrix::TileMap, visitations::Visitations},
 };
 
 const EXTRA_MOVES_SEARCH_MARGIN: usize = 3;

@@ -1,8 +1,10 @@
-use rand::{random, seq::IteratorRandom, Rng};
+use std::ops::Deref;
+
+use rand::{random, seq::IteratorRandom};
 
 use crate::{
     api::main::{Direction, Pos, Tile},
-    logic::{noise_reduction::map_noise_cleanup, tile_map::TileMap},
+    logic::{noise_reduction::map_noise_cleanup, matrix::{Matrix, TileMap}},
 };
 
 #[derive(Clone, Debug)]
@@ -14,40 +16,18 @@ pub struct Board {
     pub end_direction: Direction,
 }
 
+impl Deref for Board{
+    type Target = TileMap;
+
+    fn deref(&self) -> &Self::Target {
+        &self.map
+    }
+}
+
 impl Board {
-    pub fn get_height(&self) -> isize {
-        self.map.get_height()
-    }
+ 
 
-    pub fn get_width(&self) -> isize {
-        self.map.get_width()
-    }
-
-    pub fn mutate(&self, factor: f32) -> Self {
-        let mut rng = rand::rng();
-
-        let mut ret = self.clone();
-
-        for pos in self.map.all_inner_pos() {
-            if rng.random::<f32>() < factor {
-                match ret.map.at(&pos) {
-                    Tile::Wall => ret.map.set(&pos, Tile::Ice),
-                    Tile::Ice => ret.map.set(&pos, Tile::Wall),
-                    _ => {}
-                }
-            }
-        }
-
-        map_noise_cleanup(
-            &mut ret.map,
-            &mut ret.start,
-            ret.start_direction,
-            &mut ret.end,
-            ret.end_direction,
-        );
-
-        ret
-    }
+   
 
     pub fn box_cascade(&mut self, moved_ice_cube: &Pos, direction: &Direction) {
         assert!(self.map.at(moved_ice_cube) == Tile::Box);
@@ -187,7 +167,7 @@ impl Board {
         let mut start = start;
         let mut end = end;
 
-        let mut map = TileMap(map);
+        let mut map = Matrix(map);
 
         map_noise_cleanup(
             &mut map,
@@ -225,10 +205,6 @@ impl Board {
             end_direction: self.end_direction.left(),
             map: self.map.rotate_left(),
         }
-    }
-
-    pub fn at(&self, p: &Pos) -> Tile {
-        self.map.at(p)
     }
 }
 

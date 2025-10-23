@@ -9,7 +9,7 @@ mod tests {
     use crate::{
         api::main::{Direction, Pos},
         logic::{
-            board::Board, noise_reduction::asthetic_cleanup, solver::analyze, tile_map::TileMap,
+            board::Board, noise_reduction::asthetic_cleanup, solver::analyze, matrix::TileMap,
             worker_pool::worker_thread,
         },
     };
@@ -37,10 +37,12 @@ mod tests {
             ret = last;
         }
 
-        ret.board = asthetic_cleanup(ret.board);
-        ret.board.print(vec![]);
-        ret.board.print(
-            ret.analysis.routes[0][0]
+        let (analysis, board) = ret;
+
+        let board = asthetic_cleanup(board);
+        board.print(vec![]);
+        board.print(
+            analysis.routes[0][0]
                 .solution
                 .iter()
                 .map(|e| e.1)
@@ -48,8 +50,7 @@ mod tests {
         );
         join_handdle.join().expect("worker panicked");
 
-        ret.analysis.print();
-        println!("mutated {:?} times", ret.mutation_count);
+        analysis.print();
     }
 
     #[test]

@@ -10,7 +10,7 @@ import 'package:icedash/components/actors/weak_wall.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 class RoomComponent extends Component {
-  Room room;
+  DartBoard room;
 
   late Rect worldBB;
   late Direction exitDirection;
@@ -50,8 +50,8 @@ class RoomComponent extends Component {
     exitWorldPos = mapPos2WorldVector(room.getEnd());
 
     worldBB = Rect.fromLTWH(
-      entranceWorldPos.x - entranceRoomPos.x,
-      entranceWorldPos.y - entranceRoomPos.y,
+      entranceWorldPos.x - entranceRoomPos.x-0.5,
+      entranceWorldPos.y - entranceRoomPos.y-0.5,
       room.getWidth().toDouble(),
       room.getHeight().toDouble(),
     );
@@ -150,23 +150,30 @@ class RoomComponent extends Component {
     actorList = [];
 
     for (var pos in room.getAllPositions()) {
-      var tile = room.at(pos: pos);
-      String? bgImg = room.neighbourAt(pos: pos).getAsset();
+      (String, int)? bgImg = room.assetAt(p: pos);
 
       if (bgImg != null) {
-        SpriteComponent img = SpriteComponent(priority: 0, size: Vector2.all(1), position: mapPos2WorldVector(pos));
+        SpriteComponent img = SpriteComponent(
+          priority: 0,
+          size: Vector2.all(1),
+          position: mapPos2WorldVector(pos),
+          anchor: Anchor.center,
+          angle: bgImg.$2 * pi / 2,
+        );
 
-        img.sprite = await Sprite.load(bgImg);
+        img.sprite = await Sprite.load(bgImg.$1);
 
         add(img);
         tileSpriteGrid[pos] = img;
       }
 
+      var tile = room.at(p: pos);
+
       if (tile == Tile.entrance) {
-        String? asset = room.neighbourAt(pos: pos).maskCenter(tile: Tile.wall).getAsset();
+        (String, int)? asset = room.assetAt(p: pos);
 
         if (asset != null) {
-          var entrance = Entrance(asset, position: mapPos2WorldVector(pos));
+          var entrance = Entrance(asset.$1, position: mapPos2WorldVector(pos), angle: asset.$2 * pi / 2);
           add(
             FunctionEffect(
               (_, _) {},
@@ -175,17 +182,19 @@ class RoomComponent extends Component {
               onComplete: () {
                 actorList.add(entrance);
 
-                SpriteComponent gate_ice = tileSpriteGrid[pos]!;
+                SpriteComponent? gateIce = tileSpriteGrid[pos];
 
-                gate_ice.add(
-                  OpacityEffect.fadeOut(
-                    EffectController(duration: 0.1),
-                    onComplete: () {
-                      gate_ice.removeFromParent();
-                    },
-                  ),
-                );
-                tileSpriteGrid.remove(pos);
+                if (gateIce != null) {
+                  gateIce.add(
+                    OpacityEffect.fadeOut(
+                      EffectController(duration: 0.1),
+                      onComplete: () {
+                        gateIce.removeFromParent();
+                      },
+                    ),
+                  );
+                  tileSpriteGrid.remove(pos);
+                }
               },
             ),
           );
@@ -255,7 +264,7 @@ class RoomComponent extends Component {
     try {
       Pos localPos = worldVector2MapPos(worldPos);
 
-      return room.at(pos: localPos);
+      return room.at(p: localPos);
     } catch (_) {
       return Tile.outside;
     }
