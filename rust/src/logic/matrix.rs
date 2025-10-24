@@ -24,7 +24,7 @@ impl<T: Clone> Matrix<T> {
     where
         T: Default,
     {
-       Matrix( vec![vec![T::default(); width as usize]; height as usize])
+        Matrix(vec![vec![T::default(); width as usize]; height as usize])
     }
 
     pub fn neighbour_at(&self, p: &Pos) -> Neighbour<T>
@@ -102,6 +102,16 @@ impl<T: Clone> Matrix<T> {
         // ret.print(vec![]);
 
         ret
+    }
+
+    pub fn map<B: Clone>(self, f: fn(T) -> B) -> Matrix<B> {
+        Matrix(
+            self.0
+                .iter()
+                .cloned()
+                .map(|e| e.iter().cloned().map(|e| f(e)).collect())
+                .collect()
+        )
     }
 }
 

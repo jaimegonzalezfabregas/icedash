@@ -2,8 +2,8 @@ use std::ops::{Add, AddAssign, Deref, Div, Mul, Sub, SubAssign};
 
 use crate::logic::{
     board::Board,
-    solver::Analysis,
     matrix::{Matrix, TileMap},
+    solver::Analysis,
     worker_pool::{get_new_room, start_search, worker_halt},
 };
 #[derive(Clone)]
@@ -42,19 +42,27 @@ impl Neighbour<Tile> {
 
     pub fn get_asset(&self) -> Option<(String, isize)> {
         match self.center {
-            Tile::Entrance => Some(("ice.png".into(), 0)),
-            Tile::Gate => Some(("ice.png".into(), 0)),
-            Tile::Ice => Some(("ice.png".into(), 0)),
-            Tile::WeakWall => Some(("ice.png".into(), 0)),
-            Tile::Box => Some(("ice.png".into(), 0)),
+            Tile::Gate | Tile::Ice | Tile::WeakWall | Tile::Box => Some(("ice.png".into(), 0)),
             Tile::Outside => None,
-            Tile::Wall => {
+            Tile::Wall | Tile::Entrance => {
                 let mut rotator = self.clone();
                 let mut ret = None;
                 let mut ret_priority = 0;
 
                 for i in 0..4 {
                     let (priority, new_ret) = match rotator.to_stops_player_during_gameplay() {
+                        Neighbour {
+                            southwest: true,
+                            northwest: false,
+                            southeast: false,
+                            northeast: true,
+                            south: true,
+                            west: true,
+                            north: true,
+                            east: true,
+                            ..
+                        } => (500, Some(("wall_double_corner.png".into(), i))),
+                       
                         Neighbour {
                             southwest: false,
                             south: true,
@@ -332,9 +340,40 @@ type AssetMap = Matrix<Option<(String, isize)>>;
 impl Matrix<Option<(String, isize)>> {
     fn from_tilemap(tilemap: &TileMap) -> Self {
         let mut ret = Matrix::new(tilemap.get_width(), tilemap.get_height());
+        let mut wip_tilemap = tilemap.clone();
 
-        for p in tilemap.all_pos() {
-            ret.set(&p, tilemap.neighbour_at(&p).get_asset());
+        let mut rep = true;
+
+        while rep {
+            rep = false;
+
+            // Decorate Interior
+            for p in wip_tilemap.all_pos().collect::<Vec<_>>() {
+                let tile = wip_tilemap.at(&p);
+
+                if let Tile::Wall = tile {
+                    let mut neigh_count = 0;
+                    for delta in Direction::all() {
+                        if wip_tilemap
+                            .at(&(p + delta.vector()))
+                            .stops_box_during_gameplay()
+                        {
+                            neigh_count += 1;
+                        }
+                    }
+                    if neigh_count < 2 {
+                        ret.set(&p, Some(("1x1_obstacle.png".into(), 0)));
+                        wip_tilemap.set(&p, Tile::Ice);
+                        rep = true;
+                    }
+                }
+            }
+        }
+
+        for p in wip_tilemap.all_pos() {
+            if let None = ret.at(&p) {
+                ret.set(&p, wip_tilemap.neighbour_at(&p).get_asset());
+            }
         }
 
         ret
@@ -396,7 +435,14 @@ impl DartBoard {
     pub fn rotate_left(&self) -> Self {
         Self {
             board: self.board.clone().rotate_left(),
-            asset_map: self.asset_map.clone().rotate_left(),
+            asset_map: self
+                .asset_map
+                .clone()
+                .rotate_left()
+                .map(|asset| match asset {
+                    Some((asset, rotation)) => Some((asset, rotation - 1)),
+                    None => None,
+                }),
             analysis: self.analysis.clone(),
         }
     }
@@ -420,7 +466,7 @@ impl DartBoard {
     }
 
     pub fn get_start(&self) -> Pos {
-        self.end
+        self.start
     }
 
     pub fn at(&self, p: &Pos) -> Tile {

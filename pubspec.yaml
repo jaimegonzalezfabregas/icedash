@@ -33,5 +33,7 @@ flutter:
     - assets/images/wall_corner_out.png
     - assets/images/wall_corner_in.png
     - assets/images/weakwall.png
+    - assets/images/1x1_obstacle.png
+    - assets/images/wall_double_corner.png
   
     - assets/images/ice.png

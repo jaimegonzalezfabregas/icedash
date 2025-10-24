@@ -50,8 +50,8 @@ class RoomComponent extends Component {
     exitWorldPos = mapPos2WorldVector(room.getEnd());
 
     worldBB = Rect.fromLTWH(
-      entranceWorldPos.x - entranceRoomPos.x-0.5,
-      entranceWorldPos.y - entranceRoomPos.y-0.5,
+      entranceWorldPos.x - entranceRoomPos.x - 0.5,
+      entranceWorldPos.y - entranceRoomPos.y - 0.5,
       room.getWidth().toDouble(),
       room.getHeight().toDouble(),
     );
@@ -170,37 +170,19 @@ class RoomComponent extends Component {
       var tile = room.at(p: pos);
 
       if (tile == Tile.entrance) {
-        (String, int)? asset = room.assetAt(p: pos);
+        var entrance = Entrance(position: mapPos2WorldVector(pos));
+        add(
+          FunctionEffect(
+            (_, _) {},
+            EffectController(duration: 1, startDelay: 1),
 
-        if (asset != null) {
-          var entrance = Entrance(asset.$1, position: mapPos2WorldVector(pos), angle: asset.$2 * pi / 2);
-          add(
-            FunctionEffect(
-              (_, _) {},
-              EffectController(duration: 1, startDelay: 1),
+            onComplete: () {
+              entrance.removeFromParent();
+            },
+          ),
+        );
 
-              onComplete: () {
-                actorList.add(entrance);
-
-                SpriteComponent? gateIce = tileSpriteGrid[pos];
-
-                if (gateIce != null) {
-                  gateIce.add(
-                    OpacityEffect.fadeOut(
-                      EffectController(duration: 0.1),
-                      onComplete: () {
-                        gateIce.removeFromParent();
-                      },
-                    ),
-                  );
-                  tileSpriteGrid.remove(pos);
-                }
-              },
-            ),
-          );
-
-          add(entrance);
-        }
+        add(entrance);
       }
       if (tile == Tile.box) {
         var box = Box(this, position: mapPos2WorldVector(pos));

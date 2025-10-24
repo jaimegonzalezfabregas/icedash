@@ -5,7 +5,7 @@ import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
-  Player({super.position}) : super(priority: 1, size: Vector2.all(1), anchor: Anchor.center);
+  Player({super.position}) : super(priority: 20, size: Vector2.all(1), anchor: Anchor.center);
 
   double timePerStep = 0.1;
   bool sliding = false;

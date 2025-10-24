@@ -9,12 +9,13 @@ class RoomTraversal {
 
   DartBoard getOnLoadRoom() {
     var lobby = '''# # # # # # # # # # 
-# # #   w w w     # 
-#         w w     G 
-#       w w w     # 
+# # #   # # #     # 
+#       # #       G 
+#       # # #     # 
+#         # #     # 
 # # E # # # # # # # ''';
 
-    return DartBoard.newLobby(serialized:lobby, start: Pos(x:2,y:4), end:Pos(x:9, y:2), startDirection: Direction.north, endDirection: Direction.east );
+    return DartBoard.newLobby(serialized:lobby, start: Pos(x:2,y:5), end:Pos(x:9, y:2), startDirection: Direction.north, endDirection: Direction.east );
   }
 
   DartBoard getNextRoom(Pos pos) {
