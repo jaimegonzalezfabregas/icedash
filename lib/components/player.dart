@@ -51,7 +51,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       game.idWorld.reset();
       buffered = null;
       position = game.idWorld.resetPlayerPos();
-      push(game.idWorld.getResetDirection(), userPush: false);
+      push(game.idWorld.getResetDirection().reverse(), userPush: false);
       remainingMoves = remainingMovesReset;
     }
   }
@@ -96,8 +96,6 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
     effect.onComplete = () {
       sliding = false;
-      var standingOn = game.idWorld.getTile(position);
-
       movementLenght += 1;
       push(dir, userPush: false);
     };

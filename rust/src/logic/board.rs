@@ -7,7 +7,7 @@ use crate::{
     logic::{
         gate::Gate,
         matrix::{Matrix, TileMap},
-        noise_reduction::map_noise_cleanup,
+        noise_reduction::entrance_and_exit_prep,
     },
 };
 
@@ -26,6 +26,11 @@ impl Deref for Board {
 }
 
 impl Board {
+    pub fn print(&self, highlight: Vec<Pos>) {
+        println!("{:?}", self.gates);
+        self.map.print(highlight);
+    }
+
     pub fn get_gate_direction(&self, gate_id: usize) -> Direction {
         self.gates[gate_id].entry_direction
     }
@@ -35,16 +40,11 @@ impl Board {
     }
 
     pub fn get_gate_destination(&self, gate_id: usize) -> Option<(String, usize)> {
-        self.gates[gate_id]
-            .destination_room_and_gate_id
-            .clone()
+        self.gates[gate_id].destination_room_and_gate_id.clone()
     }
 
     pub fn get_gate_id_by_pos(&self, p: Pos) -> Option<usize> {
-        self
-            .gates
-            .iter()
-            .position(|gate| gate.pos == p)
+        self.gates.iter().position(|gate| gate.pos == p)
     }
 
     pub fn box_cascade(&mut self, moved_ice_cube: &Pos, direction: &Direction) {
@@ -159,13 +159,16 @@ impl Board {
 
         let mut map = Matrix(map);
 
-        map_noise_cleanup(
+        entrance_and_exit_prep(
             &mut map,
             &mut start,
             start_direction,
             &mut end,
             end_direction,
         );
+
+        map.set(end, Tile::Gate("\\next_autogen".into(), 0));
+        map.set(start, Tile::Entrance);
 
         let ret = Board {
             map,
@@ -187,14 +190,21 @@ impl Board {
     }
 
     pub fn rotate_left(self) -> Self {
-        Board {
+        self.print(vec![]);
+        println!("{}", self.get_width());
+
+        let ret = Board {
             gates: self
                 .gates
                 .iter()
                 .map(|e| e.rotate_left(self.get_width()))
                 .collect(),
             map: self.map.rotate_left(),
-        }
+        };
+
+        ret.print(vec![]);
+
+        return ret;
     }
 }
 

@@ -6,13 +6,10 @@ mod tests {
         time::Duration,
     };
 
-    use crate::{
-        api::main::{Direction, Pos},
-        logic::{
-            board::Board, matrix::TileMap, noise_reduction::asthetic_cleanup, solver::analyze,
+    use crate::logic::{
+            noise_reduction::asthetic_cleanup,
             worker_pool::worker_thread,
-        },
-    };
+        };
 
     #[test]
     fn test_bench() {

@@ -12,22 +12,17 @@ class RoomTraversal {
 #     b     b b   # 
 # # E # # # # # # # ''';
 
-    return (DartBoard.newLobby(serialized: lobby, gateMetadata: {'G'.codeUnitAt(0): ("\\next_autogen", BigInt.from(0))}), BigInt.from(0));
+    var gateMetadata = {'G'.codeUnitAt(0): ("\\next_autogen", BigInt.from(0))};
+    var ret = DartBoard.newLobby(serialized: lobby, gateMetadata: gateMetadata);
+
+    return (ret, BigInt.from(1));
   }
 
   DartBoard getRoom(String roomId, Pos pos) {
     if (roomId == "\\next_autogen") {
       return dartGetNewBoard();
     } else {
-      var lobby = '''# # # # # # # # # # 
-# # #   # # #     # 
-#           w     G 
-#         # #     # 
-#       # # #     # 
-#     b     b b   # 
-# # E # # # # # # # ''';
-
-      return DartBoard.newLobby(serialized: lobby, gateMetadata: {'G'.codeUnitAt(0): ("\\next_autogen", BigInt.from(0))});
+      return getOnLoadRoom().$1;
     }
   }
 }

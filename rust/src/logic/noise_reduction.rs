@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-pub fn map_noise_cleanup(
+pub fn entrance_and_exit_prep(
     map: &mut TileMap,
     start: &mut Pos,
     start_direction: Direction,
@@ -66,8 +66,7 @@ pub fn map_noise_cleanup(
         Tile::Ice,
     );
 
-    map.set(end, Tile::Gate("\\next_autogen".into(), 0));
-    map.set(start, Tile::Entrance);
+
 }
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;

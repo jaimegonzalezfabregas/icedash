@@ -165,6 +165,7 @@ class RoomComponent extends Component {
       var tile = room.at(p: pos);
 
       if (tile is Tile_Gate) {
+        room.print();
         BigInt gateId = room.getGateIdByPos(p: pos)!;
         (String, BigInt)? destination = room.getGateDestination(gateId: gateId);
 
@@ -173,13 +174,13 @@ class RoomComponent extends Component {
 
           switch (room.getGateDirection(gateId: gateId)) {
             case Direction.west:
-              angle = -pi / 2;
-            case Direction.north:
-              angle = 0;
-            case Direction.east:
               angle = pi / 2;
-            case Direction.south:
+            case Direction.north:
               angle = pi;
+            case Direction.east:
+              angle = -pi / 2;
+            case Direction.south:
+              angle = 0;
           }
 
           var gate = Gate(this, gateId, destination, position: mapPos2WorldVector(pos), angle: angle);
@@ -202,13 +203,13 @@ class RoomComponent extends Component {
         }
       }
 
-      if (tile == Tile.box) {
+      if (tile is Tile_Box) {
         var box = Box(this, position: mapPos2WorldVector(pos));
         actorList.add(box);
         add(box);
       }
 
-      if (tile == Tile.weakWall) {
+      if (tile is Tile_WeakWall) {
         var weakWall = WeakWall(position: mapPos2WorldVector(pos));
         actorList.add(weakWall);
         add(weakWall);
@@ -219,7 +220,7 @@ class RoomComponent extends Component {
   bool canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) {
     Tile ogTile = getTile(og);
 
-    if (ogTile == Tile.stop && !userPush) {
+    if (ogTile is Tile_Stop && !userPush) {
       return false;
     }
 

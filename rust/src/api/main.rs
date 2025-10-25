@@ -5,7 +5,7 @@ use std::{
 
 use crate::logic::{
     board::Board,
-    gate::{self, Gate},
+    gate::Gate,
     matrix::{Matrix, TileMap},
     solver::Analysis,
     worker_pool::{get_new_room, start_search, worker_halt},
@@ -463,8 +463,8 @@ impl DartBoard {
     pub fn new_lobby(serialized: String, gate_metadata: HashMap<u8, (String, usize)>) -> Self {
         let mut map: Vec<Vec<Tile>> = vec![];
         let mut gates = vec![];
-        let mut x = 0;
-        let mut y = 0;
+        let mut x: usize;
+        let mut y: usize = 0;
 
         for line in serialized.split("\n") {
             let mut line = line.as_bytes();
@@ -472,42 +472,42 @@ impl DartBoard {
             x = 0;
 
             while line.len() != 0 {
-                x += 1;
-
                 let tile = Tile::from_symbol(line[0], &gate_metadata);
 
-                {
-                    if tile == Tile::Entrance {
-                        gates.push(Gate {
-                            pos: Pos::new(x, y),
-                            destination_room_and_gate_id: None,
-                            entry_direction: if x == 0 {
-                                Direction::East
-                            } else if y == 0 {
-                                Direction::South
-                            } else if x == map[0].len() as isize - 1 {
-                                Direction::West
-                            } else {
-                                Direction::South
-                            },
-                        })
-                    }
-                    if let Tile::Gate(room_id, gate_id) = tile.clone() {
-                        gates.push(Gate {
-                            pos: Pos::new(x, y),
-                            destination_room_and_gate_id: Some((room_id, gate_id)),
-                            entry_direction: if x == 0 {
-                                Direction::East
-                            } else if y == 0 {
-                                Direction::South
-                            } else if x == map[0].len() as isize - 1 {
-                                Direction::West
-                            } else {
-                                Direction::South
-                            },
-                        })
-                    }
+                if tile == Tile::Entrance {
+                    gates.push(Gate {
+                        pos: Pos::new(x as isize, y as isize),
+                        destination_room_and_gate_id: None,
+                        entry_direction: if x == 0 {
+                            Direction::East
+                        } else if y == 0 {
+                            Direction::South
+                        } else if x == map[0].len() - 1 {
+                            Direction::West
+                        } else {
+                            Direction::South
+                        },
+                    })
                 }
+                if let Tile::Gate(room_id, gate_id) = tile.clone() {
+                    println!("{x}");
+
+                    gates.push(Gate {
+                        pos: Pos::new(x as isize, y as isize),
+                        destination_room_and_gate_id: Some((room_id, gate_id)),
+                        entry_direction: if x == 0 {
+                            Direction::East
+                        } else if y == 0 {
+                            Direction::South
+                        } else if x == map[0].len() - 1 {
+                            Direction::West
+                        } else {
+                            Direction::South
+                        },
+                    })
+                }
+
+                x += 1;
 
                 row.push(tile.clone());
 
@@ -569,6 +569,10 @@ impl DartBoard {
     pub fn get_all_positions(&self) -> Vec<Pos> {
         self.map.all_pos().collect()
     }
+
+    pub fn print(&self) {
+        self.board.print(vec![]);
+    }
 }
 
 pub fn dart_get_new_board() -> DartBoard {
@@ -580,7 +584,6 @@ pub fn dart_worker_halt(millis: usize) {
 }
 
 use cap::Cap;
-use itertools::Itertools;
 use std::alloc;
 
 #[global_allocator]
