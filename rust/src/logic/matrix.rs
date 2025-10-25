@@ -116,26 +116,7 @@ impl<T: Clone> Matrix<T> {
 }
 
 impl TileMap {
-    pub(crate) fn from_print(arg: &str) -> TileMap {
-        let mut ret = vec![];
-
-        for line in arg.split("\n") {
-            let mut line = line.as_bytes();
-            let mut row = vec![];
-
-            while line.len() != 0 {
-                row.push(Tile::from_symbol(line[0]));
-
-                line = &line[2..];
-            }
-            if row.len() != 0 {
-                ret.push(row)
-            }
-        }
-
-        Matrix(ret)
-    }
-
+  
     pub fn print(&self, highlight: Vec<Pos>) {
         for (y, row) in self.0.iter().enumerate() {
             for (x, tile) in row.iter().enumerate() {

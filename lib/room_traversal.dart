@@ -1,24 +1,33 @@
 import 'package:icedash/src/rust/api/main.dart';
-import 'package:icedash/src/rust/logic/board.dart';
-import 'package:icedash/src/rust/logic/tile_map.dart';
 
 enum RoomType { lobby, game }
 
 class RoomTraversal {
- 
-
-  DartBoard getOnLoadRoom() {
+  (DartBoard, BigInt) getOnLoadRoom() {
     var lobby = '''# # # # # # # # # # 
 # # #   # # #     # 
-#       # #       G 
-#       # # #     # 
+#           w     G 
 #         # #     # 
+#       # # #     # 
+#     b     b b   # 
 # # E # # # # # # # ''';
 
-    return DartBoard.newLobby(serialized:lobby, start: Pos(x:2,y:5), end:Pos(x:9, y:2), startDirection: Direction.north, endDirection: Direction.east );
+    return (DartBoard.newLobby(serialized: lobby, gateMetadata: {'G'.codeUnitAt(0): ("\\next_autogen", BigInt.from(0))}), BigInt.from(0));
   }
 
-  DartBoard getNextRoom(Pos pos) {
-    return dartGetNewBoard();
+  DartBoard getRoom(String roomId, Pos pos) {
+    if (roomId == "\\next_autogen") {
+      return dartGetNewBoard();
+    } else {
+      var lobby = '''# # # # # # # # # # 
+# # #   # # #     # 
+#           w     G 
+#         # #     # 
+#       # # #     # 
+#     b     b b   # 
+# # E # # # # # # # ''';
+
+      return DartBoard.newLobby(serialized: lobby, gateMetadata: {'G'.codeUnitAt(0): ("\\next_autogen", BigInt.from(0))});
+    }
   }
 }

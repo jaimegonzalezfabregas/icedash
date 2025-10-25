@@ -4,19 +4,20 @@ use rand::{random, seq::IteratorRandom};
 
 use crate::{
     api::main::{Direction, Pos, Tile},
-    logic::{noise_reduction::map_noise_cleanup, matrix::{Matrix, TileMap}},
+    logic::{
+        gate::Gate,
+        matrix::{Matrix, TileMap},
+        noise_reduction::map_noise_cleanup,
+    },
 };
 
 #[derive(Clone, Debug)]
 pub struct Board {
     pub map: TileMap,
-    pub start: Pos,
-    pub end: Pos,
-    pub start_direction: Direction,
-    pub end_direction: Direction,
+    pub gates: Vec<Gate>,
 }
 
-impl Deref for Board{
+impl Deref for Board {
     type Target = TileMap;
 
     fn deref(&self) -> &Self::Target {
@@ -25,9 +26,26 @@ impl Deref for Board{
 }
 
 impl Board {
- 
+    pub fn get_gate_direction(&self, gate_id: usize) -> Direction {
+        self.gates[gate_id].entry_direction
+    }
 
-   
+    pub fn get_gate_position(&self, gate_id: usize) -> Pos {
+        self.gates[gate_id].pos
+    }
+
+    pub fn get_gate_destination(&self, gate_id: usize) -> Option<(String, usize)> {
+        self.gates[gate_id]
+            .destination_room_and_gate_id
+            .clone()
+    }
+
+    pub fn get_gate_id_by_pos(&self, p: Pos) -> Option<usize> {
+        self
+            .gates
+            .iter()
+            .position(|gate| gate.pos == p)
+    }
 
     pub fn box_cascade(&mut self, moved_ice_cube: &Pos, direction: &Direction) {
         assert!(self.map.at(moved_ice_cube) == Tile::Box);
@@ -50,50 +68,20 @@ impl Board {
         let width = (7..15).choose(&mut rng).unwrap();
         let height = (7..15).choose(&mut rng).unwrap();
 
-        let start_side = (0..3).choose(&mut rng).unwrap();
-        let end_side = ((1..3).choose(&mut rng).unwrap() + start_side) % 4;
-
         let gate_range_horizontal = &(3..height - 3);
         let gate_range_vertical = &(3..width - 3);
 
-        let (start, start_direction) = match start_side {
+        let (start, start_direction) = (
+            Pos::new(0, gate_range_horizontal.clone().choose(&mut rng).unwrap()),
+            Direction::East,
+        );
+        let (end, end_direction) = match (1..3).choose(&mut rng).unwrap() {
             0 => (
                 Pos::new(0, gate_range_horizontal.clone().choose(&mut rng).unwrap()),
-                Direction::East,
-            ),
-            1 => (
-                Pos::new(
-                    width - 1,
-                    gate_range_horizontal.clone().choose(&mut rng).unwrap(),
-                ),
                 Direction::West,
             ),
-            2 => (
-                Pos::new(gate_range_vertical.clone().choose(&mut rng).unwrap(), 0),
-                Direction::South,
-            ),
-            _ => (
-                Pos::new(
-                    gate_range_vertical.clone().choose(&mut rng).unwrap(),
-                    height - 1,
-                ),
-                Direction::North,
-            ),
-        };
 
-        let (end, end_direction) = match end_side {
-            0 => (
-                Pos::new(0, gate_range_horizontal.clone().choose(&mut rng).unwrap()),
-                Direction::West,
-            ),
             1 => (
-                Pos::new(
-                    width - 1,
-                    gate_range_horizontal.clone().choose(&mut rng).unwrap(),
-                ),
-                Direction::East,
-            ),
-            2 => (
                 Pos::new(gate_range_vertical.clone().choose(&mut rng).unwrap(), 0),
                 Direction::North,
             ),
@@ -136,7 +124,9 @@ impl Board {
             map[y][x] = Tile::Wall;
         }
 
-        let boxes = ((width * height) / 40..=(width * height) / 30).choose(&mut rng).unwrap();
+        let boxes = ((width * height) / 40..=(width * height) / 30)
+            .choose(&mut rng)
+            .unwrap();
 
         for _ in 0..boxes {
             let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
@@ -179,30 +169,30 @@ impl Board {
 
         let ret = Board {
             map,
-            start,
-            start_direction,
-            end,
-            end_direction,
+            gates: vec![
+                Gate {
+                    destination_room_and_gate_id: None,
+                    pos: start,
+                    entry_direction: start_direction,
+                },
+                Gate {
+                    destination_room_and_gate_id: Some(("\\next_autogen".into(), 0)),
+                    pos: end,
+                    entry_direction: end_direction,
+                },
+            ],
         };
 
         Ok(ret)
     }
 
-    pub(crate) fn print(&self, highlight: Vec<Pos>) {
-        println!(
-            "printing start {:?} {:?} end {:?} {:?}",
-            self.start, self.start_direction, self.end, self.end_direction
-        );
-
-        self.map.print(highlight);
-    }
-
     pub fn rotate_left(self) -> Self {
         Board {
-            start: self.start.rotate_left(self.map.get_width()),
-            end: self.end.rotate_left(self.map.get_width()),
-            start_direction: self.start_direction.left(),
-            end_direction: self.end_direction.left(),
+            gates: self
+                .gates
+                .iter()
+                .map(|e| e.rotate_left(self.get_width()))
+                .collect(),
             map: self.map.rotate_left(),
         }
     }
@@ -217,7 +207,7 @@ pub struct TileMapWrap<'a> {
 impl<'a> TileMapWrap<'a> {
     pub fn at(&self, p: &Pos) -> Tile {
         if *p == self.p {
-            self.tile
+            self.tile.clone()
         } else {
             self.base.at(p)
         }

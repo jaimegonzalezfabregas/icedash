@@ -6,6 +6,7 @@ import 'package:flame/effects.dart';
 import 'package:icedash/components/actor.dart';
 import 'package:icedash/components/actors/box.dart';
 import 'package:icedash/components/actors/entrance.dart';
+import 'package:icedash/components/actors/gate.dart';
 import 'package:icedash/components/actors/weak_wall.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
@@ -16,7 +17,6 @@ class RoomComponent extends Component {
   late Direction exitDirection;
 
   Vector2 entranceWorldPos;
-  late Vector2 exitWorldPos;
   late Vector2 entranceRoomPos;
   Map<Pos, SpriteComponent> tileSpriteGrid = {};
   List<Actor> actorList = [];
@@ -36,18 +36,12 @@ class RoomComponent extends Component {
     buildSpriteGrid();
   }
 
-  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room) {
-    print("room component entrance direction is $entranceDirection");
-    while (room.getStartDirection() != entranceDirection) {
-      print("room entrance direction is ${room.getStartDirection()}");
-
+  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, BigInt entranceGateId) {
+    while (room.getGateDirection(gateId: entranceGateId) != entranceDirection) {
       room = room.rotateLeft();
     }
-    print("room entrance direction is ${room.getStartDirection()}");
 
-    entranceRoomPos = Vector2.array(room.getStart().dartVector());
-
-    exitWorldPos = mapPos2WorldVector(room.getEnd());
+    entranceRoomPos = Vector2.array(room.getGatePosition(gateId: entranceGateId).dartVector());
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x - 0.5,
@@ -81,7 +75,9 @@ class RoomComponent extends Component {
     }
   }
 
-  Future fadeOut(onDone) async {
+  Future fadeOut(BigInt exitGateId) async {
+    Vector2 exitWorldPos = mapPos2WorldVector(room.getGatePosition(gateId: exitGateId));
+
     var fadeDuration = 0.5;
     var rippleDuration = 0.1;
 
@@ -119,8 +115,7 @@ class RoomComponent extends Component {
         (_, __) {},
         onComplete: () {
           clean();
-
-          onDone();
+          removeFromParent();
         },
         EffectController(duration: maxDelay + fadeDuration),
       ),
@@ -169,21 +164,44 @@ class RoomComponent extends Component {
 
       var tile = room.at(p: pos);
 
-      if (tile == Tile.entrance) {
-        var entrance = Entrance(position: mapPos2WorldVector(pos));
-        add(
-          FunctionEffect(
-            (_, _) {},
-            EffectController(duration: 1, startDelay: 1),
+      if (tile is Tile_Gate) {
+        BigInt gateId = room.getGateIdByPos(p: pos)!;
+        (String, BigInt)? destination = room.getGateDestination(gateId: gateId);
 
-            onComplete: () {
-              entrance.removeFromParent();
-            },
-          ),
-        );
+        if (destination != null) {
+          double angle = 0;
 
-        add(entrance);
+          switch (room.getGateDirection(gateId: gateId)) {
+            case Direction.west:
+              angle = -pi / 2;
+            case Direction.north:
+              angle = 0;
+            case Direction.east:
+              angle = pi / 2;
+            case Direction.south:
+              angle = pi;
+          }
+
+          var gate = Gate(this, gateId, destination, position: mapPos2WorldVector(pos), angle: angle);
+          add(gate);
+          actorList.add(gate);
+        } else {
+          var entrance = Entrance(position: mapPos2WorldVector(pos));
+          add(
+            FunctionEffect(
+              (_, _) {},
+              EffectController(duration: 1, startDelay: 1),
+
+              onComplete: () {
+                entrance.removeFromParent();
+              },
+            ),
+          );
+
+          add(entrance);
+        }
       }
+
       if (tile == Tile.box) {
         var box = Box(this, position: mapPos2WorldVector(pos));
         actorList.add(box);
@@ -198,14 +216,28 @@ class RoomComponent extends Component {
     }
   }
 
-  bool canWalkInto(Vector2 dst) {
+  bool canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) {
+    Tile ogTile = getTile(og);
+
+    if (ogTile == Tile.stop && !userPush) {
+      return false;
+    }
+
+    if (ogTile.stopsPlayerDuringGameplay()) {
+      return true;
+    }
+
     Tile dstTile = getTile(dst);
     var canWalk = !dstTile.stopsPlayerDuringGameplay();
 
     if (canWalk == true) {
       for (var actor in actorList) {
-        if (actor.colision && worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
-          return false;
+        if (worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
+          canWalk &= !actor.colision;
+
+          if (actor is Gate) {
+            actor.hit(dir);
+          }
         }
       }
     }
@@ -219,12 +251,12 @@ class RoomComponent extends Component {
 
     if (canWalk == true) {
       for (var actor in actorList) {
-        if (actor.colision && worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
+        if (worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
+          canWalk &= !actor.colision;
+
           if (actor is Box) {
             actor.hit(dir);
           }
-
-          return false;
         }
       }
     }
@@ -248,7 +280,7 @@ class RoomComponent extends Component {
 
       return room.at(p: localPos);
     } catch (_) {
-      return Tile.outside;
+      return Tile.outside();
     }
   }
 }

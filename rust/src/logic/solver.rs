@@ -252,18 +252,18 @@ pub struct StepResult {
     pub pos: Pos,
 }
 
-pub fn analyze(initial_board: &Board) -> Result<Analysis, String> {
+pub fn analyze(initial_board: &Board, entry_gate_id: usize, exit_gate_id: usize) -> Result<Analysis, String> {
     // board.print(vec![]);
 
     let mut initial_visitations =
         Visitations::new(initial_board.get_width(), initial_board.get_height());
-    initial_visitations.insert(&initial_board.start);
+    initial_visitations.insert(&initial_board.get_gate_position(entry_gate_id));
 
     let mut states = VecDeque::from([SearchState {
         tile_length: 0,
         path: Rc::from(PathNode::Root {
-            root_direction: initial_board.start_direction,
-            root_position: initial_board.start,
+            root_direction: initial_board.get_gate_direction(entry_gate_id),
+            root_position: initial_board.get_gate_position(entry_gate_id),
         }),
         path_len: 0,
         visitations: initial_visitations,
@@ -288,7 +288,7 @@ pub fn analyze(initial_board: &Board) -> Result<Analysis, String> {
                 continue;
             };
 
-            if new_state.path.get_position() == state.board.end {
+            if new_state.path.get_position() == state.board.get_gate_position(exit_gate_id) {
                 let best_movement_count = if let Some(best_movement_count) = best_movement_count {
                     best_movement_count
                 } else {

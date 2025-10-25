@@ -47,68 +47,45 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   }
 
   void reset() {
-    if (!sliding ) {
-      print("reset");
-            game.idWorld.reset();
+    if (!sliding) {
+      game.idWorld.reset();
       buffered = null;
       position = game.idWorld.resetPlayerPos();
-      push( game.idWorld.getResetDirection(), user: false, force: true);
+      push(game.idWorld.getResetDirection(), userPush: false);
       remainingMoves = remainingMovesReset;
     }
   }
 
-  Vector2 raycast(dir, position) {
+  void push(Direction dir, {bool userPush = true}) {
     Vector2 delta = Vector2.array(dir.dartVector());
-    Vector2 ray = position;
-    while (game.idWorld.canWalkInto(ray, ray + delta)) {
-      ray += delta;
+
+    if (sliding) {
+      buffered = dir;
+      return;
     }
-    return ray;
-  }
 
-  void push(Direction dir, {bool force = false, bool user = true}) {
-    Vector2 delta = Vector2.array(dir.dartVector());
-
-    if (!force) {
-      if (sliding) {
-        buffered = dir;
-        return;
-      }
-
-      if (user) {
-        Vector2 endPos = raycast(dir, position);
-
-        if (game.idWorld.getTile(endPos) == Tile.gate) {
-          dartWorkerHalt(millis: BigInt.from((((position - endPos).length + 2) * timePerStep) * 1000));
-        }
-      }
-
-      if (!game.idWorld.canWalkInto(position, position + delta)) {
+    if (!game.idWorld.canWalkInto(position, position + delta, dir, userPush)) {
       bool consecuences = game.idWorld.hit(position + delta, dir);
 
-        if(movementLenght != 0 || consecuences){
-       
-          if (remainingMoves != null) {
-            remainingMoves = remainingMoves! - 1;
-            print("remaining moves $remainingMoves");
-            if (remainingMoves == 0) {
-              reset();
-            }
+      if (movementLenght != 0 || consecuences) {
+        if (remainingMoves != null) {
+          remainingMoves = remainingMoves! - 1;
+          print("remaining moves $remainingMoves");
+          if (remainingMoves == 0) {
+            reset();
           }
-          }
-        
-
-
-        movementLenght = 0;
-
-        if (buffered != null) {
-          Direction d = buffered!;
-          buffered = null;
-          push(d);
         }
-
-        return;
       }
+
+      movementLenght = 0;
+
+      if (buffered != null) {
+        Direction d = buffered!;
+        buffered = null;
+        push(d);
+      }
+
+      return;
     }
 
     sliding = true;
@@ -121,13 +98,8 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       sliding = false;
       var standingOn = game.idWorld.getTile(position);
 
-      if (standingOn == Tile.gate) {
-        movementLenght = 0;
-        game.idWorld.nextRoom(position, dir);
-      } else {
-        movementLenght += 1;
-        push(dir, user: false);
-      }
+      movementLenght += 1;
+      push(dir, userPush: false);
     };
 
     add(effect);

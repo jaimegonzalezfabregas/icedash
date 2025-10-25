@@ -9,7 +9,7 @@ mod tests {
     use crate::{
         api::main::{Direction, Pos},
         logic::{
-            board::Board, noise_reduction::asthetic_cleanup, solver::analyze, matrix::TileMap,
+            board::Board, matrix::TileMap, noise_reduction::asthetic_cleanup, solver::analyze,
             worker_pool::worker_thread,
         },
     };
@@ -41,52 +41,10 @@ mod tests {
 
         let board = asthetic_cleanup(board);
         board.print(vec![]);
-        board.print(
-            analysis.routes[0][0]
-                .solution
-                .iter()
-                .map(|e| e.1)
-                .collect(),
-        );
+        board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
         join_handdle.join().expect("worker panicked");
 
         analysis.print();
     }
 
-    #[test]
-
-    fn analyze_test() {
-        let board = Board {
-            map: TileMap::from_print(
-                "# # # E # # # # # # # 
-# # #   # w # # # # # 
-#         # # # # # # 
-#         # # # # # # 
-# #   b   # # # # # # 
-# # #     # # # # # # 
-#         #     # # # 
-G         #     # # # 
-#     w # # # # # # # 
-# # # # # # # # # # # 
-# # # # # # # # # # # ",
-            ),
-            start: Pos { x: 3, y: 0 },
-            end: Pos { x: 0, y: 7 },
-            start_direction: Direction::South,
-            end_direction: Direction::West,
-        };
-        board.print(vec![]);
-        let analysis = analyze(&board).expect("err");
-
-        board.print(
-            analysis.routes[0][0]
-                .solution
-                .iter()
-                .map(|(_, b)| b)
-                .cloned()
-                .collect(),
-        );
-
-        analysis.print();
-    }
 }

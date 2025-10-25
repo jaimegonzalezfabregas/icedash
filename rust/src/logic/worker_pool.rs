@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::{
-    api::main::{DartBoard},
+    api::main::DartBoard,
     logic::{
         board::Board,
         noise_reduction::asthetic_cleanup,
@@ -122,7 +122,7 @@ pub fn worker_thread(returns: Sender<(Analysis, Board)>, messenger: Receiver<Ctr
         }
 
         if let Ok(board) = Board::new_random() {
-            if let Ok(analysis) = analyze(&board) {
+            if let Ok(analysis) = analyze(&board, 0, 1) {
                 successes += 1;
                 let fitness = analysis.compute_fitness(&board.map);
                 if fitness > best_so_far {

@@ -1,7 +1,11 @@
-use std::ops::{Add, AddAssign, Deref, Div, Mul, Sub, SubAssign};
+use std::{
+    collections::HashMap,
+    ops::{Add, AddAssign, Deref, Div, Mul, Sub, SubAssign},
+};
 
 use crate::logic::{
     board::Board,
+    gate::{self, Gate},
     matrix::{Matrix, TileMap},
     solver::Analysis,
     worker_pool::{get_new_room, start_search, worker_halt},
@@ -42,8 +46,11 @@ impl Neighbour<Tile> {
 
     pub fn get_asset(&self) -> Option<(String, isize)> {
         match self.center {
-            Tile::Gate | Tile::Ice | Tile::WeakWall | Tile::Box => Some(("ice.png".into(), 0)),
+            Tile::Gate(_, _) | Tile::Ice | Tile::WeakWall | Tile::Box => {
+                Some(("ice.png".into(), 0))
+            }
             Tile::Outside => None,
+            Tile::Stop => Some(("stop.png".into(), 0)),
             Tile::Wall | Tile::Entrance => {
                 let mut rotator = self.clone();
                 let mut ret = None;
@@ -62,7 +69,7 @@ impl Neighbour<Tile> {
                             east: true,
                             ..
                         } => (500, Some(("wall_double_corner.png".into(), i))),
-                       
+
                         Neighbour {
                             southwest: false,
                             south: true,
@@ -101,18 +108,18 @@ impl Neighbour<Tile> {
     }
 }
 
-impl<T: Copy> Neighbour<T> {
+impl<T: Clone> Neighbour<T> {
     fn rotate_left(&self) -> Neighbour<T> {
         Neighbour {
-            center: self.center,
-            north: self.east,
-            south: self.west,
-            east: self.south,
-            west: self.north,
-            northeast: self.southeast,
-            southeast: self.southwest,
-            northwest: self.northeast,
-            southwest: self.northwest,
+            center: self.center.clone(),
+            north: self.east.clone(),
+            south: self.west.clone(),
+            east: self.south.clone(),
+            west: self.north.clone(),
+            northeast: self.southeast.clone(),
+            southeast: self.southwest.clone(),
+            northwest: self.northeast.clone(),
+            southwest: self.northwest.clone(),
         }
     }
 }
@@ -256,12 +263,13 @@ impl Direction {
     }
 }
 
-#[derive(Clone, PartialEq, Copy, Debug, Eq, Hash)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum Tile {
+    Gate(String, usize),
     Entrance,
-    Gate,
     Wall,
     Ice,
+    Stop,
     WeakWall,
     Box,
     Outside,
@@ -276,9 +284,10 @@ impl Default for Tile {
 impl Tile {
     pub fn symbol(&self) -> &str {
         match self {
+            Tile::Gate(..) => "G",
             Tile::Entrance => "E",
-            Tile::Gate => "G",
             Tile::Wall => "#",
+            Tile::Stop => "s",
             Tile::Ice => " ",
             Tile::WeakWall => "w",
             Tile::Outside => " ",
@@ -289,8 +298,9 @@ impl Tile {
     pub fn stops_player_during_sim(&self) -> bool {
         match self {
             Tile::Entrance => true,
-            Tile::Gate => false,
+            Tile::Gate(..) => false,
             Tile::Wall => true,
+            Tile::Stop => false,
             Tile::Ice => false,
             Tile::WeakWall => true,
             Tile::Outside => true,
@@ -301,8 +311,9 @@ impl Tile {
     pub fn stops_player_during_gameplay(&self) -> bool {
         match self {
             Tile::Entrance => true,
-            Tile::Gate => false,
+            Tile::Gate(..) => false,
             Tile::Wall => true,
+            Tile::Stop => false,
             Tile::Ice => false,
             Tile::WeakWall => false,
             Tile::Outside => true,
@@ -313,8 +324,9 @@ impl Tile {
     pub fn stops_box_during_gameplay(&self) -> bool {
         match self {
             Tile::Entrance => true,
-            Tile::Gate => true,
+            Tile::Gate(..) => true,
             Tile::Wall => true,
+            Tile::Stop => false,
             Tile::Ice => false,
             Tile::WeakWall => false,
             Tile::Outside => true,
@@ -322,15 +334,20 @@ impl Tile {
         }
     }
 
-    pub(crate) fn from_symbol(symbol: u8) -> Tile {
+    pub(crate) fn from_symbol(symbol: u8, gate_metadata: &HashMap<u8, (String, usize)>) -> Tile {
         match symbol {
             b'E' => Tile::Entrance,
-            b'G' => Tile::Gate,
             b'#' => Tile::Wall,
             b' ' => Tile::Ice,
             b'w' => Tile::WeakWall,
             b'b' => Tile::Box,
-            _ => Tile::Outside,
+            b's' => Tile::Stop,
+            e => {
+                let metadata = gate_metadata
+                    .get(&e)
+                    .expect("serialized gate had no corresponding metadata");
+                Tile::Gate(metadata.0.clone(), metadata.1)
+            }
         }
     }
 }
@@ -366,6 +383,30 @@ impl Matrix<Option<(String, isize)>> {
                         wip_tilemap.set(&p, Tile::Ice);
                         rep = true;
                     }
+
+                    if !wip_tilemap
+                        .at(&(p + Pos::new(1, 0)))
+                        .stops_player_during_gameplay()
+                        && !wip_tilemap
+                            .at(&(p + Pos::new(-1, 0)))
+                            .stops_player_during_gameplay()
+                    {
+                        ret.set(&p, Some(("1x1_obstacle.png".into(), 0)));
+                        wip_tilemap.set(&p, Tile::Ice);
+                        rep = true;
+                    }
+
+                    if !wip_tilemap
+                        .at(&(p + Pos::new(0, 1)))
+                        .stops_player_during_gameplay()
+                        && !wip_tilemap
+                            .at(&(p + Pos::new(0, -1)))
+                            .stops_player_during_gameplay()
+                    {
+                        ret.set(&p, Some(("1x1_obstacle.png".into(), 0)));
+                        wip_tilemap.set(&p, Tile::Ice);
+                        rep = true;
+                    }
                 }
             }
         }
@@ -396,6 +437,21 @@ impl Deref for DartBoard {
 }
 
 impl DartBoard {
+    pub fn get_gate_direction(&self, gate_id: usize) -> Direction {
+        self.board.get_gate_direction(gate_id)
+    }
+
+    pub fn get_gate_position(&self, gate_id: usize) -> Pos {
+        self.board.get_gate_position(gate_id)
+    }
+
+    pub fn get_gate_destination(&self, gate_id: usize) -> Option<(String, usize)> {
+        self.board.get_gate_destination(gate_id)
+    }
+
+    pub fn get_gate_id_by_pos(&self, p: Pos) -> Option<usize> {
+        self.board.get_gate_id_by_pos(p)
+    }
     pub(crate) fn new(board: Board, analysis: Analysis) -> Self {
         Self {
             asset_map: AssetMap::from_tilemap(&board.map),
@@ -404,32 +460,73 @@ impl DartBoard {
         }
     }
 
-    pub fn new_lobby(
-        serialized: String,
-        start: Pos,
-        end: Pos,
-        start_direction: Direction,
-        end_direction: Direction,
-    ) -> Self {
+    pub fn new_lobby(serialized: String, gate_metadata: HashMap<u8, (String, usize)>) -> Self {
+        let mut map: Vec<Vec<Tile>> = vec![];
+        let mut gates = vec![];
+        let mut x = 0;
+        let mut y = 0;
+
+        for line in serialized.split("\n") {
+            let mut line = line.as_bytes();
+            let mut row = vec![];
+            x = 0;
+
+            while line.len() != 0 {
+                x += 1;
+
+                let tile = Tile::from_symbol(line[0], &gate_metadata);
+
+                {
+                    if tile == Tile::Entrance {
+                        gates.push(Gate {
+                            pos: Pos::new(x, y),
+                            destination_room_and_gate_id: None,
+                            entry_direction: if x == 0 {
+                                Direction::East
+                            } else if y == 0 {
+                                Direction::South
+                            } else if x == map[0].len() as isize - 1 {
+                                Direction::West
+                            } else {
+                                Direction::South
+                            },
+                        })
+                    }
+                    if let Tile::Gate(room_id, gate_id) = tile.clone() {
+                        gates.push(Gate {
+                            pos: Pos::new(x, y),
+                            destination_room_and_gate_id: Some((room_id, gate_id)),
+                            entry_direction: if x == 0 {
+                                Direction::East
+                            } else if y == 0 {
+                                Direction::South
+                            } else if x == map[0].len() as isize - 1 {
+                                Direction::West
+                            } else {
+                                Direction::South
+                            },
+                        })
+                    }
+                }
+
+                row.push(tile.clone());
+
+                line = &line[2..];
+            }
+            if row.len() != 0 {
+                y += 1;
+                map.push(row)
+            }
+        }
+
         Self {
-            asset_map: AssetMap::from_tilemap(&TileMap::from_print(&serialized)),
+            asset_map: AssetMap::from_tilemap(&Matrix(map.clone())),
             board: Board {
-                map: TileMap::from_print(&serialized),
-                start,
-                end,
-                start_direction,
-                end_direction,
+                map: Matrix(map),
+                gates,
             },
             analysis: None,
         }
-    }
-
-    pub fn get_start_direction(&self) -> Direction {
-        self.start_direction
-    }
-
-    pub fn get_end_direction(&self) -> Direction {
-        self.start_direction
     }
 
     pub fn rotate_left(&self) -> Self {
@@ -461,14 +558,6 @@ impl DartBoard {
             .map(|analysis| analysis.optimal_movement_count as isize)
     }
 
-    pub fn get_end(&self) -> Pos {
-        self.end
-    }
-
-    pub fn get_start(&self) -> Pos {
-        self.start
-    }
-
     pub fn at(&self, p: &Pos) -> Tile {
         self.map.at(p)
     }
@@ -491,6 +580,7 @@ pub fn dart_worker_halt(millis: usize) {
 }
 
 use cap::Cap;
+use itertools::Itertools;
 use std::alloc;
 
 #[global_allocator]

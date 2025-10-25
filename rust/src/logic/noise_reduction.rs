@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, vec};
 
-use rand::{random};
+use rand::random;
 
 use crate::{
     api::main::{Direction, Pos, Tile},
@@ -23,7 +23,6 @@ pub fn map_noise_cleanup(
 
         map.set(&mean, Tile::Wall);
     }
-
 
     map.set(&(*start + start_direction.vector()), Tile::Ice);
     map.set(
@@ -67,7 +66,7 @@ pub fn map_noise_cleanup(
         Tile::Ice,
     );
 
-    map.set(end, Tile::Gate);
+    map.set(end, Tile::Gate("\\next_autogen".into(), 0));
     map.set(start, Tile::Entrance);
 }
 use std::cmp::Ordering;
@@ -259,31 +258,19 @@ pub fn flood(
 
 pub fn asthetic_cleanup(mut ret: Board) -> Board {
     let reachability = flood(
-        vec![
-            ret.start + ret.start_direction.vector(),
-            ret.end + ret.end_direction.vector(),
-        ],
+        ret.gates.iter().map(|g| g.pos + g.entry_direction.vector()).collect(),
         &ret.map,
         vec![
             Tile::Ice,
             Tile::WeakWall,
             Tile::Box,
-            Tile::Entrance,
-            Tile::Gate,
         ],
     );
     let inner_pos = ret.map.all_pos().collect::<Vec<_>>();
 
-    for p in inner_pos {
-        if ret.end == p {
-            continue;
-        }
-
-        if ret.start == p {
-            continue;
-        }
-        if !reachability.contains(&p) {
-            ret.map.set(&p, Tile::Wall);
+    for p in &inner_pos {
+        if !reachability.contains(p) {
+            ret.map.set(p, Tile::Wall);
         }
     }
 
@@ -292,6 +279,15 @@ pub fn asthetic_cleanup(mut ret: Board) -> Board {
 
         while ret.map.0[ret.map.0.len() - 1] == ret.map.0[ret.map.0.len() - 2] {
             ret.map.0.pop();
+        }
+
+        for p in &inner_pos {
+            if ret.map.at(&p) == Tile::Box
+                && ret.map.at(&(*p + Pos::new(1, 0))) == Tile::Wall
+                && ret.map.at(&(*p + Pos::new(0, 1))) == Tile::Wall
+            {
+                ret.map.set(&p, Tile::Wall);
+            }
         }
     }
 

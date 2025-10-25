@@ -4,3 +4,4 @@ pub mod matrix;
 pub mod board;
 pub mod worker_pool;
 mod visitations;
+pub mod gate;

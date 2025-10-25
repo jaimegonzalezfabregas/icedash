@@ -51,23 +51,23 @@ class IceDashWorld extends World {
     player = Player(position: Vector2(0, 0));
     add(player);
 
-    var board = roomTraversal.getOnLoadRoom();
+    var (board, entranceGateId) = roomTraversal.getOnLoadRoom();
 
-    setCurrentRoom(board, Vector2(0, 0), Direction.north);
+    setCurrentRoom(board, Vector2(0, 0), Direction.north, entranceGateId);
   }
 
-  void nextRoom(Vector2 exitPos, Direction exitDirection) {
+  void goToRoom((String, BigInt) destination, Vector2 worldStichPos, Direction exitDirection) {
     Vector2 dpos = Vector2.array(exitDirection.dartVector());
-    Vector2 entrancePostion = exitPos + dpos;
+    Vector2 entrancePostion = worldStichPos + dpos;
 
-    var board = roomTraversal.getNextRoom(Pos(x: (exitPos.x).round(), y: (exitPos.y).round()));
+    var board = roomTraversal.getRoom(destination.$1, Pos(x: (worldStichPos.x).round(), y: (worldStichPos.y).round()));
 
-    setCurrentRoom(board, entrancePostion, exitDirection);
+    setCurrentRoom(board, entrancePostion, exitDirection, destination.$2);
   }
 
-  void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection) {
+  void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) {
     _lastRoom = _currentRoom;
-    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room);
+    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room, entranceGateId);
 
     var transition = EffectController(duration: 0);
 
@@ -81,15 +81,8 @@ class IceDashWorld extends World {
 
     zoomTransition(camTransitionDuration, min(screenSize.x / _currentRoom!.worldBB.width, screenSize.y / _currentRoom!.worldBB.height));
 
-    if (_lastRoom != null) {
-      var fadingOutRoom = _lastRoom!;
-      _lastRoom = null;
-      fadingOutRoom.fadeOut(() {
-        remove(fadingOutRoom);
-      });
-    }
+    _lastRoom = null;
     add(_currentRoom!);
-    player.push(stichDirection, force: true);
 
     player.remainingMoves = room.getMaxMovementCount();
     player.remainingMovesReset = room.getMaxMovementCount();
@@ -126,8 +119,8 @@ class IceDashWorld extends World {
     camera = cam;
   }
 
-  bool canWalkInto(Vector2 origin, Vector2 dst) {
-    bool ret = _currentRoom!.canWalkInto(dst);
+  bool canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) {
+    bool ret = _currentRoom!.canWalkInto(og, dst, dir, userPush);
     return ret;
   }
 
