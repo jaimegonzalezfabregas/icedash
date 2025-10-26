@@ -7,7 +7,7 @@ class RoomTraversal {
     var lobby = '''# # # # # # # # # # 
 # # #   # # #     # 
 #           w     G 
-#         # #     # 
+#   s s   # #     # 
 #       # # #     # 
 #     b     b b   # 
 # # E # # # # # # # ''';

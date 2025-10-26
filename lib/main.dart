@@ -53,7 +53,7 @@ class IceDashWorld extends World {
 
     var (board, entranceGateId) = roomTraversal.getOnLoadRoom();
 
-    setCurrentRoom(board, Vector2(0, 0), Direction.south, entranceGateId);
+    setCurrentRoom(board, Vector2(0, 0), Direction.north, entranceGateId);
   }
 
   void goToRoom((String, BigInt) destination, Vector2 worldStichPos, Direction exitDirection) {
