@@ -46,12 +46,12 @@ impl Neighbour<Tile> {
 
     pub fn get_asset(&self) -> Option<(String, isize)> {
         match self.center {
-            Tile::Gate(_, _) | Tile::Ice | Tile::WeakWall | Tile::Box => {
+            Tile::Gate(Some((_, _))) | Tile::Ice | Tile::WeakWall | Tile::Box => {
                 Some(("ice.png".into(), 0))
             }
             Tile::Outside => None,
             Tile::Stop => Some(("stop.png".into(), 0)),
-            Tile::Wall | Tile::Entrance => {
+            Tile::Wall | Tile::Gate(None) => {
                 let mut rotator = self.clone();
                 let mut ret = None;
                 let mut ret_priority = 0;
@@ -265,8 +265,7 @@ impl Direction {
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum Tile {
-    Gate(String, usize),
-    Entrance,
+    Gate(Option<(String, usize)>),
     Wall,
     Ice,
     Stop,
@@ -285,7 +284,6 @@ impl Tile {
     pub fn symbol(&self) -> &str {
         match self {
             Tile::Gate(..) => "G",
-            Tile::Entrance => "E",
             Tile::Wall => "#",
             Tile::Stop => "s",
             Tile::Ice => " ",
@@ -297,8 +295,8 @@ impl Tile {
 
     pub fn stops_player_during_sim(&self) -> bool {
         match self {
-            Tile::Entrance => true,
-            Tile::Gate(..) => false,
+            Tile::Gate(None) => true,
+            Tile::Gate(Some(_)) => false,
             Tile::Wall => true,
             Tile::Stop => false,
             Tile::Ice => false,
@@ -310,8 +308,8 @@ impl Tile {
 
     pub fn stops_player_during_gameplay(&self) -> bool {
         match self {
-            Tile::Entrance => true,
-            Tile::Gate(..) => false,
+            Tile::Gate(None) => true,
+            Tile::Gate(Some(_)) => false,
             Tile::Wall => true,
             Tile::Stop => false,
             Tile::Ice => false,
@@ -323,8 +321,7 @@ impl Tile {
 
     pub fn stops_box_during_gameplay(&self) -> bool {
         match self {
-            Tile::Entrance => true,
-            Tile::Gate(..) => true,
+            Tile::Gate(_) => true,
             Tile::Wall => true,
             Tile::Stop => false,
             Tile::Ice => false,
@@ -336,17 +333,14 @@ impl Tile {
 
     pub(crate) fn from_symbol(symbol: u8, gate_metadata: &HashMap<u8, (String, usize)>) -> Tile {
         match symbol {
-            b'E' => Tile::Entrance,
             b'#' => Tile::Wall,
             b' ' => Tile::Ice,
             b'w' => Tile::WeakWall,
             b'b' => Tile::Box,
             b's' => Tile::Stop,
             e => {
-                let metadata = gate_metadata
-                    .get(&e)
-                    .expect("serialized gate had no corresponding metadata");
-                Tile::Gate(metadata.0.clone(), metadata.1)
+                let metadata = gate_metadata.get(&e).cloned();
+                Tile::Gate(metadata)
             }
         }
     }
@@ -474,37 +468,12 @@ impl DartBoard {
             while line.len() != 0 {
                 let tile = Tile::from_symbol(line[0], &gate_metadata);
 
-                if tile == Tile::Entrance {
-                    gates.push(Gate {
-                        pos: Pos::new(x as isize, y as isize),
-                        destination_room_and_gate_id: None,
-                        entry_direction: if x == 0 {
-                            Direction::East
-                        } else if y == 0 {
-                            Direction::South
-                        } else if x == map[0].len() - 1 {
-                            Direction::West
-                        } else {
-                            Direction::South
-                        },
-                    })
-                }
-                if let Tile::Gate(room_id, gate_id) = tile.clone() {
-                    println!("{x}");
-
-                    gates.push(Gate {
-                        pos: Pos::new(x as isize, y as isize),
-                        destination_room_and_gate_id: Some((room_id, gate_id)),
-                        entry_direction: if x == 0 {
-                            Direction::East
-                        } else if y == 0 {
-                            Direction::South
-                        } else if x == map[0].len() - 1 {
-                            Direction::West
-                        } else {
-                            Direction::South
-                        },
-                    })
+                if let Tile::Gate(destination) = tile.clone() {
+                    gates.push(Gate::new(
+                        destination,
+                        Pos::new(x as isize, y as isize),
+                        map[0].len() as isize,
+                    ));
                 }
 
                 x += 1;
@@ -518,6 +487,9 @@ impl DartBoard {
                 map.push(row)
             }
         }
+
+        Matrix(map.clone()).print(vec![]);
+        println!("{gates:?}");
 
         Self {
             asset_map: AssetMap::from_tilemap(&Matrix(map.clone())),

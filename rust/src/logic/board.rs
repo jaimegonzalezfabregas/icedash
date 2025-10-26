@@ -7,7 +7,7 @@ use crate::{
     logic::{
         gate::Gate,
         matrix::{Matrix, TileMap},
-        noise_reduction::entrance_and_exit_prep,
+        noise_reduction::asthetic_filter,
     },
 };
 
@@ -32,7 +32,7 @@ impl Board {
     }
 
     pub fn get_gate_direction(&self, gate_id: usize) -> Direction {
-        self.gates[gate_id].entry_direction
+        self.gates[gate_id].inwards_direction
     }
 
     pub fn get_gate_position(&self, gate_id: usize) -> Pos {
@@ -78,19 +78,19 @@ impl Board {
         let (end, end_direction) = match (1..3).choose(&mut rng).unwrap() {
             0 => (
                 Pos::new(0, gate_range_horizontal.clone().choose(&mut rng).unwrap()),
-                Direction::West,
+                Direction::East,
             ),
 
             1 => (
                 Pos::new(gate_range_vertical.clone().choose(&mut rng).unwrap(), 0),
-                Direction::North,
+                Direction::South,
             ),
             _ => (
                 Pos::new(
                     gate_range_vertical.clone().choose(&mut rng).unwrap(),
                     height - 1,
                 ),
-                Direction::South,
+                Direction::North,
             ),
         };
 
@@ -159,7 +159,7 @@ impl Board {
 
         let mut map = Matrix(map);
 
-        entrance_and_exit_prep(
+        asthetic_filter(
             &mut map,
             &mut start,
             start_direction,
@@ -167,22 +167,14 @@ impl Board {
             end_direction,
         );
 
-        map.set(end, Tile::Gate("\\next_autogen".into(), 0));
-        map.set(start, Tile::Entrance);
+        map.set(&end, Tile::Gate(Some(("\\next_autogen".into(), 0))));
+        map.set(&start, Tile::Gate(None));
 
         let ret = Board {
             map,
             gates: vec![
-                Gate {
-                    destination_room_and_gate_id: None,
-                    pos: start,
-                    entry_direction: start_direction,
-                },
-                Gate {
-                    destination_room_and_gate_id: Some(("\\next_autogen".into(), 0)),
-                    pos: end,
-                    entry_direction: end_direction,
-                },
+                Gate::new(None, start, width),
+                Gate::new(Some(("\\next_autogen".into(), 0)), end, width),
             ],
         };
 
@@ -190,7 +182,6 @@ impl Board {
     }
 
     pub fn rotate_left(self) -> Self {
-        self.print(vec![]);
         println!("{}", self.get_width());
 
         let ret = Board {
@@ -201,9 +192,6 @@ impl Board {
                 .collect(),
             map: self.map.rotate_left(),
         };
-
-        ret.print(vec![]);
-
         return ret;
     }
 }

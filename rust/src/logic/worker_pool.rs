@@ -62,7 +62,6 @@ pub fn get_new_room() -> DartBoard {
     board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
 
     let board = asthetic_cleanup(board);
-    analysis.print();
 
     DartBoard::new(board, analysis)
 }
@@ -105,9 +104,7 @@ pub fn worker_thread(returns: Sender<(Analysis, Board)>, messenger: Receiver<Ctr
         iter += 1;
         match messenger.try_recv() {
             Ok(CtrlMsg::Halt(time)) => {
-                println!("halting");
                 thread::sleep(time::Duration::from_millis(time as u64));
-                println!("resuming");
                 continue;
             }
             Ok(CtrlMsg::Kill) => {

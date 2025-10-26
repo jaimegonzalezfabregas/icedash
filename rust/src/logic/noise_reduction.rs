@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-pub fn entrance_and_exit_prep(
+pub fn asthetic_filter(
     map: &mut TileMap,
     start: &mut Pos,
     start_direction: Direction,
@@ -46,27 +46,25 @@ pub fn entrance_and_exit_prep(
 
     remove_rooms(map, &start, &start_direction);
 
-    map.set(&(*end - end_direction.vector()), Tile::Ice);
+    map.set(&(*end + end_direction.vector()), Tile::Ice);
     map.set(
-        &(*end - end_direction.vector() + end_direction.left().vector()),
+        &(*end + end_direction.vector() + end_direction.left().vector()),
         Tile::Ice,
     );
     map.set(
-        &(*end - end_direction.vector() + end_direction.right().vector()),
-        Tile::Ice,
-    );
-
-    map.set(&(*end - end_direction.vector() * 2), Tile::Ice);
-    map.set(
-        &(*end - end_direction.vector() * 2 + end_direction.left().vector()),
-        Tile::Ice,
-    );
-    map.set(
-        &(*end - end_direction.vector() * 2 + end_direction.right().vector()),
+        &(*end + end_direction.vector() + end_direction.right().vector()),
         Tile::Ice,
     );
 
-
+    map.set(&(*end + end_direction.vector() * 2), Tile::Ice);
+    map.set(
+        &(*end + end_direction.vector() * 2 + end_direction.left().vector()),
+        Tile::Ice,
+    );
+    map.set(
+        &(*end + end_direction.vector() * 2 + end_direction.right().vector()),
+        Tile::Ice,
+    );
 }
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
@@ -257,15 +255,14 @@ pub fn flood(
 
 pub fn asthetic_cleanup(mut ret: Board) -> Board {
     let reachability = flood(
-        ret.gates.iter().map(|g| g.pos + g.entry_direction.vector()).collect(),
+        ret.gates
+            .iter()
+            .map(|g| g.pos + g.inwards_direction.vector())
+            .collect(),
         &ret.map,
-        vec![
-            Tile::Ice,
-            Tile::WeakWall,
-            Tile::Box,
-        ],
+        vec![Tile::Ice, Tile::WeakWall, Tile::Box],
     );
-    let inner_pos = ret.map.all_pos().collect::<Vec<_>>();
+    let inner_pos = ret.map.all_inner_pos().collect::<Vec<_>>();
 
     for p in &inner_pos {
         if !reachability.contains(p) {
@@ -279,6 +276,8 @@ pub fn asthetic_cleanup(mut ret: Board) -> Board {
         while ret.map.0[ret.map.0.len() - 1] == ret.map.0[ret.map.0.len() - 2] {
             ret.map.0.pop();
         }
+
+        let inner_pos = ret.map.all_inner_pos().collect::<Vec<_>>();
 
         for p in &inner_pos {
             if ret.map.at(&p) == Tile::Box

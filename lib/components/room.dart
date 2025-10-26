@@ -89,8 +89,6 @@ class RoomComponent extends Component {
       maxDelay = max(maxDelay, fadeDuration + d);
     }
 
-    print("max delay $maxDelay");
-
     for (var actor in actorList) {
       double d = (actor.position - exitWorldPos).length * rippleDuration;
       actor.opacity = 1;
@@ -165,7 +163,6 @@ class RoomComponent extends Component {
       var tile = room.at(p: pos);
 
       if (tile is Tile_Gate) {
-        room.print();
         BigInt gateId = room.getGateIdByPos(p: pos)!;
         (String, BigInt)? destination = room.getGateDestination(gateId: gateId);
 

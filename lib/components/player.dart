@@ -51,7 +51,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       game.idWorld.reset();
       buffered = null;
       position = game.idWorld.resetPlayerPos();
-      push(game.idWorld.getResetDirection().reverse(), userPush: false);
+      push(game.idWorld.getResetDirection(), userPush: true);
       remainingMoves = remainingMovesReset;
     }
   }
