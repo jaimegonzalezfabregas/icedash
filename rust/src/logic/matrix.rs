@@ -1,6 +1,6 @@
 use flutter_rust_bridge::frb;
 
-use crate::api::main::{Direction, Neighbour, Pos, Tile};
+use crate::{api::main::{Direction,  Tile}, logic::{neighbour::Neighbour, pos::Pos}};
 
 pub(crate) type TileMap = Matrix<Tile>;
 

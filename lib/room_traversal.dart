@@ -1,4 +1,5 @@
 import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/src/rust/logic/pos.dart';
 
 enum RoomType { lobby, game }
 

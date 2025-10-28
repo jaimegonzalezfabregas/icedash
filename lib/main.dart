@@ -14,6 +14,7 @@ import 'package:icedash/room_traversal.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 import 'package:icedash/src/rust/frb_generated.dart';
+import 'package:icedash/src/rust/logic/pos.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

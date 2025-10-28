@@ -9,6 +9,7 @@ import 'package:icedash/components/actors/entrance.dart';
 import 'package:icedash/components/actors/gate.dart';
 import 'package:icedash/components/actors/weak_wall.dart';
 import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/src/rust/logic/pos.dart';
 
 class RoomComponent extends Component {
   DartBoard room;
@@ -25,7 +26,7 @@ class RoomComponent extends Component {
   BigInt entranceGateId;
 
   Vector2 mapPos2WorldVector(Pos p) {
-    return Vector2.array(p.dartVector()) - entranceRoomPos + entranceWorldPos;
+    return Vector2.array(pos2DartVector(p:p)) - entranceRoomPos + entranceWorldPos;
   }
 
   Pos worldVector2MapPos(Vector2 v) {
@@ -43,7 +44,7 @@ class RoomComponent extends Component {
       room = room.rotateLeft();
     }
 
-    entranceRoomPos = Vector2.array(room.getGatePosition(gateId: entranceGateId).dartVector());
+    entranceRoomPos = Vector2.array(pos2DartVector(p:room.getGatePosition(gateId: entranceGateId)));
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x - 0.5,

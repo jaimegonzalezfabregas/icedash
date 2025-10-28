@@ -3,11 +3,11 @@ use std::ops::Deref;
 use rand::{random, seq::IteratorRandom};
 
 use crate::{
-    api::main::{Direction, Pos, Tile},
+    api::main::{Direction,  Tile},
     logic::{
         gate::Gate,
         matrix::{Matrix, TileMap},
-        noise_reduction::asthetic_filter,
+        noise_reduction::asthetic_filter, pos::Pos,
     },
 };
 

@@ -3,8 +3,8 @@ use std::{collections::VecDeque, rc::Rc};
 use itertools::Itertools;
 
 use crate::{
-    api::main::{Direction, Pos, Tile},
-    logic::{board::Board, matrix::TileMap, visitations::Visitations},
+    api::main::{Direction, Tile},
+    logic::{board::Board, matrix::TileMap, pos::Pos, visitations::Visitations},
 };
 
 const EXTRA_MOVES_SEARCH_MARGIN: usize = 3;
@@ -169,7 +169,7 @@ pub fn step(map: &TileMap, start: &Pos, direction: &Direction) -> StepResult {
         .at(&(ret + direction.vector()))
         .stops_player_during_sim()
     {
-        ret += direction.vector();
+        ret = ret + direction.vector();
     }
 
     StepResult {
