@@ -47,10 +47,13 @@ class IceDashGame extends FlameGame with HasKeyboardHandlerComponents, DragCallb
   void onDragStart(DragStartEvent event){
     dragStart = event.localPosition;
     dragEnd = event.localPosition;
+    super.onDragStart(event);
   }
 
+  @override 
   void onDragUpdate(DragUpdateEvent event){
     dragEnd = event.localEndPosition;
+    super.onDragUpdate(event);
   }
 
   @override

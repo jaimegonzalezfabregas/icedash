@@ -1,6 +1,5 @@
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flame/events.dart';
 import 'package:flutter/services.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';

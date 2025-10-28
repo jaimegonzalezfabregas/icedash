@@ -171,7 +171,6 @@ class RoomComponent extends Component {
         (String, BigInt)? destination = room.getGateDestination(gateId: gateId);
 
         bool usedEntrance = gateId == entranceGateId;
-        print(usedEntrance);
 
         if (destination != null) {
           double angle = 0;

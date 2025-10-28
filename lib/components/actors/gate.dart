@@ -15,22 +15,20 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
 
   (String, BigInt) destination;
 
-  Gate(this.room, this.gateId, this.destination, {required this.fadeIn, super.position, super.angle}) : super("fade.png", colision: false, selffade: fadeIn);
+  Gate(this.room, this.gateId, this.destination, {required this.fadeIn, super.position, super.angle})
+    : super("fade.png", colision: false, selffade: fadeIn);
 
   @override
   FutureOr<void> onLoad() {
     if (fadeIn) {
-      print("fading in gate");
       super.opacity = 0;
-      add(OpacityEffect.fadeIn(EffectController(duration: 1, startDelay: 1), onComplete: () => print("done"),));
+      add(OpacityEffect.fadeIn(EffectController(duration: 1, startDelay: 1)));
     }
     return super.onLoad();
   }
 
   @override
   bool hit(Direction dir) {
-    print("hit gate");
-
     dartWorkerHalt(millis: BigInt.from(timePerStep * 1000 * 4));
     game.idWorld.goToRoom(destination, position, dir);
 
