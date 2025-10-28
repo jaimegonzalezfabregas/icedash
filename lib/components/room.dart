@@ -22,6 +22,8 @@ class RoomComponent extends Component {
   List<Actor> actorList = [];
   Direction entranceDirection;
 
+  BigInt entranceGateId;
+
   Vector2 mapPos2WorldVector(Pos p) {
     return Vector2.array(p.dartVector()) - entranceRoomPos + entranceWorldPos;
   }
@@ -36,7 +38,7 @@ class RoomComponent extends Component {
     buildSpriteGrid();
   }
 
-  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, BigInt entranceGateId) {
+  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, this.entranceGateId) {
     while (room.getGateDirection(gateId: entranceGateId) != entranceDirection) {
       room = room.rotateLeft();
     }
@@ -69,9 +71,11 @@ class RoomComponent extends Component {
     }
 
     for (var actor in actorList) {
-      double d = (actor.position - entranceWorldPos).length * rippleDuration;
+      if (!actor.selffade) {
+        double d = (actor.position - entranceWorldPos).length * rippleDuration;
 
-      await actor.add(OpacityEffect.fadeIn(EffectController(duration: fadeDuration, startDelay: d)));
+        await actor.add(OpacityEffect.fadeIn(EffectController(duration: fadeDuration, startDelay: d)));
+      }
     }
   }
 
@@ -166,6 +170,9 @@ class RoomComponent extends Component {
         BigInt gateId = room.getGateIdByPos(p: pos)!;
         (String, BigInt)? destination = room.getGateDestination(gateId: gateId);
 
+        bool usedEntrance = gateId == entranceGateId;
+        print(usedEntrance);
+
         if (destination != null) {
           double angle = 0;
 
@@ -180,23 +187,25 @@ class RoomComponent extends Component {
               angle = 0;
           }
 
-          var gate = Gate(this, gateId, destination, position: mapPos2WorldVector(pos), angle: angle);
+          var gate = Gate(this, gateId, destination, position: mapPos2WorldVector(pos), angle: angle, fadeIn: usedEntrance);
           add(gate);
           actorList.add(gate);
         } else {
-          var entrance = Entrance(position: mapPos2WorldVector(pos));
-          add(
-            FunctionEffect(
-              (_, _) {},
-              EffectController(duration: 1, startDelay: 1),
+          if (usedEntrance) {
+            var entrance = EntranceTmpIcePatch(position: mapPos2WorldVector(pos));
+            add(
+              FunctionEffect(
+                (_, _) {},
+                EffectController(duration: 1, startDelay: 1),
 
-              onComplete: () {
-                entrance.removeFromParent();
-              },
-            ),
-          );
+                onComplete: () {
+                  entrance.removeFromParent();
+                },
+              ),
+            );
 
-          add(entrance);
+            add(entrance);
+          }
         }
       }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:icedash/components/actor.dart';
@@ -9,10 +11,21 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
   RoomComponent room;
   BigInt gateId;
   double timePerStep = 0.1;
+  bool fadeIn;
 
   (String, BigInt) destination;
 
-  Gate(this.room, this.gateId, this.destination, {super.position, super.angle}) : super("fade.png", colision: false);
+  Gate(this.room, this.gateId, this.destination, {required this.fadeIn, super.position, super.angle}) : super("fade.png", colision: false, selffade: fadeIn);
+
+  @override
+  FutureOr<void> onLoad() {
+    if (fadeIn) {
+      print("fading in gate");
+      super.opacity = 0;
+      add(OpacityEffect.fadeIn(EffectController(duration: 1, startDelay: 1), onComplete: () => print("done"),));
+    }
+    return super.onLoad();
+  }
 
   @override
   bool hit(Direction dir) {

@@ -4,8 +4,9 @@ import 'package:flame/effects.dart';
 import 'package:icedash/components/actor.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
-class Entrance extends Actor {
-  Entrance({super.position}):super("ice.png");
+class EntranceTmpIcePatch extends Actor {
+
+  EntranceTmpIcePatch({super.position}) : super("ice.png", selffade: true);
 
   @override
   FutureOr<void> onLoad() async {

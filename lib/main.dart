@@ -23,7 +23,7 @@ Future<void> main() async {
   runApp(GameWidget(game: IceDashGame()));
 }
 
-class IceDashGame extends FlameGame with HasKeyboardHandlerComponents {
+class IceDashGame extends FlameGame with HasKeyboardHandlerComponents, DragCallbacks, LongPressDetector {
   late IceDashWorld idWorld;
 
   IceDashGame() {
@@ -34,6 +34,48 @@ class IceDashGame extends FlameGame with HasKeyboardHandlerComponents {
     super.world = idWorld;
     super.camera = camera;
   }
+
+  @override 
+  void onLongPress(){
+    idWorld.player.reset();
+  }
+
+  Vector2? dragStart;
+  Vector2? dragEnd;
+
+  @override 
+  void onDragStart(DragStartEvent event){
+    dragStart = event.localPosition;
+    dragEnd = event.localPosition;
+  }
+
+  void onDragUpdate(DragUpdateEvent event){
+    dragEnd = event.localEndPosition;
+  }
+
+  @override
+  void onDragEnd(DragEndEvent event) {
+
+    Vector2 dragVector = dragEnd! - dragStart!;
+
+      if (dragVector.x.abs() > dragVector.y.abs()) {
+        if (dragVector.x.sign > 0) {
+          idWorld.player.push(Direction.east);
+        } else {
+          idWorld.player.push(Direction.west);
+        }
+      } else {
+        if (dragVector.y.sign > 0) {
+          idWorld.player.push(Direction.south);
+        } else {
+          idWorld.player.push(Direction.north);
+        }
+      }
+    
+
+    super.onDragEnd(event);
+  }
+
 }
 
 class IceDashWorld extends World {
@@ -51,9 +93,10 @@ class IceDashWorld extends World {
     player = Player(position: Vector2(0, 0));
     add(player);
 
-    var (board, entranceGateId) = roomTraversal.getOnLoadRoom();
+    var destination = roomTraversal.getOnLoadDestination();
 
-    setCurrentRoom(board, Vector2(0, 0), Direction.north, entranceGateId);
+    goToRoom(destination, Vector2(0, 0), Direction.north);
+    player.push(Direction.north);
   }
 
   void goToRoom((String, BigInt) destination, Vector2 worldStichPos, Direction exitDirection) {
@@ -66,6 +109,8 @@ class IceDashWorld extends World {
   }
 
   void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) {
+
+
     _lastRoom = _currentRoom;
     _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room, entranceGateId);
 

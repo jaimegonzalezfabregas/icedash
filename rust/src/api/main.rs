@@ -472,7 +472,7 @@ impl DartBoard {
                     gates.push(Gate::new(
                         destination,
                         Pos::new(x as isize, y as isize),
-                        map[0].len() as isize,
+                        map.get(0).unwrap_or(&vec![]).len() as isize,
                     ));
                 }
 
