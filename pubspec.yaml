@@ -39,3 +39,7 @@ flutter:
   
     - assets/images/ice.png
     - assets/images/fade.png
+  fonts:
+    - family: BoldPixels
+      fonts:
+        - asset: assets/fonts/boldpixels.boldpixels.otf

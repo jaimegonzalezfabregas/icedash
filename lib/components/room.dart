@@ -26,7 +26,7 @@ class RoomComponent extends Component {
   BigInt entranceGateId;
 
   Vector2 mapPos2WorldVector(Pos p) {
-    return Vector2.array(pos2DartVector(p:p)) - entranceRoomPos + entranceWorldPos;
+    return Vector2.array(pos2DartVector(p: p)) - entranceRoomPos + entranceWorldPos;
   }
 
   Pos worldVector2MapPos(Vector2 v) {
@@ -44,7 +44,7 @@ class RoomComponent extends Component {
       room = room.rotateLeft();
     }
 
-    entranceRoomPos = Vector2.array(pos2DartVector(p:room.getGatePosition(gateId: entranceGateId)));
+    entranceRoomPos = Vector2.array(pos2DartVector(p: room.getGatePosition(gateId: entranceGateId)));
 
     worldBB = Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x - 0.5,
@@ -174,20 +174,17 @@ class RoomComponent extends Component {
         bool usedEntrance = gateId == entranceGateId;
 
         if (destination != null) {
-          double angle = 0;
 
-          switch (room.getGateDirection(gateId: gateId)) {
-            case Direction.west:
-              angle = pi / 2;
-            case Direction.north:
-              angle = pi;
-            case Direction.east:
-              angle = -pi / 2;
-            case Direction.south:
-              angle = 0;
-          }
-
-          var gate = Gate(this, gateId, destination, position: mapPos2WorldVector(pos), angle: angle, fadeIn: usedEntrance);
+          var gate = Gate(
+            this,
+            gateId,
+            destination,
+            room.getGateDirection(gateId: gateId),
+            null,
+            position: mapPos2WorldVector(pos),
+            
+            fadeIn: usedEntrance,
+          );
           add(gate);
           actorList.add(gate);
         } else {

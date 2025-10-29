@@ -387,5 +387,5 @@ pub fn init_app() {
     ALLOCATOR.set_limit(5 * 1024 * 1024 * 1024).unwrap();
 
     flutter_rust_bridge::setup_default_user_utils();
-    start_search();
+    // start_search();
 }
