@@ -1,11 +1,8 @@
-use std::{
-    collections::HashMap,
-    ops::Deref,
-};
+use std::{collections::HashMap, ops::Deref};
 
 use crate::logic::{
     board::Board,
-    gate::Gate,
+    gate::GateEntry,
     matrix::{Matrix, TileMap},
     pos::Pos,
     solver::Analysis,
@@ -85,8 +82,19 @@ impl Direction {
 }
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
+pub enum GateMetadata {
+    NextAutoGen,
+    RoomIdWithGate {
+        room_id: String,
+        gate_id: usize,
+        label: Option<String>,
+    },
+    EntryOnly,
+}
+
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum Tile {
-    Gate(Option<(String, usize)>),
+    Gate(GateMetadata),
     Wall,
     Ice,
     Stop,
@@ -104,7 +112,8 @@ impl Default for Tile {
 impl Tile {
     pub fn symbol(&self) -> &str {
         match self {
-            Tile::Gate(..) => "G",
+            Tile::Gate(GateMetadata::EntryOnly) => "E",
+            Tile::Gate(_) => "G",
             Tile::Wall => "#",
             Tile::Stop => "s",
             Tile::Ice => " ",
@@ -116,8 +125,8 @@ impl Tile {
 
     pub fn stops_player_during_sim(&self) -> bool {
         match self {
-            Tile::Gate(None) => true,
-            Tile::Gate(Some(_)) => false,
+            Tile::Gate(GateMetadata::EntryOnly) => true,
+            Tile::Gate(_) => false,
             Tile::Wall => true,
             Tile::Stop => false,
             Tile::Ice => false,
@@ -129,8 +138,8 @@ impl Tile {
 
     pub fn stops_player_during_gameplay(&self) -> bool {
         match self {
-            Tile::Gate(None) => true,
-            Tile::Gate(Some(_)) => false,
+            Tile::Gate(GateMetadata::EntryOnly) => true,
+            Tile::Gate(_) => false,
             Tile::Wall => true,
             Tile::Stop => false,
             Tile::Ice => false,
@@ -152,7 +161,10 @@ impl Tile {
         }
     }
 
-    pub(crate) fn from_symbol(symbol: u8, gate_metadata: &HashMap<u8, (String, usize)>) -> Tile {
+    pub(crate) fn from_symbol(
+        symbol: u8,
+        gate_metadata: &HashMap<u8, (String, usize, Option<String>)>,
+    ) -> Tile {
         match symbol {
             b'#' => Tile::Wall,
             b' ' => Tile::Ice,
@@ -161,7 +173,15 @@ impl Tile {
             b's' => Tile::Stop,
             e => {
                 let metadata = gate_metadata.get(&e).cloned();
-                Tile::Gate(metadata)
+                Tile::Gate(
+                    metadata
+                        .map(|e| GateMetadata::RoomIdWithGate {
+                            room_id: e.0,
+                            gate_id: e.1,
+                            label: e.2,
+                        })
+                        .unwrap_or(GateMetadata::EntryOnly),
+                )
             }
         }
     }
@@ -264,6 +284,10 @@ impl DartBoard {
         self.board.get_gate_destination(gate_id)
     }
 
+    pub fn get_gate_label(&self, gate_id: usize) -> Option<String> {
+        self.board.get_gate_label(gate_id)
+    }
+
     pub fn get_gate_id_by_pos(&self, p: Pos) -> Option<usize> {
         self.board.get_gate_id_by_pos(p)
     }
@@ -275,7 +299,10 @@ impl DartBoard {
         }
     }
 
-    pub fn new_lobby(serialized: String, gate_metadata: HashMap<u8, (String, usize)>) -> Self {
+    pub fn new_lobby(
+        serialized: String,
+        gate_metadata: HashMap<u8, (String, usize, Option<String>)>,
+    ) -> Self {
         let mut map: Vec<Vec<Tile>> = vec![];
         let mut gates = vec![];
         let mut x: usize;
@@ -289,9 +316,8 @@ impl DartBoard {
             while line.len() != 0 {
                 let tile = Tile::from_symbol(line[0], &gate_metadata);
 
-                if let Tile::Gate(destination) = tile.clone() {
-                    gates.push(Gate::new(
-                        destination,
+                if let Tile::Gate(_) = tile {
+                    gates.push(GateEntry::new(
                         Pos::new(x as isize, y as isize),
                         map.get(0).unwrap_or(&vec![]).len() as isize,
                     ));

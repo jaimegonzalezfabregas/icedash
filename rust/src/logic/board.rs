@@ -3,18 +3,19 @@ use std::ops::Deref;
 use rand::{random, seq::IteratorRandom};
 
 use crate::{
-    api::main::{Direction,  Tile},
+    api::main::{Direction, GateMetadata, Tile},
     logic::{
-        gate::Gate,
+        gate::GateEntry,
         matrix::{Matrix, TileMap},
-        noise_reduction::asthetic_filter, pos::Pos,
+        noise_reduction::asthetic_filter,
+        pos::Pos,
     },
 };
 
 #[derive(Clone, Debug)]
 pub struct Board {
     pub map: TileMap,
-    pub gates: Vec<Gate>,
+    pub gates: Vec<GateEntry>,
 }
 
 impl Deref for Board {
@@ -40,7 +41,37 @@ impl Board {
     }
 
     pub fn get_gate_destination(&self, gate_id: usize) -> Option<(String, usize)> {
-        self.gates[gate_id].destination_room_and_gate_id.clone()
+        if let Some(gate_entry) = &self.gates.get(gate_id) {
+            if let Tile::Gate(metadata) = self.at(&gate_entry.pos) {
+                match metadata {
+                    GateMetadata::NextAutoGen => None,
+                    GateMetadata::RoomIdWithGate {
+                        room_id, gate_id, ..
+                    } => Some((room_id, gate_id)),
+                    GateMetadata::EntryOnly => None,
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn get_gate_label(&self, gate_id: usize) -> Option<String> {
+        if let Some(gate_entry) = &self.gates.get(gate_id) {
+            if let Tile::Gate(metadata) = self.at(&gate_entry.pos) {
+                match metadata {
+                    GateMetadata::NextAutoGen => None,
+                    GateMetadata::RoomIdWithGate { label, .. } => label,
+                    GateMetadata::EntryOnly => None,
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 
     pub fn get_gate_id_by_pos(&self, p: Pos) -> Option<usize> {
@@ -167,15 +198,12 @@ impl Board {
             end_direction,
         );
 
-        map.set(&end, Tile::Gate(Some(("\\next_autogen".into(), 0))));
-        map.set(&start, Tile::Gate(None));
+        map.set(&end, Tile::Gate(GateMetadata::NextAutoGen));
+        map.set(&start, Tile::Gate(GateMetadata::EntryOnly));
 
         let ret = Board {
             map,
-            gates: vec![
-                Gate::new(None, start, width),
-                Gate::new(Some(("\\next_autogen".into(), 0)), end, width),
-            ],
+            gates: vec![GateEntry::new(start, width), GateEntry::new(end, width)],
         };
 
         Ok(ret)

@@ -1,5 +1,4 @@
-use crate::api::main::Tile;
-
+use crate::api::main::{GateMetadata, Tile};
 
 #[derive(Clone)]
 pub struct Neighbour<T> {
@@ -37,12 +36,13 @@ impl Neighbour<Tile> {
 
     pub fn get_asset(&self) -> Option<(String, isize)> {
         match self.center {
-            Tile::Gate(Some((_, _))) | Tile::Ice | Tile::WeakWall | Tile::Box => {
-                Some(("ice.png".into(), 0))
-            }
+            Tile::Gate(GateMetadata::RoomIdWithGate { .. })
+            | Tile::Ice
+            | Tile::WeakWall
+            | Tile::Box => Some(("ice.png".into(), 0)),
             Tile::Outside => None,
             Tile::Stop => Some(("stop.png".into(), 0)),
-            Tile::Wall | Tile::Gate(None) => {
+            Tile::Wall | Tile::Gate(_) => {
                 let mut rotator = self.clone();
                 let mut ret = None;
                 let mut ret_priority = 0;

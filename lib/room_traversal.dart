@@ -4,7 +4,7 @@ import 'package:icedash/src/rust/logic/pos.dart';
 enum RoomType { lobby, game }
 
 class RoomTraversal {
-  Map<String, (String, Map<int, (String, BigInt)>)> lobbyRooms = {
+  Map<String, (String, Map<int, (String, BigInt, String?)>)> lobbyRooms = {
     "StartLobby": (
       '''
 # # # S # # # 
@@ -16,9 +16,9 @@ T     s     M
 # # # E # # # 
 ''',
       {
-        'T'.codeUnitAt(0): ("tutorial", BigInt.from(0)),
-        'S'.codeUnitAt(0): ("singleplayer", BigInt.from(0)),
-        'M'.codeUnitAt(0): ("multiplayer", BigInt.from(0)),
+        'T'.codeUnitAt(0): ("tutorial", BigInt.from(0), "Tutorial"),
+        'S'.codeUnitAt(0): ("singleplayer", BigInt.from(0), "Single Player"),
+        'M'.codeUnitAt(0): ("multiplayer", BigInt.from(0), "Multi Player"),
       },
     ),
   };
@@ -42,7 +42,7 @@ T     s     M
 #   # 
 # E # 
 ''',
-          gateMetadata: {'E'.codeUnitAt(0): ("StartLobby", BigInt.from(3))},
+          gateMetadata: {'E'.codeUnitAt(0): ("StartLobby", BigInt.from(3), null)},
         );
       }
     }

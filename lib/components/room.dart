@@ -174,35 +174,27 @@ class RoomComponent extends Component {
         bool usedEntrance = gateId == entranceGateId;
 
         if (destination != null) {
+          String? label = room.getGateLabel(gateId: gateId);
 
-          var gate = Gate(
-            this,
-            gateId,
-            destination,
-            room.getGateDirection(gateId: gateId),
-            null,
-            position: mapPos2WorldVector(pos),
-            
-            fadeIn: usedEntrance,
-          );
+          var gate = Gate(this, gateId, destination, room.getGateDirection(gateId: gateId), label, position: mapPos2WorldVector(pos));
           add(gate);
           actorList.add(gate);
-        } else {
-          if (usedEntrance) {
-            var entrance = EntranceTmpIcePatch(position: mapPos2WorldVector(pos));
-            add(
-              FunctionEffect(
-                (_, _) {},
-                EffectController(duration: 1, startDelay: 1),
+        }
 
-                onComplete: () {
-                  entrance.removeFromParent();
-                },
-              ),
-            );
+        if (usedEntrance) {
+          var entrance = EntranceTmpIcePatch(position: mapPos2WorldVector(pos));
+          add(
+            FunctionEffect(
+              (_, _) {},
+              EffectController(duration: 1, startDelay: 1),
 
-            add(entrance);
-          }
+              onComplete: () {
+                entrance.removeFromParent();
+              },
+            ),
+          );
+
+          add(entrance);
         }
       }
 

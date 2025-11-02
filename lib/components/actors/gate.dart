@@ -1,30 +1,51 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/palette.dart';
 import 'package:flame/text.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:icedash/components/actor.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
+final big_num = 1000.0;
+
+class MyTextBox extends TextBoxComponent {
+  Color color;
+
+  MyTextBox(String text, {required Vector2 size, required this.color, required Vector2 delta, required position, super.angle})
+    : super(
+        position: position + delta / 16 / 4,
+        scale: Vector2.all(1 / big_num),
+        size: size * big_num,
+        text: text,
+        textRenderer: TextPaint(
+          style: TextStyle(fontSize: big_num / 4, color: color, fontFamily: "BoldPixels"),
+        ),
+        boxConfig: TextBoxConfig(maxWidth: 3, margins: EdgeInsets.all(0)),
+        align: Anchor.center,
+        anchor: Anchor.center,
+      );
+}
+
 class Gate extends Actor with HasGameReference<IceDashGame> {
   RoomComponent room;
   BigInt gateId;
   double timePerStep = 0.1;
-  bool fadeIn;
 
   Direction inner_direction;
   (String, BigInt) destination;
   String? lable;
 
-  Gate(this.room, this.gateId, this.destination, this.inner_direction, this.lable, {required this.fadeIn, super.position})
+  Gate(this.room, this.gateId, this.destination, this.inner_direction, this.lable, {super.position})
     : super(
         "fade.png",
         colision: false,
-        selffade: fadeIn,
         angle: switch (inner_direction) {
           Direction.west => pi / 2,
           Direction.north => pi,
@@ -35,37 +56,18 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
 
   @override
   FutureOr<void> onLoad() {
-    TextStyle a = TextStyle(fontSize: 1.0, color: Color.fromARGB(255, 255, 255, 255), fontFamily: "BoldPixels");
-    TextStyle b = TextStyle(fontSize: 1.0, color: Color.fromARGB(255, 58, 38, 145), fontFamily: "BoldPixels");
-    final regular = TextPaint(style: a);
-    final shadow = TextPaint(style: b);
-
-    if (fadeIn) {
-      super.opacity = 0;
-      add(OpacityEffect.fadeIn(EffectController(duration: 1, startDelay: 1)));
+    if (lable != null) {
+      for (var x in [
+        (Color.fromARGB(255, 0, 0, 0), Vector2(0, -1)),
+        (Color.fromARGB(255, 0, 0, 0), Vector2(1, 0)),
+        (Color.fromARGB(255, 0, 0, 0), Vector2(0, 1)),
+        (Color.fromARGB(255, 0, 0, 0), Vector2(-1, 0)),
+        (Color.fromARGB(255, 255, 255, 255), Vector2(0, 0)),
+      ]) {
+        var t = (MyTextBox(lable!, delta: x.$2, color: x.$1, size: Vector2(1, 1), position: Vector2(0.5, 0.5), angle: -super.angle));
+        add(t);
+      }
     }
-
-  var text = "SinglePlayer";
-
-    add(
-      TextComponent(
-        position: Vector2(-regular.getLineMetrics(text).width / 2 + 0.5, -1 - 5 * (1 / 16)),
-        text: text,
-        size: Vector2(regular.getLineMetrics(text).width, 1),
-        textRenderer: regular,
-        priority: 100,
-      ),
-    );
-
-    add(
-      TextComponent(
-        position: Vector2(-shadow.getLineMetrics(text).width / 2 + 0.5 - (1 / 16), -1 - 4*(1 / 16)),
-        text: text,
-        size: Vector2(shadow.getLineMetrics(text).width, 1),
-        textRenderer: shadow,
-        priority: 99,
-      ),
-    );
 
     return super.onLoad();
   }
