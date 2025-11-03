@@ -3,7 +3,7 @@ use std::ops::Deref;
 use rand::{random, seq::IteratorRandom};
 
 use crate::{
-    api::main::{Direction, GateMetadata, Tile},
+    api::main::{BoardDescription, Direction, GateDestination, GateMetadata, Tile},
     logic::{
         gate::GateEntry,
         matrix::{Matrix, TileMap},
@@ -39,14 +39,11 @@ impl Board {
         self.gates[gate_id].pos
     }
 
-    pub fn get_gate_destination(&self, gate_id: usize) -> Option<(String, usize)> {
+    pub fn get_gate_destination(&self, gate_id: usize) -> Option<GateDestination> {
         if let Some(gate_entry) = &self.gates.get(gate_id) {
             if let Tile::Gate(metadata) = self.at(&gate_entry.pos) {
                 match metadata {
-                    GateMetadata::NextAutoGen => None,
-                    GateMetadata::RoomIdWithGate {
-                        room_id, gate_id, ..
-                    } => Some((room_id, gate_id)),
+                    GateMetadata::Exit { destination, .. } => Some(destination),
                     GateMetadata::EntryOnly => None,
                 }
             } else {
@@ -61,8 +58,7 @@ impl Board {
         if let Some(gate_entry) = &self.gates.get(gate_id) {
             if let Tile::Gate(metadata) = self.at(&gate_entry.pos) {
                 match metadata {
-                    GateMetadata::NextAutoGen => None,
-                    GateMetadata::RoomIdWithGate { label, .. } => label,
+                    GateMetadata::Exit { label, .. } => label,
                     GateMetadata::EntryOnly => None,
                 }
             } else {
@@ -93,10 +89,16 @@ impl Board {
         }
     }
 
-    pub fn new_random() -> Result<Self, String> {
+    pub fn new_random(desc: &BoardDescription) -> Result<Self, String> {
         let mut rng = rand::rng();
-        let width = (7..15).choose(&mut rng).unwrap();
-        let height = (7..15).choose(&mut rng).unwrap();
+        let width = (desc.size_range_min..desc.size_range_max)
+            .choose(&mut rng)
+            .unwrap();
+        let height = (desc.size_range_min..desc.size_range_max)
+            .clone()
+            .into_iter()
+            .choose(&mut rng)
+            .unwrap();
 
         let gate_range_horizontal = &(3..height - 3);
         let gate_range_vertical = &(3..width - 3);
@@ -132,42 +134,41 @@ impl Board {
             }
         }
 
-        let weak_walls = ((width * height) / 40..=(width * height) / 30)
-            .choose(&mut rng)
-            .unwrap();
+        for (percentage, tile) in [
+            (
+                ((desc.weak_walls_percentage_min..desc.weak_walls_percentage_max)
+                    .choose(&mut rng)
+                    .unwrap()),
+                Tile::WeakWall,
+            ),
+            (
+                ((desc.pilars_percentage_min..desc.pilars_percentage_max)
+                    .choose(&mut rng)
+                    .unwrap()),
+                Tile::Wall,
+            ),
+            (
+                ((desc.box_percentage_min..desc.box_percentage_max)
+                    .clone()
+                    .into_iter()
+                    .choose(&mut rng)
+                    .unwrap()),
+                Tile::Box,
+            ),
+        ] {
+            for _ in 0..((width - 2) * (height - 2)) * percentage / 100 {
+                let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
+                let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
 
-        for _ in 0..weak_walls {
-            let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
-            let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
-
-            map[y][x] = Tile::WeakWall;
+                map[y][x] = tile.clone();
+            }
         }
 
-        let pilars = ((width * height) / 20..(width * height) / 10)
-            .choose(&mut rng)
-            .unwrap();
-
-        for _ in 0..pilars {
-            let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
-            let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
-
-            map[y][x] = Tile::Wall;
-        }
-
-        let boxes = ((width * height) / 40..=(width * height) / 30)
-            .choose(&mut rng)
-            .unwrap();
-
-        for _ in 0..boxes {
-            let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
-            let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
-
-            map[y][x] = Tile::Box;
-        }
-
-        let vignet = ((width * height) / 10..(width * height) / 5)
-            .choose(&mut rng)
-            .unwrap();
+        let vignet = (width * height)
+            * ((desc.vignet_percentage_min..desc.vignet_percentage_max)
+                .choose(&mut rng)
+                .unwrap())
+            / 100;
 
         for _ in 0..vignet {
             let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
@@ -197,7 +198,13 @@ impl Board {
             end_direction,
         );
 
-        map.set(&end, Tile::Gate(GateMetadata::NextAutoGen));
+        map.set(
+            &end,
+            Tile::Gate(GateMetadata::Exit {
+                destination: GateDestination::NextAutoGen,
+                label: None,
+            }),
+        );
         map.set(&start, Tile::Gate(GateMetadata::EntryOnly));
 
         let ret = Board {

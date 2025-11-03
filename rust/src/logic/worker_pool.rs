@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::{
-    api::main::DartBoard,
+    api::main::{BoardDescription, DartBoard},
     logic::{
         board::Board,
         noise_reduction::asthetic_cleanup,
@@ -27,19 +27,17 @@ struct Worker {
     crtl_channel: mpsc::Sender<CtrlMsg>,
 }
 
+static G_BOARD_DESCRIPTIONS_STACK: Mutex<Vec<BoardDescription>> = Mutex::new(Vec::new());
 static G_WORKER: Mutex<VecDeque<Worker>> = Mutex::new(VecDeque::new());
 
-pub fn get_new_room() -> DartBoard {
-    let (analysis, board) = {
-        let mut workers = G_WORKER.lock().unwrap();
-        let workers = &mut (*workers);
-        let worker = workers.pop_front().unwrap();
+pub fn get_new_room() -> Option<DartBoard> {
+    let mut workers = G_WORKER.lock().unwrap();
+    let workers = &mut (*workers);
+    let worker = workers.pop_front().unwrap();
 
-        let mut ret = worker
-            .return_channel
-            .recv_timeout(Duration::from_millis(500))
-            .expect("Worker Thread did not return any boards");
+    let ret = worker.return_channel.recv_timeout(Duration::from_millis(1));
 
+    if let Ok(mut ret) = ret {
         if let Some(last) = worker.return_channel.try_iter().last() {
             ret = last;
         }
@@ -51,19 +49,20 @@ pub fn get_new_room() -> DartBoard {
                 .expect("could not send kill signal to child worker");
         });
 
-        ret
-    };
+        let (analysis, board) = ret;
 
-    spawn(move || {
-        start_search();
-    });
+        spawn(move || {
+            start_search();
+        });
 
-    board.print(vec![]);
-    board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
+        board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
 
-    let board = asthetic_cleanup(board);
+        let board = asthetic_cleanup(board);
 
-    DartBoard::new(board, analysis)
+        Some(DartBoard::new(board, analysis))
+    } else {
+        None
+    }
 }
 
 pub fn worker_halt(millis: usize) {
@@ -74,10 +73,17 @@ pub fn worker_halt(millis: usize) {
     });
 }
 
-pub fn start_search() {
-    let mut ret = G_WORKER.lock().unwrap();
+pub fn load_board_description_stack(board_desc_stack: Vec<BoardDescription>) {
+    let mut ret = G_BOARD_DESCRIPTIONS_STACK.lock().unwrap();
+    *ret = board_desc_stack;
+    start_search()
+}
 
-    while ret.len()
+pub fn start_search() {
+    let mut worker_queue = G_WORKER.lock().unwrap();
+    let mut board_desc_stack = G_BOARD_DESCRIPTIONS_STACK.lock().unwrap();
+
+    while worker_queue.len()
         < (available_parallelism()
             .expect("couldnt get available parallelism")
             .get()
@@ -86,16 +92,27 @@ pub fn start_search() {
         // while ret.len() < 1 {
         let (ctrl_tx, ctrl_rx) = mpsc::channel();
         let (ret_tx, ret_rx) = mpsc::channel();
-        ret.push_back(Worker {
-            return_channel: ret_rx,
-            crtl_channel: ctrl_tx,
-        });
 
-        spawn(|| worker_thread(ret_tx, ctrl_rx));
+        let desc = board_desc_stack.pop();
+
+        if let Some(desc) = desc {
+            worker_queue.push_back(Worker {
+                return_channel: ret_rx,
+                crtl_channel: ctrl_tx,
+            });
+
+            spawn(|| worker_thread(ret_tx, ctrl_rx, desc));
+        } else {
+            break;
+        }
     }
 }
 
-pub fn worker_thread(returns: Sender<(Analysis, Board)>, messenger: Receiver<CtrlMsg>) {
+pub fn worker_thread(
+    returns: Sender<(Analysis, Board)>,
+    messenger: Receiver<CtrlMsg>,
+    board_desc: BoardDescription,
+) {
     let mut best_so_far = 0.;
     let mut iter = 0;
     let mut successes: i32 = 0;
@@ -118,7 +135,7 @@ pub fn worker_thread(returns: Sender<(Analysis, Board)>, messenger: Receiver<Ctr
             Err(_) => {}
         }
 
-        if let Ok(board) = Board::new_random() {
+        if let Ok(board) = Board::new_random(&board_desc) {
             if let Ok(analysis) = analyze(&board, 0, 1) {
                 successes += 1;
                 let fitness = analysis.compute_fitness(&board.map);

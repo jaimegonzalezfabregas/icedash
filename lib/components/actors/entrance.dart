@@ -15,7 +15,7 @@ class EntranceTmpIcePatch extends Actor {
   }
 
   @override
-  bool hit(Direction dir) {
+  Future<bool> hit(Direction dir) async {
     return false;
   }
 }

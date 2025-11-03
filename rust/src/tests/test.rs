@@ -6,17 +6,28 @@ mod tests {
         time::Duration,
     };
 
-    use crate::logic::{
+    use crate::{api::main::BoardDescription, logic::{
             noise_reduction::asthetic_cleanup,
             worker_pool::worker_thread,
-        };
+        }};
 
     #[test]
     fn test_bench() {
         let (ctrl_tx, ctrl_rx) = mpsc::channel();
         let (ret_tx, ret_rx) = mpsc::channel();
 
-        let join_handdle = spawn(|| worker_thread(ret_tx, ctrl_rx));
+        let join_handdle = spawn(|| worker_thread(ret_tx, ctrl_rx, BoardDescription{
+            size_range_min: 7,
+            size_range_max: 15,
+            weak_walls_percentage_min: 0,
+            weak_walls_percentage_max: 0,
+            pilars_percentage_min: 0,
+            pilars_percentage_max: 0,
+            box_percentage_min: 0,
+            box_percentage_max: 0,
+            vignet_percentage_min: 0,
+            vignet_percentage_max: 20,
+        }));
 
         thread::sleep(Duration::from_secs(5));
 

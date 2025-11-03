@@ -6,9 +6,10 @@ use crate::logic::{
     matrix::{Matrix, TileMap},
     pos::Pos,
     solver::Analysis,
-    worker_pool::{get_new_room, start_search, worker_halt},
+    worker_pool::{get_new_room, load_board_description_stack, worker_halt},
 };
 
+#[frb(sync)]
 pub fn pos2dart_vector(p: Pos) -> Vec<f32> {
     p.dart_vector()
 }
@@ -40,6 +41,7 @@ impl Direction {
         }
     }
 
+    #[frb(sync)]
     pub fn dart_vector(&self) -> Vec<f32> {
         match self {
             Direction::North => vec![0., -1.],
@@ -82,11 +84,45 @@ impl Direction {
 }
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
-pub enum GateMetadata {
+pub struct BoardDescription {
+    pub size_range_min: isize,
+    pub size_range_max: isize,
+    pub weak_walls_percentage_min: isize,
+    pub weak_walls_percentage_max: isize,
+    pub pilars_percentage_min: isize,
+    pub pilars_percentage_max: isize,
+    pub box_percentage_min: isize,
+    pub box_percentage_max: isize,
+    pub vignet_percentage_min: isize,
+    pub vignet_percentage_max: isize,
+}
+
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+pub enum GateDestination {
     NextAutoGen,
+    FirstAutogen {
+        profile: Vec<BoardDescription>,
+    },
     RoomIdWithGate {
         room_id: String,
         gate_id: usize,
+    },
+}
+
+impl GateDestination {
+    pub fn get_gate_id(&self) -> usize {
+        match self {
+            GateDestination::NextAutoGen => 0,
+            GateDestination::FirstAutogen { .. } => 0,
+            GateDestination::RoomIdWithGate { gate_id, .. } => *gate_id,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+pub enum GateMetadata {
+    Exit {
+        destination: GateDestination,
         label: Option<String>,
     },
     EntryOnly,
@@ -161,10 +197,7 @@ impl Tile {
         }
     }
 
-    pub(crate) fn from_symbol(
-        symbol: u8,
-        gate_metadata: &HashMap<u8, (String, usize, Option<String>)>,
-    ) -> Tile {
+    pub(crate) fn from_symbol(symbol: u8, gate_metadata: &HashMap<u8, GateMetadata>) -> Tile {
         match symbol {
             b'#' => Tile::Wall,
             b' ' => Tile::Ice,
@@ -173,15 +206,7 @@ impl Tile {
             b's' => Tile::Stop,
             e => {
                 let metadata = gate_metadata.get(&e).cloned();
-                Tile::Gate(
-                    metadata
-                        .map(|e| GateMetadata::RoomIdWithGate {
-                            room_id: e.0,
-                            gate_id: e.1,
-                            label: e.2,
-                        })
-                        .unwrap_or(GateMetadata::EntryOnly),
-                )
+                Tile::Gate(metadata.unwrap_or(GateMetadata::EntryOnly))
             }
         }
     }
@@ -272,15 +297,17 @@ impl Deref for DartBoard {
 }
 
 impl DartBoard {
+    #[frb(sync)]
     pub fn get_gate_direction(&self, gate_id: usize) -> Direction {
         self.board.get_gate_direction(gate_id)
     }
 
+    #[frb(sync)]
     pub fn get_gate_position(&self, gate_id: usize) -> Pos {
         self.board.get_gate_position(gate_id)
     }
 
-    pub fn get_gate_destination(&self, gate_id: usize) -> Option<(String, usize)> {
+    pub fn get_gate_destination(&self, gate_id: usize) -> Option<GateDestination> {
         self.board.get_gate_destination(gate_id)
     }
 
@@ -299,10 +326,7 @@ impl DartBoard {
         }
     }
 
-    pub fn new_lobby(
-        serialized: String,
-        gate_metadata: HashMap<u8, (String, usize, Option<String>)>,
-    ) -> Self {
+    pub fn new_lobby(serialized: String, gate_metadata: HashMap<u8, GateMetadata>) -> Self {
         let mut map: Vec<Vec<Tile>> = vec![];
         let mut gates = vec![];
         let mut x: usize;
@@ -347,6 +371,7 @@ impl DartBoard {
         }
     }
 
+    #[frb(sync)]
     pub fn rotate_left(&self) -> Self {
         Self {
             board: self.board.clone().rotate_left(),
@@ -362,14 +387,17 @@ impl DartBoard {
         }
     }
 
+    #[frb(sync)]
     pub fn get_width(&self) -> isize {
         self.map.get_width()
     }
 
+    #[frb(sync)]
     pub fn get_height(&self) -> isize {
         self.map.get_height()
     }
 
+    #[frb(sync)]
     pub fn get_max_movement_count(&self) -> Option<isize> {
         self.analysis
             .clone()
@@ -393,7 +421,7 @@ impl DartBoard {
     }
 }
 
-pub fn dart_get_new_board() -> DartBoard {
+pub fn dart_get_new_board() -> Option<DartBoard> {
     get_new_room()
 }
 
@@ -401,16 +429,19 @@ pub fn dart_worker_halt(millis: usize) {
     worker_halt(millis)
 }
 
+pub fn dart_load_board_description_stack(board_desc_stack: Vec<BoardDescription>) {
+    load_board_description_stack(board_desc_stack)
+}
 use cap::Cap;
+use flutter_rust_bridge::frb;
 use std::alloc;
 
 #[global_allocator]
 static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
 
-#[flutter_rust_bridge::frb(init)]
+#[frb(init)]
 pub fn init_app() {
     ALLOCATOR.set_limit(5 * 1024 * 1024 * 1024).unwrap();
 
     flutter_rust_bridge::setup_default_user_utils();
-    // start_search();
 }

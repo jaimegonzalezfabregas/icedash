@@ -36,7 +36,7 @@ impl Neighbour<Tile> {
 
     pub fn get_asset(&self) -> Option<(String, isize)> {
         match self.center {
-            Tile::Gate(GateMetadata::RoomIdWithGate { .. })
+            Tile::Gate(GateMetadata::Exit { .. })
             | Tile::Ice
             | Tile::WeakWall
             | Tile::Box => Some(("ice.png".into(), 0)),

@@ -147,8 +147,8 @@ class RoomComponent extends Component {
     tileSpriteGrid = {};
     actorList = [];
 
-    for (var pos in room.getAllPositions()) {
-      (String, int)? bgImg = room.assetAt(p: pos);
+    for (var pos in await room.getAllPositions()) {
+      (String, int)? bgImg = await room.assetAt(p: pos);
 
       if (bgImg != null) {
         SpriteComponent img = SpriteComponent(
@@ -165,16 +165,17 @@ class RoomComponent extends Component {
         tileSpriteGrid[pos] = img;
       }
 
-      var tile = room.at(p: pos);
+      var tile = await room.at(p: pos);
 
       if (tile is Tile_Gate) {
-        BigInt gateId = room.getGateIdByPos(p: pos)!;
-        (String, BigInt)? destination = room.getGateDestination(gateId: gateId);
+
+        BigInt gateId = (await room.getGateIdByPos(p: pos))!;
+        GateDestination? destination = await room.getGateDestination(gateId: gateId);
 
         bool usedEntrance = gateId == entranceGateId;
 
         if (destination != null) {
-          String? label = room.getGateLabel(gateId: gateId);
+          String? label = await room.getGateLabel(gateId: gateId);
 
           var gate = Gate(this, gateId, destination, room.getGateDirection(gateId: gateId), label, position: mapPos2WorldVector(pos));
           add(gate);
@@ -212,19 +213,19 @@ class RoomComponent extends Component {
     }
   }
 
-  bool canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) {
-    Tile ogTile = getTile(og);
+  Future<bool> canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) async {
+    Tile ogTile = await getTile(og);
 
     if (ogTile is Tile_Stop && !userPush) {
       return false;
     }
 
-    if (ogTile.stopsPlayerDuringGameplay()) {
+    if (await ogTile.stopsPlayerDuringGameplay()) {
       return true;
     }
 
-    Tile dstTile = getTile(dst);
-    var canWalk = !dstTile.stopsPlayerDuringGameplay();
+    Tile dstTile = await getTile(dst);
+    var canWalk = !(await dstTile.stopsPlayerDuringGameplay());
 
     if (canWalk == true) {
       for (var actor in actorList) {
@@ -241,9 +242,9 @@ class RoomComponent extends Component {
     return canWalk;
   }
 
-  bool canBoxWalkInto(Vector2 dst, Direction dir) {
-    Tile dstTile = getTile(dst);
-    var canWalk = !dstTile.stopsBoxDuringGameplay();
+  Future<bool> canBoxWalkInto(Vector2 dst, Direction dir) async {
+    Tile dstTile = await getTile(dst);
+    var canWalk = !(await dstTile.stopsBoxDuringGameplay());
 
     if (canWalk == true) {
       for (var actor in actorList) {
@@ -260,17 +261,17 @@ class RoomComponent extends Component {
     return canWalk;
   }
 
-  bool hit(Vector2 pos, Direction dir) {
+  Future<bool> hit(Vector2 pos, Direction dir) async {
     var consecuences = false;
     for (var actor in actorList) {
       if (worldVector2MapPos(actor.position) == worldVector2MapPos(pos)) {
-        consecuences |= actor.hit(dir);
+        consecuences |= await actor.hit(dir);
       }
     }
     return consecuences;
   }
 
-  Tile getTile(Vector2 worldPos) {
+  Future<Tile> getTile(Vector2 worldPos) async {
     try {
       Pos localPos = worldVector2MapPos(worldPos);
 

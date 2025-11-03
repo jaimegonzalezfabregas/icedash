@@ -36,15 +36,15 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
   BigInt gateId;
   double timePerStep = 0.1;
 
-  Direction inner_direction;
-  (String, BigInt) destination;
+  Direction innerDirection;
+  GateDestination destination;
   String? lable;
 
-  Gate(this.room, this.gateId, this.destination, this.inner_direction, this.lable, {super.position})
+  Gate(this.room, this.gateId, this.destination, this.innerDirection, this.lable, {super.position})
     : super(
         "fade.png",
         colision: false,
-        angle: switch (inner_direction) {
+        angle: switch (innerDirection) {
           Direction.west => pi / 2,
           Direction.north => pi,
           Direction.east => -pi / 2,
@@ -71,7 +71,7 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
   }
 
   @override
-  bool hit(Direction dir) {
+  Future<bool> hit(Direction dir) async {
     dartWorkerHalt(millis: BigInt.from(timePerStep * 1000 * 4));
     game.idWorld.goToRoom(destination, position, dir);
 

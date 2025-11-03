@@ -14,7 +14,7 @@ abstract class Actor extends SpriteComponent {
     super.anchor = Anchor.center;
   }
 
-  bool hit(Direction dir);
+  Future<bool> hit(Direction dir);
 
   @override
   FutureOr<void> onLoad() async {

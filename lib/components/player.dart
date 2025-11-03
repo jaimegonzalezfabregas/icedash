@@ -57,7 +57,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
     }
   }
 
-  void push(Direction dir, {bool userPush = true}) {
+  void push(Direction dir, {bool userPush = true}) async{
     Vector2 delta = Vector2.array(dir.dartVector());
 
     if (sliding) {
@@ -65,8 +65,8 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       return;
     }
 
-    if (!game.idWorld.canWalkInto(position, position + delta, dir, userPush)) {
-      bool consecuences = game.idWorld.hit(position + delta, dir);
+    if (!(await game.idWorld.canWalkInto(position, position + delta, dir, userPush))) {
+      bool consecuences = await game.idWorld.hit(position + delta, dir);
 
       if (movementLenght != 0 || consecuences) {
         if (remainingMoves != null) {

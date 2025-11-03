@@ -8,11 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:icedash/components/player.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/room_traversal.dart';
-import 'package:icedash/src/rust/logic/pos.dart';
 
 import 'src/rust/api/main.dart';
 
-class IceDashWorld extends World with HasGameReference{
+class IceDashWorld extends World with HasGameReference {
   late CameraComponent camera;
   RoomTraversal roomTraversal = RoomTraversal();
 
@@ -27,17 +26,17 @@ class IceDashWorld extends World with HasGameReference{
 
     var destination = roomTraversal.getOnLoadDestination();
 
-    goToRoom(destination, Vector2(0, 0), Direction.north);
+    await goToRoom(destination, Vector2(0, 0), Direction.north);
     player.push(Direction.north);
   }
 
-  void goToRoom((String, BigInt) destination, Vector2 worldStichPos, Direction exitDirection) {
+  Future<void> goToRoom(GateDestination destination, Vector2 worldStichPos, Direction exitDirection) async {
     Vector2 dpos = Vector2.array(exitDirection.dartVector());
     Vector2 entrancePostion = worldStichPos + dpos;
 
-    var board = roomTraversal.getRoom(destination.$1, Pos(x: (worldStichPos.x).round(), y: (worldStichPos.y).round()));
+    var board = await roomTraversal.getRoom(destination);
 
-    setCurrentRoom(board, entrancePostion, exitDirection, destination.$2);
+    setCurrentRoom(board, entrancePostion, exitDirection, await destination.getGateId());
   }
 
   void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) {
@@ -105,17 +104,17 @@ class IceDashWorld extends World with HasGameReference{
     camera = cam;
   }
 
-  bool canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) {
-    bool ret = _currentRoom!.canWalkInto(og, dst, dir, userPush);
+  Future<bool> canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) async {
+    bool ret = await _currentRoom!.canWalkInto(og, dst, dir, userPush);
     return ret;
   }
 
-  bool hit(Vector2 pos, Direction dir) {
+  Future<bool> hit(Vector2 pos, Direction dir) async {
     return _currentRoom!.hit(pos, dir);
   }
 
-  Tile getTile(Vector2 position) {
-    return _currentRoom!.getTile(position);
+  Future<Tile> getTile(Vector2 position) async {
+    return await (_currentRoom!.getTile(position));
   }
 
   reset() {

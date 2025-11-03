@@ -11,8 +11,8 @@ class Box extends Actor {
   Box(this.room, {super.position}) : super("box.png");
 
   @override
-  bool hit(Direction dir) {
-    if (!room.canBoxWalkInto(position + Vector2.array(dir.dartVector()), dir)) {
+  Future<bool> hit(Direction dir) async {
+    if (!await room.canBoxWalkInto(position + Vector2.array(dir.dartVector()), dir)) {
       return false;
     }
 
