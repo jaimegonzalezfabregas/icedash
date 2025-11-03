@@ -8,7 +8,6 @@ import 'package:icedash/components/actors/box.dart';
 import 'package:icedash/components/actors/entrance.dart';
 import 'package:icedash/components/actors/gate.dart';
 import 'package:icedash/components/actors/weak_wall.dart';
-import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/src/rust/logic/pos.dart';
 
@@ -36,7 +35,7 @@ class RoomComponent extends Component {
   }
 
   void reset() {
-    buildSpriteGrid();
+    buildSpriteGrid(1);
   }
 
   RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, this.entranceGateId) {
@@ -83,7 +82,7 @@ class RoomComponent extends Component {
   }
 
   Future fadeOut(BigInt exitGateId) async {
-    Vector2 exitWorldPos = mapPos2WorldVector(room.getGatePosition(gateId: exitGateId));
+    Vector2 exitWorldPos = mapPos2WorldVector(await room.getGatePosition(gateId: exitGateId));
 
     var fadeDuration = 0.5;
     var rippleDuration = 0.1;
@@ -129,25 +128,27 @@ class RoomComponent extends Component {
 
   @override
   void onLoad() async {
-    await buildSpriteGrid();
-    fadeIn();
+    buildSpriteGrid(0).then((value) => fadeIn());
+  }
+
+  List<Component> pendingClean = [];
+
+  void armClean() {
+    pendingClean.addAll(tileSpriteGrid.values);
+    tileSpriteGrid = {};
+
+    pendingClean.addAll(actorList);
+    actorList = [];
   }
 
   void clean() {
-    for (var e in tileSpriteGrid.values) {
-      e.removeFromParent();
-    }
-
-    for (var actor in actorList) {
-      actor.removeFromParent();
+    for (var component in pendingClean) {
+      component.removeFromParent();
     }
   }
 
-  Future<void> buildSpriteGrid() async {
-    clean();
-
-    tileSpriteGrid = {};
-    actorList = [];
+  Future<void> buildSpriteGrid(double startingOpacity) async {
+    armClean();
 
     for (var pos in await room.getAllPositions()) {
       (String, int)? bgImg = await room.assetAt(p: pos);
@@ -162,7 +163,7 @@ class RoomComponent extends Component {
         );
 
         img.sprite = await Sprite.load(bgImg.$1);
-
+        img.opacity = startingOpacity;
         add(img);
         tileSpriteGrid[pos] = img;
       }
@@ -179,6 +180,7 @@ class RoomComponent extends Component {
           String? label = await room.getGateLabel(gateId: gateId);
 
           var gate = Gate(this, gateId, destination, room.getGateDirection(gateId: gateId), label, position: mapPos2WorldVector(pos));
+          gate.opacity = startingOpacity;
           add(gate);
           actorList.add(gate);
         }
@@ -195,13 +197,14 @@ class RoomComponent extends Component {
               },
             ),
           );
-
+          entrance.opacity = startingOpacity;
           add(entrance);
         }
       }
 
       if (tile is Tile_Box) {
         var box = Box(this, position: mapPos2WorldVector(pos));
+        box.opacity = startingOpacity;
         actorList.add(box);
         add(box);
       }
@@ -209,9 +212,12 @@ class RoomComponent extends Component {
       if (tile is Tile_WeakWall) {
         var weakWall = WeakWall(position: mapPos2WorldVector(pos));
         actorList.add(weakWall);
+        weakWall.opacity = startingOpacity;
         add(weakWall);
       }
     }
+
+    clean();
   }
 
   Future<bool> canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) async {

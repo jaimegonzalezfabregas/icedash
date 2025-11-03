@@ -21,25 +21,28 @@ final waitRoom = DartBoard.newLobby(
 #   # 
 #   # 
 #   # 
-#   # 
-#   # 
-#   # 
-#   # 
-# s # 
-#   # 
-#   # 
-#   # 
-#   # 
-#   # 
-#   # 
-#   # 
 # E # 
 ''',
   gateMetadata: {
-    'E'.codeUnitAt(0): GateMetadata.exit(destination: GateDestination.nextAutoGen(), label: "Continue waiting",),
+    'E'.codeUnitAt(0): GateMetadata.exit(destination: GateDestination.nextAutoGen()),
     'B'.codeUnitAt(0): GateMetadata.exit(
       destination: GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(3)),
-      label: "Go to lobby",
+    ),
+  },
+);
+
+final endOfGameRoom = DartBoard.newLobby(
+  serialized: '''
+# # E # # 
+#       # 
+#   s   # 
+#       # 
+# # G # # 
+''',
+  gateMetadata: {
+    'G'.codeUnitAt(0): GateMetadata.exit(
+      destination: GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(3)),
+      label: "Back to lobby",
     ),
   },
 );
@@ -174,10 +177,20 @@ T     s     M
   }
 
   Future<DartBoard> getRoom(GateDestination gateDestination) async {
-    if (gateDestination is GateDestination_NextAutoGen) {
-      var ret = await dartGetNewBoard();
+    if (gateDestination is GateDestination_FirstAutogen) {
+      await dartLoadBoardDescriptionStack(boardDescStack: gateDestination.profile);
+    }
 
-      return ret ?? waitRoom;
+    if (gateDestination is GateDestination_NextAutoGen || gateDestination is GateDestination_FirstAutogen) {
+      AutoGenOutput ret = await dartGetNewBoard();
+
+      if (ret is AutoGenOutput_Ok) {
+        return ret.field0;
+      } else if (ret is AutoGenOutput_NoMoreDescriptionsLoaded) {
+        return endOfGameRoom;
+      } else {
+        return waitRoom;
+      }
     } else if (gateDestination is GateDestination_RoomIdWithGate) {
       var roomData = lobbyRooms[gateDestination.roomId];
 
@@ -186,16 +199,6 @@ T     s     M
       } else {
         return errorRoom;
       }
-    } else if (gateDestination is GateDestination_FirstAutogen) {
-      print("a");
-
-      await dartLoadBoardDescriptionStack(boardDescStack: gateDestination.profile);
-      print("b");
-
-      var ret = await dartGetNewBoard();
-      print("c");
-
-      return ret ?? waitRoom;
     }
 
     throw UnimplementedError();

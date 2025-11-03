@@ -70,8 +70,8 @@ class IceDashWorld extends World with HasGameReference {
 
     add(_currentRoom!);
 
-    player.remainingMoves = room.getMaxMovementCount();
-    player.remainingMovesReset = room.getMaxMovementCount();
+    player.remainingMoves = await room.getMaxMovementCount();
+    player.remainingMovesReset = await room.getMaxMovementCount();
   }
 
   double? lastZoomVal;
@@ -80,6 +80,9 @@ class IceDashWorld extends World with HasGameReference {
     var lastVal = lastZoomVal ?? endValue;
 
     var middlePoint = min(endValue, lastVal) * 0.9;
+
+    print("zoom transition $endValue $middlePoint $lastZoomVal");
+
 
     var zoomOutEfect = CurvedEffectController(duration / 2, Curves.easeInOut);
     var zoomInEffect = CurvedEffectController(duration / 2, Curves.easeInOut);

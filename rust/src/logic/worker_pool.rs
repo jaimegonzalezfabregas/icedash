@@ -9,7 +9,7 @@ use std::{
 };
 
 use crate::{
-    api::main::{BoardDescription, DartBoard},
+    api::main::{AutoGenOutput, BoardDescription, DartBoard},
     logic::{
         board::Board,
         noise_reduction::asthetic_cleanup,
@@ -30,14 +30,30 @@ struct Worker {
 static G_BOARD_DESCRIPTIONS_STACK: Mutex<Vec<BoardDescription>> = Mutex::new(Vec::new());
 static G_WORKER: Mutex<VecDeque<Worker>> = Mutex::new(VecDeque::new());
 
-pub fn get_new_room() -> Option<DartBoard> {
-    let mut workers = G_WORKER.lock().ok()?;
-    let workers = &mut (*workers);
-    let worker = workers.pop_front()?;
+pub fn get_new_room() -> AutoGenOutput {
+    let mut workers = G_WORKER.lock().unwrap();
 
-    let mut ret = worker
+    let workers = &mut (*workers);
+    let worker = workers.pop_front();
+
+    let worker = match worker {
+        Some(e) => e,
+        None => {
+            return AutoGenOutput::NoMoreDescriptionsLoaded;
+        }
+    };
+
+    let ret = worker
         .return_channel
-        .recv_timeout(Duration::from_millis(1)).ok()?;
+        .recv_timeout(Duration::from_millis(1))
+        .ok();
+
+    let mut ret = match ret {
+        Some(e) => e,
+        None => {
+            return AutoGenOutput::NotReady;
+        }
+    };
 
     if let Some(last) = worker.return_channel.try_iter().last() {
         ret = last;
@@ -60,7 +76,7 @@ pub fn get_new_room() -> Option<DartBoard> {
 
     let board = asthetic_cleanup(board);
 
-    Some(DartBoard::new(board, analysis))
+    AutoGenOutput::Ok(DartBoard::new(board, analysis))
 }
 
 pub fn worker_halt(millis: usize) {

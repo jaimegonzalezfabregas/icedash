@@ -12,7 +12,7 @@ import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/world.dart';
 
-final bigNum = 1000.0;
+final bigNum = 100.0;
 
 class MyTextBox extends TextBoxComponent {
   Color color;
@@ -52,7 +52,7 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
           Direction.east => -pi / 2,
           Direction.south => 0,
         },
-      ) {}
+      );
 
   @override
   Future<void> onLoad() async {
@@ -64,8 +64,9 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
         (Color.fromARGB(255, 0, 0, 0), Vector2(-1, 0)),
         (Color.fromARGB(255, 255, 255, 255), Vector2(0, 0)),
       ]) {
-        var t = (MyTextBox(lable!, delta: x.$2, color: x.$1, size: Vector2(1, 1), position: Vector2(0.5, 0.5), angle: -super.angle));
-        add(t);
+        Future(() {
+          add(MyTextBox(lable!, delta: x.$2, color: x.$1, size: Vector2(1, 1), position: Vector2(0.5, 0.5), angle: -super.angle));
+        });
       }
     }
     world = game.idWorld;

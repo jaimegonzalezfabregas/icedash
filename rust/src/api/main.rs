@@ -100,13 +100,8 @@ pub struct BoardDescription {
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum GateDestination {
     NextAutoGen,
-    FirstAutogen {
-        profile: Vec<BoardDescription>,
-    },
-    RoomIdWithGate {
-        room_id: String,
-        gate_id: usize,
-    },
+    FirstAutogen { profile: Vec<BoardDescription> },
+    RoomIdWithGate { room_id: String, gate_id: usize },
 }
 
 impl GateDestination {
@@ -395,7 +390,6 @@ impl DartBoard {
         self.map.get_height()
     }
 
-    #[frb(sync)]
     pub fn get_max_movement_count(&self) -> Option<isize> {
         self.analysis
             .clone()
@@ -419,7 +413,14 @@ impl DartBoard {
     }
 }
 
-pub fn dart_get_new_board() -> Option<DartBoard> {
+#[frb(non_opaque)]
+pub enum AutoGenOutput {
+    NoMoreDescriptionsLoaded,
+    NotReady,
+    Ok(DartBoard),
+}
+
+pub fn dart_get_new_board() -> AutoGenOutput {
     get_new_room()
 }
 
