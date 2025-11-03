@@ -17,11 +17,31 @@ final errorRoom = DartBoard.newLobby(
 
 final waitRoom = DartBoard.newLobby(
   serialized: '''
-# G # 
+# B # 
+#   # 
+#   # 
+#   # 
+#   # 
+#   # 
+#   # 
+#   # 
+# s # 
+#   # 
+#   # 
+#   # 
+#   # 
+#   # 
+#   # 
 #   # 
 # E # 
 ''',
-  gateMetadata: {'E'.codeUnitAt(0): GateMetadata.exit(destination: GateDestination.nextAutoGen())},
+  gateMetadata: {
+    'E'.codeUnitAt(0): GateMetadata.exit(destination: GateDestination.nextAutoGen(), label: "Continue waiting",),
+    'B'.codeUnitAt(0): GateMetadata.exit(
+      destination: GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(3)),
+      label: "Go to lobby",
+    ),
+  },
 );
 
 class RoomTraversal {
@@ -67,16 +87,83 @@ T     s     M
           destination: GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(0)),
         ),
         '1'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: []), label: "easy"
+          destination: GateDestination.firstAutogen(
+            profile: [
+              BoardDescription(
+                sizeRangeMin: 7,
+                sizeRangeMax: 10,
+                weakWallsPercentageMin: 0,
+                weakWallsPercentageMax: 0,
+                pilarsPercentageMin: 10,
+                pilarsPercentageMax: 30,
+                boxPercentageMin: 0,
+                boxPercentageMax: 0,
+                vignetPercentageMin: 20,
+                vignetPercentageMax: 30,
+              ),
+              BoardDescription(
+                sizeRangeMin: 7,
+                sizeRangeMax: 10,
+                weakWallsPercentageMin: 0,
+                weakWallsPercentageMax: 0,
+                pilarsPercentageMin: 10,
+                pilarsPercentageMax: 30,
+                boxPercentageMin: 0,
+                boxPercentageMax: 0,
+                vignetPercentageMin: 20,
+                vignetPercentageMax: 30,
+              ),
+              BoardDescription(
+                sizeRangeMin: 7,
+                sizeRangeMax: 10,
+                weakWallsPercentageMin: 0,
+                weakWallsPercentageMax: 0,
+                pilarsPercentageMin: 10,
+                pilarsPercentageMax: 30,
+                boxPercentageMin: 0,
+                boxPercentageMax: 0,
+                vignetPercentageMin: 20,
+                vignetPercentageMax: 30,
+              ),
+              BoardDescription(
+                sizeRangeMin: 7,
+                sizeRangeMax: 10,
+                weakWallsPercentageMin: 0,
+                weakWallsPercentageMax: 0,
+                pilarsPercentageMin: 10,
+                pilarsPercentageMax: 30,
+                boxPercentageMin: 0,
+                boxPercentageMax: 0,
+                vignetPercentageMin: 20,
+                vignetPercentageMax: 30,
+              ),
+              BoardDescription(
+                sizeRangeMin: 7,
+                sizeRangeMax: 10,
+                weakWallsPercentageMin: 0,
+                weakWallsPercentageMax: 0,
+                pilarsPercentageMin: 10,
+                pilarsPercentageMax: 30,
+                boxPercentageMin: 0,
+                boxPercentageMax: 0,
+                vignetPercentageMin: 20,
+                vignetPercentageMax: 30,
+              ),
+            ],
+          ),
+          label: "Easy",
         ),
         '2'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: []), label: "normal"
+          destination: GateDestination.firstAutogen(profile: []),
+          label: "Normal",
         ),
         '3'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: []), label: "hard"
+          destination: GateDestination.firstAutogen(profile: []),
+          label: "Hard",
         ),
         '4'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: []), label: "extreme"
+          destination: GateDestination.firstAutogen(profile: []),
+          label: "Extreme",
         ),
       },
     ),
@@ -86,7 +173,7 @@ T     s     M
     return GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(3));
   }
 
-  Future<DartBoard> getRoom(GateDestination gateDestination) async{
+  Future<DartBoard> getRoom(GateDestination gateDestination) async {
     if (gateDestination is GateDestination_NextAutoGen) {
       var ret = await dartGetNewBoard();
 
@@ -100,11 +187,16 @@ T     s     M
         return errorRoom;
       }
     } else if (gateDestination is GateDestination_FirstAutogen) {
-      dartLoadBoardDescriptionStack(boardDescStack: gateDestination.profile);
+      print("a");
+
+      await dartLoadBoardDescriptionStack(boardDescStack: gateDestination.profile);
+      print("b");
+
       var ret = await dartGetNewBoard();
+      print("c");
 
       return ret ?? waitRoom;
-    } 
+    }
 
     throw UnimplementedError();
   }

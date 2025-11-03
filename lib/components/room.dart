@@ -8,13 +8,13 @@ import 'package:icedash/components/actors/box.dart';
 import 'package:icedash/components/actors/entrance.dart';
 import 'package:icedash/components/actors/gate.dart';
 import 'package:icedash/components/actors/weak_wall.dart';
+import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/src/rust/logic/pos.dart';
 
 class RoomComponent extends Component {
   DartBoard room;
 
-  late Rect worldBB;
   late Direction exitDirection;
 
   Vector2 entranceWorldPos;
@@ -45,12 +45,14 @@ class RoomComponent extends Component {
     }
 
     entranceRoomPos = Vector2.array(pos2DartVector(p: room.getGatePosition(gateId: entranceGateId)));
+  }
 
-    worldBB = Rect.fromLTWH(
+  Future getWorldBB() async {
+    return Rect.fromLTWH(
       entranceWorldPos.x - entranceRoomPos.x - 0.5,
       entranceWorldPos.y - entranceRoomPos.y - 0.5,
-      room.getWidth().toDouble(),
-      room.getHeight().toDouble(),
+      (await room.getWidth()).toDouble(),
+      (await room.getHeight()).toDouble(),
     );
   }
 
@@ -168,7 +170,6 @@ class RoomComponent extends Component {
       var tile = await room.at(p: pos);
 
       if (tile is Tile_Gate) {
-
         BigInt gateId = (await room.getGateIdByPos(p: pos))!;
         GateDestination? destination = await room.getGateDestination(gateId: gateId);
 

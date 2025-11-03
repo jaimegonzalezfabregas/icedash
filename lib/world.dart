@@ -31,6 +31,9 @@ class IceDashWorld extends World with HasGameReference {
   }
 
   Future<void> goToRoom(GateDestination destination, Vector2 worldStichPos, Direction exitDirection) async {
+
+    print("go to room: $destination");
+
     Vector2 dpos = Vector2.array(exitDirection.dartVector());
     Vector2 entrancePostion = worldStichPos + dpos;
 
@@ -39,7 +42,7 @@ class IceDashWorld extends World with HasGameReference {
     setCurrentRoom(board, entrancePostion, exitDirection, await destination.getGateId());
   }
 
-  void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) {
+  void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) async {
     var lastRoom = _currentRoom;
     _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room, entranceGateId);
 
@@ -56,12 +59,14 @@ class IceDashWorld extends World with HasGameReference {
       );
     }
 
+    Rect newFocus = await _currentRoom!.getWorldBB();
+
     zoomTransition(
       camTransitionDuration * (1 + camTransitionStaticPortion * 2),
-      min(game.size.x / _currentRoom!.worldBB.width, game.size.y / _currentRoom!.worldBB.height),
+      min(game.size.x / newFocus.width, game.size.y / newFocus.height),
     );
 
-    camera.lookAt(_currentRoom!.worldBB.center.toVector2(), transition);
+    camera.lookAt(newFocus.center.toVector2(), transition);
 
     add(_currentRoom!);
 
@@ -93,9 +98,10 @@ class IceDashWorld extends World with HasGameReference {
   }
 
   @override
-  void onGameResize(Vector2 size) {
+  void onGameResize(Vector2 size) async {
+    Rect focus = await _currentRoom!.getWorldBB();
     if (_currentRoom != null) {
-      camera.zoomTo(min(game.size.x / _currentRoom!.worldBB.width, game.size.y / _currentRoom!.worldBB.height), LinearEffectController(0));
+      camera.zoomTo(min(game.size.x / focus.width, game.size.y / focus.height), LinearEffectController(0));
     }
     super.onGameResize(size);
   }

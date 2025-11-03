@@ -387,12 +387,10 @@ impl DartBoard {
         }
     }
 
-    #[frb(sync)]
     pub fn get_width(&self) -> isize {
         self.map.get_width()
     }
 
-    #[frb(sync)]
     pub fn get_height(&self) -> isize {
         self.map.get_height()
     }

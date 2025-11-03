@@ -91,10 +91,10 @@ impl Board {
 
     pub fn new_random(desc: &BoardDescription) -> Result<Self, String> {
         let mut rng = rand::rng();
-        let width = (desc.size_range_min..desc.size_range_max)
+        let width = (desc.size_range_min..=desc.size_range_max)
             .choose(&mut rng)
             .unwrap();
-        let height = (desc.size_range_min..desc.size_range_max)
+        let height = (desc.size_range_min..=desc.size_range_max)
             .clone()
             .into_iter()
             .choose(&mut rng)
@@ -136,19 +136,19 @@ impl Board {
 
         for (percentage, tile) in [
             (
-                ((desc.weak_walls_percentage_min..desc.weak_walls_percentage_max)
+                ((desc.weak_walls_percentage_min..=desc.weak_walls_percentage_max)
                     .choose(&mut rng)
                     .unwrap()),
                 Tile::WeakWall,
             ),
             (
-                ((desc.pilars_percentage_min..desc.pilars_percentage_max)
+                ((desc.pilars_percentage_min..=desc.pilars_percentage_max)
                     .choose(&mut rng)
                     .unwrap()),
                 Tile::Wall,
             ),
             (
-                ((desc.box_percentage_min..desc.box_percentage_max)
+                ((desc.box_percentage_min..=desc.box_percentage_max)
                     .clone()
                     .into_iter()
                     .choose(&mut rng)
@@ -165,7 +165,7 @@ impl Board {
         }
 
         let vignet = (width * height)
-            * ((desc.vignet_percentage_min..desc.vignet_percentage_max)
+            * ((desc.vignet_percentage_min..=desc.vignet_percentage_max)
                 .choose(&mut rng)
                 .unwrap())
             / 100;

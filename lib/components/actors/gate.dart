@@ -10,6 +10,7 @@ import 'package:icedash/components/actor.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/world.dart';
 
 final bigNum = 1000.0;
 
@@ -35,6 +36,7 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
   RoomComponent room;
   BigInt gateId;
   double timePerStep = 0.1;
+  late IceDashWorld world;
 
   Direction innerDirection;
   GateDestination destination;
@@ -50,10 +52,10 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
           Direction.east => -pi / 2,
           Direction.south => 0,
         },
-      );
+      ) {}
 
   @override
-  FutureOr<void> onLoad() {
+  Future<void> onLoad() async {
     if (lable != null) {
       for (var x in [
         (Color.fromARGB(255, 0, 0, 0), Vector2(0, -1)),
@@ -66,14 +68,15 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
         add(t);
       }
     }
+    world = game.idWorld;
 
-    return super.onLoad();
+    return await super.onLoad();
   }
 
   @override
   Future<bool> hit(Direction dir) async {
     dartWorkerHalt(millis: BigInt.from(timePerStep * 1000 * 4));
-    game.idWorld.goToRoom(destination, position, dir);
+    world.goToRoom(destination, position, dir);
 
     add(
       OpacityEffect.fadeOut(

@@ -31,38 +31,36 @@ static G_BOARD_DESCRIPTIONS_STACK: Mutex<Vec<BoardDescription>> = Mutex::new(Vec
 static G_WORKER: Mutex<VecDeque<Worker>> = Mutex::new(VecDeque::new());
 
 pub fn get_new_room() -> Option<DartBoard> {
-    let mut workers = G_WORKER.lock().unwrap();
+    let mut workers = G_WORKER.lock().ok()?;
     let workers = &mut (*workers);
-    let worker = workers.pop_front().unwrap();
+    let worker = workers.pop_front()?;
 
-    let ret = worker.return_channel.recv_timeout(Duration::from_millis(1));
+    let mut ret = worker
+        .return_channel
+        .recv_timeout(Duration::from_millis(1)).ok()?;
 
-    if let Ok(mut ret) = ret {
-        if let Some(last) = worker.return_channel.try_iter().last() {
-            ret = last;
-        }
-
-        spawn(move || {
-            worker
-                .crtl_channel
-                .send(CtrlMsg::Kill)
-                .expect("could not send kill signal to child worker");
-        });
-
-        let (analysis, board) = ret;
-
-        spawn(move || {
-            start_search();
-        });
-
-        board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
-
-        let board = asthetic_cleanup(board);
-
-        Some(DartBoard::new(board, analysis))
-    } else {
-        None
+    if let Some(last) = worker.return_channel.try_iter().last() {
+        ret = last;
     }
+
+    spawn(move || {
+        worker
+            .crtl_channel
+            .send(CtrlMsg::Kill)
+            .expect("could not send kill signal to child worker");
+    });
+
+    let (analysis, board) = ret;
+
+    spawn(move || {
+        start_search();
+    });
+
+    board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
+
+    let board = asthetic_cleanup(board);
+
+    Some(DartBoard::new(board, analysis))
 }
 
 pub fn worker_halt(millis: usize) {
@@ -74,16 +72,19 @@ pub fn worker_halt(millis: usize) {
 }
 
 pub fn load_board_description_stack(board_desc_stack: Vec<BoardDescription>) {
-    let mut ret = G_BOARD_DESCRIPTIONS_STACK.lock().unwrap();
-    *ret = board_desc_stack;
-    start_search()
+    {
+        let mut g_board_desc_stack = G_BOARD_DESCRIPTIONS_STACK.lock().unwrap();
+        *g_board_desc_stack = board_desc_stack;
+    }
+    spawn(move || {
+        start_search();
+    });
 }
 
 pub fn start_search() {
-    let mut worker_queue = G_WORKER.lock().unwrap();
-    let mut board_desc_stack = G_BOARD_DESCRIPTIONS_STACK.lock().unwrap();
+    let mut g_worker_queue = G_WORKER.lock().unwrap();
 
-    while worker_queue.len()
+    while g_worker_queue.len()
         < (available_parallelism()
             .expect("couldnt get available parallelism")
             .get()
@@ -93,10 +94,13 @@ pub fn start_search() {
         let (ctrl_tx, ctrl_rx) = mpsc::channel();
         let (ret_tx, ret_rx) = mpsc::channel();
 
-        let desc = board_desc_stack.pop();
+        let desc = {
+            let mut g_board_desc_stack = G_BOARD_DESCRIPTIONS_STACK.lock().unwrap();
+            g_board_desc_stack.pop()
+        };
 
         if let Some(desc) = desc {
-            worker_queue.push_back(Worker {
+            g_worker_queue.push_back(Worker {
                 return_channel: ret_rx,
                 crtl_channel: ctrl_tx,
             });
