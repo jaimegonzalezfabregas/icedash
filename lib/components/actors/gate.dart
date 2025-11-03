@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flame/palette.dart';
 import 'package:flame/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -13,7 +11,7 @@ import 'package:icedash/components/room.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
-final big_num = 1000.0;
+final bigNum = 1000.0;
 
 class MyTextBox extends TextBoxComponent {
   Color color;
@@ -21,11 +19,11 @@ class MyTextBox extends TextBoxComponent {
   MyTextBox(String text, {required Vector2 size, required this.color, required Vector2 delta, required position, super.angle})
     : super(
         position: position + delta / 16 / 4,
-        scale: Vector2.all(1 / big_num),
-        size: size * big_num,
+        scale: Vector2.all(1 / bigNum),
+        size: size * bigNum,
         text: text,
         textRenderer: TextPaint(
-          style: TextStyle(fontSize: big_num / 4, color: color, fontFamily: "BoldPixels"),
+          style: TextStyle(fontSize: bigNum / 4, color: color, fontFamily: "BoldPixels"),
         ),
         boxConfig: TextBoxConfig(maxWidth: 3, margins: EdgeInsets.all(0)),
         align: Anchor.center,

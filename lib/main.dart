@@ -1,20 +1,13 @@
-import 'dart:math';
 
 import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
-import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flame/image_composition.dart';
-import 'package:flame_camera_tools/flame_camera_tools.dart';
 import 'package:flutter/material.dart';
-import 'package:icedash/components/player.dart';
-import 'package:icedash/components/room.dart';
-import 'package:icedash/room_traversal.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 import 'package:icedash/src/rust/frb_generated.dart';
-import 'package:icedash/src/rust/logic/pos.dart';
+import 'package:icedash/world.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,119 +69,5 @@ class IceDashGame extends FlameGame with HasKeyboardHandlerComponents, DragCallb
     }
 
     super.onDragEnd(event);
-  }
-}
-
-class IceDashWorld extends World {
-  late CameraComponent camera;
-  RoomTraversal roomTraversal = RoomTraversal();
-
-  RoomComponent? _lastRoom;
-  RoomComponent? _currentRoom;
-
-  late Vector2 screenSize = Vector2.all(1);
-  late Player player;
-
-  @override
-  Future<void> onLoad() async {
-    player = Player(position: Vector2(0, 0));
-    add(player);
-
-    var destination = roomTraversal.getOnLoadDestination();
-
-    goToRoom(destination, Vector2(0, 0), Direction.north);
-    player.push(Direction.north);
-  }
-
-  void goToRoom((String, BigInt) destination, Vector2 worldStichPos, Direction exitDirection) {
-    Vector2 dpos = Vector2.array(exitDirection.dartVector());
-    Vector2 entrancePostion = worldStichPos + dpos;
-
-    var board = roomTraversal.getRoom(destination.$1, Pos(x: (worldStichPos.x).round(), y: (worldStichPos.y).round()));
-
-    setCurrentRoom(board, entrancePostion, exitDirection, destination.$2);
-  }
-
-  void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) {
-    _lastRoom = _currentRoom;
-    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room, entranceGateId);
-
-    var transition = EffectController(duration: 0);
-
-    const camTransitionDuration = 0.8;
-
-    if (_lastRoom != null) {
-      transition = EffectController(curve: Curves.easeInOut, duration: camTransitionDuration);
-    }
-
-    camera.lookAt(_currentRoom!.worldBB.center.toVector2(), transition);
-
-    zoomTransition(camTransitionDuration, min(screenSize.x / _currentRoom!.worldBB.width, screenSize.y / _currentRoom!.worldBB.height));
-
-    _lastRoom = null;
-    add(_currentRoom!);
-
-    player.remainingMoves = room.getMaxMovementCount();
-    player.remainingMovesReset = room.getMaxMovementCount();
-  }
-
-  double? lastZoomVal;
-
-  zoomTransition(double duration, double endValue) {
-    var zoomOutEfect = CurvedEffectController(duration / 2, Curves.easeInOut);
-    var zoomInEffect = CurvedEffectController(duration / 2, Curves.easeInOut);
-
-    // var startValue = camera.viewfinder.zoom;
-    var middlePoint = max(endValue * 0.3, min(endValue, lastZoomVal ?? endValue) * 0.9);
-
-    camera.viewfinder.add(
-      ScaleEffect.to(
-        Vector2.all(middlePoint),
-        zoomOutEfect,
-        onComplete: () {
-          camera.viewfinder.add(ScaleEffect.to(Vector2.all(endValue), zoomInEffect));
-        },
-      ),
-    );
-
-    lastZoomVal = endValue;
-  }
-
-  @override
-  void onGameResize(Vector2 size) {
-    screenSize = size;
-    if (_currentRoom != null) {
-      camera.zoomTo(min(screenSize.x / _currentRoom!.worldBB.width, screenSize.y / _currentRoom!.worldBB.height), LinearEffectController(0));
-    }
-    super.onGameResize(size);
-  }
-
-  void setCamera(CameraComponent cam) {
-    camera = cam;
-  }
-
-  bool canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) {
-    bool ret = _currentRoom!.canWalkInto(og, dst, dir, userPush);
-    return ret;
-  }
-
-  bool hit(Vector2 pos, Direction dir) {
-    return _currentRoom!.hit(pos, dir);
-  }
-
-  Tile getTile(Vector2 position) {
-    return _currentRoom!.getTile(position);
-  }
-
-  reset() {
-    _currentRoom!.reset();
-  }
-
-  Direction getResetDirection() {
-    return _currentRoom!.entranceDirection;
-  }
-
-  Vector2 resetPlayerPos() {
-    return _currentRoom!.entranceWorldPos;
   }
 }

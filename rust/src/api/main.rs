@@ -336,7 +336,6 @@ impl DartBoard {
         }
 
         Matrix(map.clone()).print(vec![]);
-        println!("{gates:?}");
 
         Self {
             asset_map: AssetMap::from_tilemap(&Matrix(map.clone())),

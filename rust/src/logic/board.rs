@@ -28,7 +28,6 @@ impl Deref for Board {
 
 impl Board {
     pub fn print(&self, highlight: Vec<Pos>) {
-        println!("{:?}", self.gates);
         self.map.print(highlight);
     }
 
@@ -210,8 +209,6 @@ impl Board {
     }
 
     pub fn rotate_left(self) -> Self {
-        println!("{}", self.get_width());
-
         let ret = Board {
             gates: self
                 .gates

@@ -30,10 +30,6 @@ impl Analysis {
 
         let ret = good_route_fitness * solution_distribution;
 
-        if ret != 0. {
-
-            // println!("ret: {ret} ({}+{})/(1+{})",self.routes[1].len(),self.routes[2].len(),self.routes[0].len());
-        };
         ret
     }
 
