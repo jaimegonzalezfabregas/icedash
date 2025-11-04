@@ -12,7 +12,9 @@ class Box extends Actor {
 
   @override
   Future<bool> hit(Direction dir) async {
-    if (!await room.canBoxWalkInto(position + Vector2.array(dir.dartVector()), dir)) {
+    var delta = Vector2.array(dir.dartVector());
+    if (!await room.canBoxWalkInto(position + delta, dir)) {
+      await room.hit(position + delta, dir, box: true);
       return false;
     }
 
@@ -31,4 +33,7 @@ class Box extends Actor {
 
     return true;
   }
+
+  @override
+  void predictedHit(Vector2 startOfMovement, Direction dir) {}
 }

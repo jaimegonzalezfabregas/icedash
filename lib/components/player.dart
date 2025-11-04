@@ -14,7 +14,6 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   int? remainingMovesReset;
   int movementLenght = 0;
 
-  
   @override
   Future<void> onLoad() async {
     sprite = await Sprite.load('player.png');
@@ -48,6 +47,8 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   }
 
   void reset() {
+    print("player reset");
+
     if (!sliding) {
       game.idWorld.reset();
       buffered = null;
@@ -57,12 +58,29 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
     }
   }
 
-  void push(Direction dir, {bool userPush = true}) async{
+  void predictHit(Direction dir) async {
+    Vector2 cursor = position;
+    bool userPush = true;
+    Vector2 delta = Vector2.array(dir.dartVector());
+
+    while ((await game.idWorld.canWalkInto(cursor, cursor + delta, dir, userPush))) {
+      userPush = false;
+      cursor = cursor + delta;
+    }
+
+    game.idWorld.predictedHit(position, cursor + delta, dir);
+  }
+
+  void push(Direction dir, {bool userPush = true}) async {
     Vector2 delta = Vector2.array(dir.dartVector());
 
     if (sliding) {
       buffered = dir;
       return;
+    }
+
+    if (userPush) {
+      predictHit(dir);
     }
 
     if (!(await game.idWorld.canWalkInto(position, position + delta, dir, userPush))) {
@@ -73,7 +91,13 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
           remainingMoves = remainingMoves! - 1;
           print("remaining moves $remainingMoves");
           if (remainingMoves == 0) {
-            reset();
+            Tile hit_tile = await game.idWorld.getTile(position + delta);
+
+            print(hit_tile);
+
+            if (hit_tile is! Tile_Gate) {
+              reset();
+            }
           }
         }
       }

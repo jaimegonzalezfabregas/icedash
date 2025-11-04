@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flame/effects.dart';
 import 'package:icedash/components/actor.dart';
 import 'package:icedash/src/rust/api/main.dart';
+import 'package:vector_math/vector_math.dart';
 
 class EntranceTmpIcePatch extends Actor {
   EntranceTmpIcePatch({super.position}) : super("ice.png", selffade: true);
@@ -17,5 +18,9 @@ class EntranceTmpIcePatch extends Actor {
   @override
   Future<bool> hit(Direction dir) async {
     return false;
+  }
+
+  @override
+  void predictedHit(Vector2 startOfMovement, Direction dir) {
   }
 }

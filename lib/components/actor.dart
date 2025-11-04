@@ -16,6 +16,9 @@ abstract class Actor extends SpriteComponent {
 
   Future<bool> hit(Direction dir);
 
+  void predictedHit(Vector2 startOfMovement, Direction dir);
+
+
   @override
   FutureOr<void> onLoad() async {
     super.sprite = await Sprite.load(asset);

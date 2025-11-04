@@ -21,19 +21,17 @@ class IceDashWorld extends World with HasGameReference {
 
   @override
   Future<void> onLoad() async {
-    player = Player(position: Vector2(0, 0));
+    player = Player(position: Vector2(0, 4));
     add(player);
 
     var destination = roomTraversal.getOnLoadDestination();
 
     await goToRoom(destination, Vector2(0, 0), Direction.north);
-    player.push(Direction.north);
   }
 
+  void predictedGoToRoom(GateDestination destination, Vector2 position, Direction dir) {}
+
   Future<void> goToRoom(GateDestination destination, Vector2 worldStichPos, Direction exitDirection) async {
-
-    print("go to room: $destination");
-
     Vector2 dpos = Vector2.array(exitDirection.dartVector());
     Vector2 entrancePostion = worldStichPos + dpos;
 
@@ -61,10 +59,7 @@ class IceDashWorld extends World with HasGameReference {
 
     Rect newFocus = await _currentRoom!.getWorldBB();
 
-    zoomTransition(
-      camTransitionDuration * (1 + camTransitionStaticPortion * 2),
-      min(game.size.x / newFocus.width, game.size.y / newFocus.height),
-    );
+    zoomTransition(camTransitionDuration * (1 + camTransitionStaticPortion * 2), min(game.size.x / newFocus.width, game.size.y / newFocus.height));
 
     camera.lookAt(newFocus.center.toVector2(), transition);
 
@@ -72,6 +67,7 @@ class IceDashWorld extends World with HasGameReference {
 
     player.remainingMoves = await room.getMaxMovementCount();
     player.remainingMovesReset = await room.getMaxMovementCount();
+    player.push(stichDirection);
   }
 
   double? lastZoomVal;
@@ -82,7 +78,6 @@ class IceDashWorld extends World with HasGameReference {
     var middlePoint = min(endValue, lastVal) * 0.9;
 
     print("zoom transition $endValue $middlePoint $lastZoomVal");
-
 
     var zoomOutEfect = CurvedEffectController(duration / 2, Curves.easeInOut);
     var zoomInEffect = CurvedEffectController(duration / 2, Curves.easeInOut);
@@ -122,6 +117,7 @@ class IceDashWorld extends World with HasGameReference {
     return _currentRoom!.hit(pos, dir);
   }
 
+
   Future<Tile> getTile(Vector2 position) async {
     return await (_currentRoom!.getTile(position));
   }
@@ -136,5 +132,9 @@ class IceDashWorld extends World with HasGameReference {
 
   Vector2 resetPlayerPos() {
     return _currentRoom!.entranceWorldPos;
+  }
+
+  void predictedHit(Vector2 startingPos, Vector2 hitPos, Direction dir) {
+    return _currentRoom!.predictedHit(startingPos, hitPos, dir);
   }
 }

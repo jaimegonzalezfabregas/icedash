@@ -82,7 +82,7 @@ class RoomComponent extends Component {
   }
 
   Future fadeOut(BigInt exitGateId) async {
-    Vector2 exitWorldPos = mapPos2WorldVector(await room.getGatePosition(gateId: exitGateId));
+    Vector2 exitWorldPos = mapPos2WorldVector(room.getGatePosition(gateId: exitGateId));
 
     var fadeDuration = 0.5;
     var rippleDuration = 0.1;
@@ -238,10 +238,6 @@ class RoomComponent extends Component {
       for (var actor in actorList) {
         if (worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
           canWalk &= !actor.colision;
-
-          if (actor is Gate) {
-            actor.hit(dir);
-          }
         }
       }
     }
@@ -257,10 +253,6 @@ class RoomComponent extends Component {
       for (var actor in actorList) {
         if (worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
           canWalk &= !actor.colision;
-
-          if (actor is Box) {
-            actor.hit(dir);
-          }
         }
       }
     }
@@ -268,11 +260,13 @@ class RoomComponent extends Component {
     return canWalk;
   }
 
-  Future<bool> hit(Vector2 pos, Direction dir) async {
+  Future<bool> hit(Vector2 pos, Direction dir, {bool box = false}) async {
     var consecuences = false;
     for (var actor in actorList) {
       if (worldVector2MapPos(actor.position) == worldVector2MapPos(pos)) {
-        consecuences |= await actor.hit(dir);
+        if (!box || actor is Box) {
+          consecuences |= await actor.hit(dir);
+        }
       }
     }
     return consecuences;
@@ -285,6 +279,14 @@ class RoomComponent extends Component {
       return room.at(p: localPos);
     } catch (_) {
       return Tile.outside();
+    }
+  }
+
+  void predictedHit(Vector2 og, Vector2 pos, Direction dir) {
+    for (var actor in actorList) {
+      if (worldVector2MapPos(actor.position) == worldVector2MapPos(pos)) {
+        actor.predictedHit(og, dir);
+      }
     }
   }
 }
