@@ -37,17 +37,17 @@ class IceDashWorld extends World with HasGameReference {
 
     var board = await roomTraversal.getRoom(destination);
 
-    setCurrentRoom(board, entrancePostion, exitDirection, await destination.getGateId());
+    await setCurrentRoom(board, entrancePostion, exitDirection, await destination.getGateId());
   }
 
-  void setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) async {
+  Future<void> setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) async {
     var lastRoom = _currentRoom;
     _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room, entranceGateId);
 
     var transition = EffectController(duration: 0);
 
-    const camTransitionDuration = 0.8;
-    const camTransitionStaticPortion = 0.2;
+    double camTransitionDuration = 2;
+    double camTransitionStaticPortion = 0.2;
 
     if (lastRoom != null) {
       transition = EffectController(
@@ -59,7 +59,10 @@ class IceDashWorld extends World with HasGameReference {
 
     Rect newFocus = await _currentRoom!.getWorldBB();
 
-    zoomTransition(camTransitionDuration * (1 + camTransitionStaticPortion * 2), min(game.size.x / newFocus.width, game.size.y / newFocus.height));
+    queueZoomTransition(
+      camTransitionDuration * (1 + camTransitionStaticPortion * 2),
+      min(game.size.x / newFocus.width, game.size.y / newFocus.height),
+    );
 
     camera.lookAt(newFocus.center.toVector2(), transition);
 
@@ -71,28 +74,44 @@ class IceDashWorld extends World with HasGameReference {
   }
 
   double? lastZoomVal;
+  List<(double, double)> zoomTransitionQueue = [];
 
-  zoomTransition(double duration, double endValue) {
+  void queueZoomTransition(double duration, double endValue) {
     var lastVal = lastZoomVal ?? endValue;
 
     var middlePoint = min(endValue, lastVal) * 0.9;
 
-    print("zoom transition $endValue $middlePoint $lastZoomVal");
-
-    var zoomOutEfect = CurvedEffectController(duration / 2, Curves.easeInOut);
-    var zoomInEffect = CurvedEffectController(duration / 2, Curves.easeInOut);
-
-    camera.viewfinder.add(
-      ScaleEffect.to(
-        Vector2.all(middlePoint),
-        zoomOutEfect,
-        onComplete: () {
-          camera.viewfinder.add(ScaleEffect.to(Vector2.all(endValue), zoomInEffect));
-        },
-      ),
-    );
+    zoomTransitionQueue.add((middlePoint, duration / 2));
+    zoomTransitionQueue.add((lastVal, duration / 2));
 
     lastZoomVal = endValue;
+
+    doZoomTransition();
+  }
+
+  var zooming = false;
+
+  void doZoomTransition() {
+    if (!zooming) {
+      if (zoomTransitionQueue.isNotEmpty) {
+        (double, double) nextTransition = zoomTransitionQueue.removeAt(0);
+        zooming = true;
+
+        print("adding zooming animation $nextTransition , remaining: ${zoomTransitionQueue.length}");
+
+        camera.viewfinder.add(
+          ScaleEffect.to(
+            Vector2.all(nextTransition.$1),
+            CurvedEffectController(nextTransition.$2, Curves.easeInOut),
+            onComplete: () {
+              print("zoom done");
+              zooming = false;
+              doZoomTransition();
+            },
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -116,7 +135,6 @@ class IceDashWorld extends World with HasGameReference {
   Future<bool> hit(Vector2 pos, Direction dir) async {
     return _currentRoom!.hit(pos, dir);
   }
-
 
   Future<Tile> getTile(Vector2 position) async {
     return await (_currentRoom!.getTile(position));

@@ -20,17 +20,17 @@ impl Neighbour<Tile> {
         ret
     }
 
-    pub fn to_stops_player_during_gameplay(&self) -> Neighbour<bool> {
+    pub fn to_is_a_wall_for_texturing(&self) -> Neighbour<bool> {
         Neighbour {
-            center: self.center.stops_player_during_gameplay(),
-            north: self.north.stops_player_during_gameplay(),
-            south: self.south.stops_player_during_gameplay(),
-            east: self.east.stops_player_during_gameplay(),
-            west: self.west.stops_player_during_gameplay(),
-            northwest: self.northwest.stops_player_during_gameplay(),
-            northeast: self.northeast.stops_player_during_gameplay(),
-            southwest: self.southwest.stops_player_during_gameplay(),
-            southeast: self.southeast.stops_player_during_gameplay(),
+            center: self.center.is_a_wall_for_texturing(),
+            north: self.north.is_a_wall_for_texturing(),
+            south: self.south.is_a_wall_for_texturing(),
+            east: self.east.is_a_wall_for_texturing(),
+            west: self.west.is_a_wall_for_texturing(),
+            northwest: self.northwest.is_a_wall_for_texturing(),
+            northeast: self.northeast.is_a_wall_for_texturing(),
+            southwest: self.southwest.is_a_wall_for_texturing(),
+            southeast: self.southeast.is_a_wall_for_texturing(),
         }
     }
 
@@ -48,7 +48,7 @@ impl Neighbour<Tile> {
                 let mut ret_priority = 0;
 
                 for i in 0..4 {
-                    let (priority, new_ret) = match rotator.to_stops_player_during_gameplay() {
+                    let (priority, new_ret) = match rotator.to_is_a_wall_for_texturing() {
                         Neighbour {
                             southwest: true,
                             northwest: false,

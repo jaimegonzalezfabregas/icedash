@@ -180,6 +180,19 @@ impl Tile {
         }
     }
 
+    pub fn is_a_wall_for_texturing(&self) -> bool {
+        match self {
+            Tile::Gate(GateMetadata::EntryOnly) => true,
+            Tile::Gate(_) => false,
+            Tile::Wall => true,
+            Tile::Stop => false,
+            Tile::Ice => false,
+            Tile::WeakWall => false,
+            Tile::Outside => true,
+            Tile::Box => false,
+        }
+    }
+
     pub fn stops_box_during_gameplay(&self) -> bool {
         match self {
             Tile::Gate(_) => true,
@@ -228,7 +241,7 @@ impl Matrix<Option<(String, isize)>> {
                     for delta in Direction::all() {
                         if wip_tilemap
                             .at(&(p + delta.vector()))
-                            .stops_box_during_gameplay()
+                            .is_a_wall_for_texturing()
                         {
                             neigh_count += 1;
                         }
@@ -241,10 +254,10 @@ impl Matrix<Option<(String, isize)>> {
 
                     if !wip_tilemap
                         .at(&(p + Pos::new(1, 0)))
-                        .stops_player_during_gameplay()
+                        .is_a_wall_for_texturing()
                         && !wip_tilemap
                             .at(&(p + Pos::new(-1, 0)))
-                            .stops_player_during_gameplay()
+                            .is_a_wall_for_texturing()
                     {
                         ret.set(&p, Some(("1x1_obstacle.png".into(), 0)));
                         wip_tilemap.set(&p, Tile::Ice);
@@ -253,10 +266,10 @@ impl Matrix<Option<(String, isize)>> {
 
                     if !wip_tilemap
                         .at(&(p + Pos::new(0, 1)))
-                        .stops_player_during_gameplay()
+                        .is_a_wall_for_texturing()
                         && !wip_tilemap
                             .at(&(p + Pos::new(0, -1)))
-                            .stops_player_during_gameplay()
+                            .is_a_wall_for_texturing()
                     {
                         ret.set(&p, Some(("1x1_obstacle.png".into(), 0)));
                         wip_tilemap.set(&p, Tile::Ice);
