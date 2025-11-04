@@ -93,12 +93,12 @@ impl Board {
         let mut rng = rand::rng();
         let width = (desc.size_range_min..=desc.size_range_max)
             .choose(&mut rng)
-            .unwrap();
+            .unwrap_or(10);
         let height = (desc.size_range_min..=desc.size_range_max)
             .clone()
             .into_iter()
             .choose(&mut rng)
-            .unwrap();
+            .unwrap_or(10);
 
         let gate_range_horizontal = &(3..height - 3);
         let gate_range_vertical = &(3..width - 3);
@@ -138,13 +138,13 @@ impl Board {
             (
                 ((desc.weak_walls_percentage_min..=desc.weak_walls_percentage_max)
                     .choose(&mut rng)
-                    .unwrap()),
+                    .unwrap_or(0)),
                 Tile::WeakWall,
             ),
             (
                 ((desc.pilars_percentage_min..=desc.pilars_percentage_max)
                     .choose(&mut rng)
-                    .unwrap()),
+                    .unwrap_or(0)),
                 Tile::Wall,
             ),
             (
@@ -152,7 +152,7 @@ impl Board {
                     .clone()
                     .into_iter()
                     .choose(&mut rng)
-                    .unwrap()),
+                    .unwrap_or(0)),
                 Tile::Box,
             ),
         ] {
@@ -167,7 +167,7 @@ impl Board {
         let vignet = (width * height)
             * ((desc.vignet_percentage_min..=desc.vignet_percentage_max)
                 .choose(&mut rng)
-                .unwrap())
+               .unwrap_or(0))
             / 100;
 
         for _ in 0..vignet {

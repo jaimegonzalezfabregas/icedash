@@ -1,4 +1,3 @@
-import 'package:flame/extensions.dart';
 import 'package:icedash/BoardDescriptionChains/easy.dart';
 import 'package:icedash/BoardDescriptionChains/extreme.dart';
 import 'package:icedash/BoardDescriptionChains/hard.dart';

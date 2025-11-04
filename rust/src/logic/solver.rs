@@ -96,7 +96,7 @@ impl Route {
             self.solution.len() as f32,
         ];
 
-        let negative_factors = [weakwalls_in_the_way as f32];
+        let negative_factors = [weakwalls_in_the_way as f32, boxes_in_the_way as f32];
 
         positive_factors.iter().sum::<f32>() / (negative_factors.iter().sum::<f32>() + 1.)
     }

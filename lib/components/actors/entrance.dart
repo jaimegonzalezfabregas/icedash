@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:icedash/components/actor.dart';
 import 'package:icedash/src/rust/api/main.dart';
-import 'package:vector_math/vector_math.dart';
 
 class EntranceTmpIcePatch extends Actor {
   EntranceTmpIcePatch({super.position}) : super("ice.png", selffade: true);
