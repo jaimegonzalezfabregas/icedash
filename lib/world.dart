@@ -85,6 +85,8 @@ class IceDashWorld extends World with HasGameReference {
 
     var middlePoint = min(endValue, lastVal) * 0.9;
 
+    zoomTransitionQueue = [];
+
     zoomTransitionQueue.add((middlePoint, duration / 2));
     zoomTransitionQueue.add((endValue, duration / 2));
 

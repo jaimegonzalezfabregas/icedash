@@ -150,72 +150,80 @@ class RoomComponent extends Component {
   Future<void> buildSpriteGrid(double startingOpacity) async {
     armClean();
 
+    List<Future> tileLoadFutures = [];
+
     for (var pos in await room.getAllPositions()) {
-      (String, int)? bgImg = await room.assetAt(p: pos);
+      tileLoadFutures.add(
+        Future(() async {
+          (String, int)? bgImg = await room.assetAt(p: pos);
 
-      if (bgImg != null) {
-        SpriteComponent img = SpriteComponent(
-          priority: 0,
-          size: Vector2.all(1),
-          position: mapPos2WorldVector(pos),
-          anchor: Anchor.center,
-          angle: bgImg.$2 * pi / 2,
-        );
+          if (bgImg != null) {
+            SpriteComponent img = SpriteComponent(
+              priority: 0,
+              size: Vector2.all(1),
+              position: mapPos2WorldVector(pos),
+              anchor: Anchor.center,
+              angle: bgImg.$2 * pi / 2,
+            );
 
-        img.sprite = await Sprite.load(bgImg.$1);
-        img.opacity = startingOpacity;
-        add(img);
-        tileSpriteGrid[pos] = img;
-      }
+            img.sprite = await Sprite.load(bgImg.$1);
+            img.opacity = startingOpacity;
+            add(img);
+            tileSpriteGrid[pos] = img;
+          }
 
-      var tile = await room.at(p: pos);
+          var tile = await room.at(p: pos);
 
-      if (tile is Tile_Gate) {
-        BigInt gateId = (await room.getGateIdByPos(p: pos))!;
-        GateDestination? destination = await room.getGateDestination(gateId: gateId);
+          if (tile is Tile_Gate) {
+            BigInt gateId = (await room.getGateIdByPos(p: pos))!;
+            GateDestination? destination = await room.getGateDestination(gateId: gateId);
 
-        bool usedEntrance = gateId == entranceGateId;
+            bool usedEntrance = gateId == entranceGateId;
 
-        if (destination != null) {
-          String? label = await room.getGateLabel(gateId: gateId);
+            if (destination != null) {
+              String? label = await room.getGateLabel(gateId: gateId);
 
-          var gate = Gate(this, gateId, destination, room.getGateDirection(gateId: gateId), label, position: mapPos2WorldVector(pos));
-          gate.opacity = startingOpacity;
-          add(gate);
-          actorList.add(gate);
-        }
+              var gate = Gate(this, gateId, destination, room.getGateDirection(gateId: gateId), label, position: mapPos2WorldVector(pos));
+              gate.opacity = startingOpacity;
+              add(gate);
+              actorList.add(gate);
+            }
 
-        if (usedEntrance) {
-          var entrance = EntranceTmpIcePatch(position: mapPos2WorldVector(pos));
-          add(
-            FunctionEffect(
-              (_, _) {},
-              EffectController(duration: 1, startDelay: 1),
+            if (usedEntrance) {
+              var entrance = EntranceTmpIcePatch(position: mapPos2WorldVector(pos));
+              add(
+                FunctionEffect(
+                  (_, _) {},
+                  EffectController(duration: 1, startDelay: 1),
 
-              onComplete: () {
-                entrance.removeFromParent();
-              },
-            ),
-          );
-          entrance.opacity = startingOpacity;
-          add(entrance);
-        }
-      }
+                  onComplete: () {
+                    entrance.removeFromParent();
+                  },
+                ),
+              );
+              entrance.opacity = startingOpacity;
+              add(entrance);
+            }
+          }
 
-      if (tile is Tile_Box) {
-        var box = Box(this, position: mapPos2WorldVector(pos));
-        box.opacity = startingOpacity;
-        actorList.add(box);
-        add(box);
-      }
+          if (tile is Tile_Box) {
+            var box = Box(this, position: mapPos2WorldVector(pos));
+            box.opacity = startingOpacity;
+            actorList.add(box);
+            add(box);
+          }
 
-      if (tile is Tile_WeakWall) {
-        var weakWall = WeakWall(position: mapPos2WorldVector(pos));
-        actorList.add(weakWall);
-        weakWall.opacity = startingOpacity;
-        add(weakWall);
-      }
+          if (tile is Tile_WeakWall) {
+            var weakWall = WeakWall(position: mapPos2WorldVector(pos));
+            actorList.add(weakWall);
+            weakWall.opacity = startingOpacity;
+            add(weakWall);
+          }
+        }),
+      );
     }
+
+    await Future.wait(tileLoadFutures);
 
     clean();
   }

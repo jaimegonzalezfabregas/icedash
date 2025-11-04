@@ -77,11 +77,14 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       return;
     }
 
+    sliding = true;
+
     if (userPush) {
       predictHit(dir);
     }
 
     if (!(await game.idWorld.canWalkInto(position, position + delta, dir, userPush))) {
+      sliding = false;
       bool consecuences = await game.idWorld.hit(position + delta, dir);
 
       if (movementLenght != 0 || consecuences) {
@@ -108,8 +111,6 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
       return;
     }
-
-    sliding = true;
 
     EffectController ec = LinearEffectController(timePerStep);
 

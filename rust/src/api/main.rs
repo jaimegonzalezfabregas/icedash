@@ -100,7 +100,7 @@ pub struct BoardDescription {
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub enum GateDestination {
     NextAutoGen,
-    FirstAutogen { profile: Vec<BoardDescription> },
+    FirstAutogen { board_description_stack: Vec<BoardDescription> },
     RoomIdWithGate { room_id: String, gate_id: usize },
 }
 

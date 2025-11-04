@@ -1,3 +1,8 @@
+import 'package:flame/extensions.dart';
+import 'package:icedash/BoardDescriptionChains/easy.dart';
+import 'package:icedash/BoardDescriptionChains/extreme.dart';
+import 'package:icedash/BoardDescriptionChains/hard.dart';
+import 'package:icedash/BoardDescriptionChains/normal.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 enum RoomType { lobby, game }
@@ -91,81 +96,20 @@ T     s     M
         ),
         '1'.codeUnitAt(0): GateMetadata.exit(
           destination: GateDestination.firstAutogen(
-            profile: [
-              BoardDescription(
-                sizeRangeMin: 7,
-                sizeRangeMax: 10,
-                weakWallsPercentageMin: 0,
-                weakWallsPercentageMax: 0,
-                pilarsPercentageMin: 10,
-                pilarsPercentageMax: 30,
-                boxPercentageMin: 0,
-                boxPercentageMax: 0,
-                vignetPercentageMin: 20,
-                vignetPercentageMax: 30,
-              ),
-              BoardDescription(
-                sizeRangeMin: 7,
-                sizeRangeMax: 10,
-                weakWallsPercentageMin: 0,
-                weakWallsPercentageMax: 0,
-                pilarsPercentageMin: 10,
-                pilarsPercentageMax: 30,
-                boxPercentageMin: 0,
-                boxPercentageMax: 0,
-                vignetPercentageMin: 20,
-                vignetPercentageMax: 30,
-              ),
-              BoardDescription(
-                sizeRangeMin: 7,
-                sizeRangeMax: 10,
-                weakWallsPercentageMin: 0,
-                weakWallsPercentageMax: 0,
-                pilarsPercentageMin: 10,
-                pilarsPercentageMax: 30,
-                boxPercentageMin: 0,
-                boxPercentageMax: 0,
-                vignetPercentageMin: 20,
-                vignetPercentageMax: 30,
-              ),
-              BoardDescription(
-                sizeRangeMin: 7,
-                sizeRangeMax: 10,
-                weakWallsPercentageMin: 0,
-                weakWallsPercentageMax: 0,
-                pilarsPercentageMin: 10,
-                pilarsPercentageMax: 30,
-                boxPercentageMin: 0,
-                boxPercentageMax: 0,
-                vignetPercentageMin: 20,
-                vignetPercentageMax: 30,
-              ),
-              BoardDescription(
-                sizeRangeMin: 7,
-                sizeRangeMax: 10,
-                weakWallsPercentageMin: 0,
-                weakWallsPercentageMax: 0,
-                pilarsPercentageMin: 10,
-                pilarsPercentageMax: 30,
-                boxPercentageMin: 0,
-                boxPercentageMax: 0,
-                vignetPercentageMin: 20,
-                vignetPercentageMax: 30,
-              ),
-            ],
+            profile: easy,
           ),
           label: "Easy",
         ),
         '2'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: []),
+          destination: GateDestination.firstAutogen(profile: normal),
           label: "Normal",
         ),
         '3'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: []),
+          destination: GateDestination.firstAutogen(profile: hard),
           label: "Hard",
         ),
         '4'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: []),
+          destination: GateDestination.firstAutogen(profile: extreme),
           label: "Extreme",
         ),
       },
