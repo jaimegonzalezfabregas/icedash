@@ -36,9 +36,10 @@ flutter:
     - assets/images/1x1_obstacle.png
     - assets/images/wall_double_corner.png
     - assets/images/stop.png
-  
     - assets/images/ice.png
     - assets/images/fade.png
+    - assets/images/lock.png
+    
   fonts:
     - family: BoldPixels
       fonts:

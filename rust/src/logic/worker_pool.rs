@@ -134,21 +134,21 @@ pub fn worker_thread(
     board_desc: BoardDescription,
 ) {
     let mut best_so_far = 0.;
-    let mut iter = 0;
-    let mut successes: i32 = 0;
+    // let mut iter = 0;
+    // let mut successes: i32 = 0;
 
     loop {
-        iter += 1;
+        // iter += 1;
         match messenger.try_recv() {
             Ok(CtrlMsg::Halt(time)) => {
                 thread::sleep(time::Duration::from_millis(time as u64));
                 continue;
             }
             Ok(CtrlMsg::Kill) => {
-                println!(
-                    "reached {iter} iter and {successes} successes (ratio of {})",
-                    successes as f32 / iter as f32
-                );
+                // println!(
+                //     "reached {iter} iter and {successes} successes (ratio of {})",
+                //     successes as f32 / iter as f32
+                // );
 
                 return;
             }
@@ -157,13 +157,11 @@ pub fn worker_thread(
 
         if let Ok(board) = Board::new_random(&board_desc) {
             if let Ok(analysis) = analyze(&board, 0, 1) {
-                successes += 1;
+                // successes += 1;
                 let fitness = analysis.compute_fitness(&board.map);
                 if fitness > best_so_far {
                     best_so_far = fitness;
-                    returns
-                        .send((analysis, board))
-                        .expect("unable to send best so far");
+                    let _ = returns.send((analysis, board));
                 }
             }
         }

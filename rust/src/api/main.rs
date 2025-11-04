@@ -444,16 +444,16 @@ pub fn dart_worker_halt(millis: usize) {
 pub fn dart_load_board_description_stack(board_desc_stack: Vec<BoardDescription>) {
     load_board_description_stack(board_desc_stack)
 }
-use cap::Cap;
+// use cap::Cap;
 use flutter_rust_bridge::frb;
-use std::alloc;
+// use std::alloc;
 
-#[global_allocator]
-static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
+// #[global_allocator]
+// static ALLOCATOR: Cap<alloc::System> = Cap::new(alloc::System, usize::max_value());
 
 #[frb(init)]
 pub fn init_app() {
-    ALLOCATOR.set_limit(5 * 1024 * 1024 * 1024).unwrap();
+    // ALLOCATOR.set_limit(5 * 1024 * 1024 * 1024).unwrap();
 
     flutter_rust_bridge::setup_default_user_utils();
 }

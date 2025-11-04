@@ -46,7 +46,7 @@ class IceDashWorld extends World with HasGameReference {
 
     var transition = EffectController(duration: 0);
 
-    double camTransitionDuration = 2;
+    double camTransitionDuration = 1;
     double camTransitionStaticPortion = 0.2;
 
     if (lastRoom != null) {
@@ -68,8 +68,12 @@ class IceDashWorld extends World with HasGameReference {
 
     add(_currentRoom!);
 
-    player.remainingMoves = await room.getMaxMovementCount();
     player.remainingMovesReset = await room.getMaxMovementCount();
+    if (player.remainingMovesReset != null) {
+      player.remainingMoves = player.remainingMovesReset! + 1;
+    } else {
+      player.remainingMoves = null;
+    }
     player.push(stichDirection);
   }
 
@@ -82,7 +86,7 @@ class IceDashWorld extends World with HasGameReference {
     var middlePoint = min(endValue, lastVal) * 0.9;
 
     zoomTransitionQueue.add((middlePoint, duration / 2));
-    zoomTransitionQueue.add((lastVal, duration / 2));
+    zoomTransitionQueue.add((endValue, duration / 2));
 
     lastZoomVal = endValue;
 
@@ -97,17 +101,16 @@ class IceDashWorld extends World with HasGameReference {
         (double, double) nextTransition = zoomTransitionQueue.removeAt(0);
         zooming = true;
 
-        print("adding zooming animation $nextTransition , remaining: ${zoomTransitionQueue.length}");
+        camera.viewfinder.add(ScaleEffect.to(Vector2.all(nextTransition.$1), CurvedEffectController(nextTransition.$2, Curves.easeInOut)));
 
-        camera.viewfinder.add(
-          ScaleEffect.to(
-            Vector2.all(nextTransition.$1),
-            CurvedEffectController(nextTransition.$2, Curves.easeInOut),
+        add(
+          FunctionEffect(
+            (_, __) {},
             onComplete: () {
-              print("zoom done");
               zooming = false;
               doZoomTransition();
             },
+            LinearEffectController(nextTransition.$2),
           ),
         );
       }

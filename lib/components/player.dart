@@ -87,12 +87,11 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       if (movementLenght != 0 || consecuences) {
         if (remainingMoves != null) {
           remainingMoves = remainingMoves! - 1;
+          print("remaining moves: $remainingMoves");
           if (remainingMoves == 0) {
-            Tile hit_tile = await game.idWorld.getTile(position + delta);
+            Tile hitTile = await game.idWorld.getTile(position + delta);
 
-            print(hit_tile);
-
-            if (hit_tile is! Tile_Gate) {
+            if (hitTile is! Tile_Gate) {
               reset();
             }
           }
