@@ -74,7 +74,7 @@ pub fn get_new_room() -> AutoGenOutput {
 
     board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
 
-    let board = asthetic_cleanup(board);
+    let board = asthetic_cleanup(board, &analysis, 0);
 
     AutoGenOutput::Ok(DartBoard::new(board, analysis))
 }

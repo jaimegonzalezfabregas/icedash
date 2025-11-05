@@ -1,4 +1,3 @@
-
 import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -19,6 +18,9 @@ Future<void> main() async {
 
 class IceDashGame extends FlameGame with HasKeyboardHandlerComponents, DragCallbacks, LongPressDetector {
   late IceDashWorld idWorld;
+
+  @override
+  Color backgroundColor() => const Color.fromARGB(255, 221, 238, 255);
 
   IceDashGame() {
     idWorld = IceDashWorld();

@@ -13,7 +13,7 @@ import 'package:icedash/world.dart';
 class Gate extends Actor with HasGameReference<IceDashGame> {
   RoomComponent room;
   BigInt gateId;
-  double timePerStep = 0.05;
+  double timePerStep = 0.07;
   late IceDashWorld world;
 
   Direction innerDirection;

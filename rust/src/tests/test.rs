@@ -47,7 +47,7 @@ mod tests {
 
         let (analysis, board) = ret;
 
-        let board = asthetic_cleanup(board);
+        let board = asthetic_cleanup(board, &analysis, 0);
         board.print(vec![]);
         board.print(analysis.routes[0][0].solution.iter().map(|e| e.1).collect());
         join_handdle.join().expect("worker panicked");

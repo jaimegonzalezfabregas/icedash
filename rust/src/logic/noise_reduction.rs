@@ -1,11 +1,15 @@
 use std::{collections::VecDeque, vec};
 
-use rand::random;
+use rand::{random};
 
 use crate::{
-    api::main::{Direction,  Tile},
+    api::main::{Direction, Tile},
     logic::{
-        board::{Board, TileMapWrap}, matrix::TileMap, pos::Pos, visitations::Visitations
+        board::{Board, TileMapWrap},
+        matrix::TileMap,
+        pos::Pos,
+        solver::Analysis,
+        visitations::Visitations,
     },
 };
 
@@ -251,7 +255,17 @@ pub fn flood(
     reachability
 }
 
-pub fn asthetic_cleanup(mut ret: Board) -> Board {
+pub fn asthetic_cleanup(mut ret: Board, analysis: &Analysis, initial_gate_id: usize) -> Board {
+    println!("pre cleanup");
+
+    // assert!(analysis.check_still_applies(&ret, initial_gate_id));
+    let inner_pos = ret.map.all_inner_pos().collect::<Vec<_>>();
+
+    ret.print(vec![]);
+
+    println!("remove unreacheable");
+
+
     let reachability = flood(
         ret.gates
             .iter()
@@ -260,13 +274,46 @@ pub fn asthetic_cleanup(mut ret: Board) -> Board {
         &ret.map,
         vec![Tile::Ice, Tile::WeakWall, Tile::Box],
     );
-    let inner_pos = ret.map.all_inner_pos().collect::<Vec<_>>();
 
     for p in &inner_pos {
         if !reachability.contains(p) {
             ret.map.set(p, Tile::Wall);
         }
     }
+
+    // for pos in &inner_pos {
+    //     if ret.at(&pos) != Tile::Wall {
+    //         if random::<f32>() > 0.9 {
+    //             let mut test = ret.clone();
+    //             test.set(&pos, Tile::Wall);
+
+    //             if analysis.check_still_applies(&test, initial_gate_id) {
+    //                 println!("put a wall at {pos:?}");
+    //                 ret = test;
+    //                 repeat = true;
+    //             }
+    //         }
+    //     }
+    // }
+
+    let reachability = flood(
+        ret.gates
+            .iter()
+            .map(|g| g.pos + g.inwards_direction.vector())
+            .collect(),
+        &ret.map,
+        vec![Tile::Ice, Tile::WeakWall, Tile::Box],
+    );
+
+    for p in &inner_pos {
+        if !reachability.contains(p) {
+            ret.map.set(p, Tile::Wall);
+        }
+    }
+
+    ret.print(vec![]);
+
+    println!("remove borders");
 
     for _ in 0..4 {
         ret = ret.rotate_left();

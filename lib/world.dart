@@ -80,6 +80,7 @@ class IceDashWorld extends World with HasGameReference {
   double? lastZoomVal;
   List<(double, double)> zoomTransitionQueue = [];
 
+
   void queueZoomTransition(double duration, double endValue) {
     var lastVal = lastZoomVal ?? endValue;
 

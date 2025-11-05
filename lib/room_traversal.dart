@@ -95,20 +95,20 @@ T     s     M
         ),
         '1'.codeUnitAt(0): GateMetadata.exit(
           destination: GateDestination.firstAutogen(
-            profile: easy,
+            boardDescriptionStack: easy,
           ),
           label: "Easy",
         ),
         '2'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: normal),
+          destination: GateDestination.firstAutogen(boardDescriptionStack: normal),
           label: "Normal",
         ),
         '3'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: hard),
+          destination: GateDestination.firstAutogen(boardDescriptionStack: hard),
           label: "Hard",
         ),
         '4'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(profile: extreme),
+          destination: GateDestination.firstAutogen(boardDescriptionStack: extreme),
           label: "Extreme",
         ),
       },
@@ -121,7 +121,7 @@ T     s     M
 
   Future<DartBoard> getRoom(GateDestination gateDestination) async {
     if (gateDestination is GateDestination_FirstAutogen) {
-      await dartLoadBoardDescriptionStack(boardDescStack: gateDestination.profile);
+      await dartLoadBoardDescriptionStack(boardDescStack: gateDestination.boardDescriptionStack);
     }
 
     if (gateDestination is GateDestination_NextAutoGen || gateDestination is GateDestination_FirstAutogen) {

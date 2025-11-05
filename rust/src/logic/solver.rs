@@ -33,6 +33,13 @@ impl Analysis {
         ret
     }
 
+    pub fn check_still_applies(&self, board: &Board, initial_gate_id: usize) -> bool {
+        self.routes
+            .iter()
+            .flat_map(|e| e)
+            .all(|route| route.solves(board, initial_gate_id))
+    }
+
     pub fn print(&self) {
         println!("analisis:");
 
@@ -81,12 +88,24 @@ impl Route {
 
         let mut decision_positions = 0;
         for (start, end) in self.solution.iter().tuple_windows() {
-            if !tile_map.at(&(start.1 + end.0.right().vector())).stops_player_during_gameplay() && !tile_map.at(&(start.1 + end.0.right().vector()*2)).stops_player_during_gameplay(){
-                decision_positions +=1;
+            if !tile_map
+                .at(&(start.1 + end.0.right().vector()))
+                .stops_player_during_gameplay()
+                && !tile_map
+                    .at(&(start.1 + end.0.right().vector() * 2))
+                    .stops_player_during_gameplay()
+            {
+                decision_positions += 1;
             }
-            if !tile_map.at(&(start.1 + end.0.left().vector())).stops_player_during_gameplay() && !tile_map.at(&(start.1 + end.0.left().vector()*2)).stops_player_during_gameplay(){
-                decision_positions +=1;
-            }            
+            if !tile_map
+                .at(&(start.1 + end.0.left().vector()))
+                .stops_player_during_gameplay()
+                && !tile_map
+                    .at(&(start.1 + end.0.left().vector() * 2))
+                    .stops_player_during_gameplay()
+            {
+                decision_positions += 1;
+            }
         }
 
         let positive_factors = [
@@ -99,6 +118,49 @@ impl Route {
         let negative_factors = [weakwalls_in_the_way as f32, boxes_in_the_way as f32];
 
         positive_factors.iter().sum::<f32>() / (negative_factors.iter().sum::<f32>() + 1.)
+    }
+
+    fn solves(&self, board: &Board, initial_gate_id: usize) -> bool {
+        // println!("-----");
+        // println!("check if {self:?} solves ");
+
+        // board.print(vec![]);
+
+        let mut cursor = SearchState {
+            tile_length: 0,
+            path: Rc::from(PathNode::Root {
+                root_direction: board.get_gate_direction(initial_gate_id),
+                root_position: board.get_gate_position(initial_gate_id),
+            }),
+            path_len: 0,
+            visitations: Visitations::new(board.get_width(), board.get_height()),
+            board: Rc::from(board.clone()),
+            broken_walls: 0,
+            hitted_boxes: 0,
+        };
+
+        for (direction, _) in self.solution.iter() {
+            // println!("moving {:?}", board.get_gate_direction(initial_gate_id));
+
+            cursor = match cursor.step(direction) {
+                Ok(new_cursor) => {
+                    // println!("new cursor is {new_cursor:?}");
+
+                    new_cursor
+                }
+                Err(_) => {
+
+                    return false;
+                }
+            };
+        }
+
+        if self.solution.last().unwrap().1 != cursor.path.get_position() {
+            // println!("position desync {pos:?} {:?}", cursor.path.get_position());
+            return false;
+        }
+
+        true
     }
 }
 
@@ -248,7 +310,11 @@ pub struct StepResult {
     pub pos: Pos,
 }
 
-pub fn analyze(initial_board: &Board, entry_gate_id: usize, exit_gate_id: usize) -> Result<Analysis, String> {
+pub fn analyze(
+    initial_board: &Board,
+    entry_gate_id: usize,
+    exit_gate_id: usize,
+) -> Result<Analysis, String> {
     // board.print(vec![]);
 
     let mut initial_visitations =

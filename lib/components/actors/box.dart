@@ -5,7 +5,7 @@ import 'package:icedash/components/room.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
 class Box extends Actor {
-  double timePerStep = 0.1;
+  double timePerStep = 0.07;
 
   RoomComponent room;
   Box(this.room, {super.position}) : super("box.png");

@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 use rand::{random, seq::IteratorRandom};
 
@@ -23,6 +23,12 @@ impl Deref for Board {
 
     fn deref(&self) -> &Self::Target {
         &self.map
+    }
+}
+
+impl DerefMut for Board {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.map
     }
 }
 
@@ -167,7 +173,7 @@ impl Board {
         let vignet = (width * height)
             * ((desc.vignet_percentage_min..=desc.vignet_percentage_max)
                 .choose(&mut rng)
-               .unwrap_or(0))
+                .unwrap_or(0))
             / 100;
 
         for _ in 0..vignet {
