@@ -1,59 +1,30 @@
+import 'package:icedash/BoardDescriptionChains/Interpolator.dart';
 import 'package:icedash/src/rust/api/main.dart';
 
-final easy = [
-  BoardDescription(
-    sizeRangeMin: 11,
+final easy = BoardDescriptionInterpolator(
+  end: BoardDescription(
+    sizeRangeMin: 7,
     sizeRangeMax: 14,
     weakWallsPercentageMin: 0,
     weakWallsPercentageMax: 0,
-    pilarsPercentageMin: 5,
-    pilarsPercentageMax: 10,
-    boxPercentageMin: 0,
-    boxPercentageMax: 3,
-    vignetPercentageMin: 15,     vignetPercentageMax: 20,
-  ),
-  BoardDescription(
-    sizeRangeMin: 10,
-    sizeRangeMax: 13,
-    weakWallsPercentageMin: 0,
-    weakWallsPercentageMax: 0,
-    pilarsPercentageMin: 5,
-    pilarsPercentageMax: 10,
-    boxPercentageMin: 0,
-    boxPercentageMax: 3,
-    vignetPercentageMin: 15,     vignetPercentageMax: 20,
-  ),
-  BoardDescription(
-    sizeRangeMin: 9,
-    sizeRangeMax: 12,
-    weakWallsPercentageMin: 0,
-    weakWallsPercentageMax: 0,
-    pilarsPercentageMin: 5,
-    pilarsPercentageMax: 10,
+    pilarsPercentageMin: 2,
+    pilarsPercentageMax: 5,
     boxPercentageMin: 0,
     boxPercentageMax: 0,
-    vignetPercentageMin: 15,     vignetPercentageMax: 20,
+    vignetPercentageMin: 10,
+    vignetPercentageMax: 15,
   ),
-  BoardDescription(
-    sizeRangeMin: 8,
-    sizeRangeMax: 11,
-    weakWallsPercentageMin: 0,
-    weakWallsPercentageMax: 0,
-    pilarsPercentageMin: 5,
-    pilarsPercentageMax: 10,
-    boxPercentageMin: 0,
-    boxPercentageMax: 0,
-    vignetPercentageMin: 15,     vignetPercentageMax: 20,
-  ),
-  BoardDescription(
+
+  start: BoardDescription(
     sizeRangeMin: 7,
     sizeRangeMax: 10,
     weakWallsPercentageMin: 0,
     weakWallsPercentageMax: 0,
-    pilarsPercentageMin: 5,
-    pilarsPercentageMax: 10,
+    pilarsPercentageMin: 2,
+    pilarsPercentageMax: 5,
     boxPercentageMin: 0,
     boxPercentageMax: 0,
-    vignetPercentageMin: 15,     vignetPercentageMax: 20,
+    vignetPercentageMin: 10,
+    vignetPercentageMax: 15,
   ),
-];
+).getStack(5);

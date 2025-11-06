@@ -98,6 +98,7 @@ pub struct BoardDescription {
 }
 
 impl BoardDescription {
+    #[frb(sync)]
     pub fn from_list(data: Vec<isize>) -> BoardDescription {
         BoardDescription {
             size_range_min: data[0],
@@ -113,6 +114,7 @@ impl BoardDescription {
         }
     }
 
+    #[frb(sync)]
     pub fn as_list(&self) -> Vec<isize> {
         vec![
             self.size_range_min,
