@@ -1,3 +1,4 @@
+import 'package:flame_audio/flame_audio.dart';
 import 'package:icedash/BoardDescriptionChains/easy.dart';
 import 'package:icedash/BoardDescriptionChains/extreme.dart';
 import 'package:icedash/BoardDescriptionChains/hard.dart';
@@ -94,9 +95,7 @@ T     s     M
           destination: GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(0)),
         ),
         '1'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(
-            boardDescriptionStack: easy,
-          ),
+          destination: GateDestination.firstAutogen(boardDescriptionStack: easy),
           label: "Easy",
         ),
         '2'.codeUnitAt(0): GateMetadata.exit(
@@ -120,6 +119,8 @@ T     s     M
   }
 
   Future<DartBoard> getRoom(GateDestination gateDestination) async {
+    var playedAudio = "";
+
     if (gateDestination is GateDestination_FirstAutogen) {
       await dartLoadBoardDescriptionStack(boardDescStack: gateDestination.boardDescriptionStack);
     }
@@ -128,13 +129,22 @@ T     s     M
       AutoGenOutput ret = await dartGetNewBoard();
 
       if (ret is AutoGenOutput_Ok) {
+        if (gateDestination is GateDestination_FirstAutogen) {
+          // TODO play audio feedback for starting a new game
+        } else if (gateDestination is GateDestination_NextAutoGen) {
+          FlameAudio.play('won_room.mp3');
+        }
+
         return ret.field0;
       } else if (ret is AutoGenOutput_NoMoreDescriptionsLoaded) {
+        FlameAudio.play('won_strech.mp3');
         return endOfGameRoom;
       } else {
         return waitRoom;
       }
     } else if (gateDestination is GateDestination_RoomIdWithGate) {
+      FlameAudio.play('change_room.mp3');
+
       var roomData = lobbyRooms[gateDestination.roomId];
 
       if (roomData != null) {

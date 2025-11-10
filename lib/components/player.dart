@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/services.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/main.dart';
@@ -85,19 +86,32 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
     if (!(await game.idWorld.canWalkInto(position, position + delta, dir, userPush))) {
       sliding = false;
+      Tile hitTile = await game.idWorld.getTile(position + delta);
+
       bool consecuences = await game.idWorld.hit(position + delta, dir);
+
+      int move_i = remainingMoves == null ? 1 : remainingMoves!;
+
+      String audio = 'move_$move_i.mp3';
 
       if (movementLenght != 0 || consecuences) {
         if (remainingMoves != null) {
           remainingMoves = remainingMoves! - 1;
-          // print("remaining moves: $remainingMoves");
+          print("remaining moves: $remainingMoves");
           if (remainingMoves == 0) {
-            Tile hitTile = await game.idWorld.getTile(position + delta);
-
             if (hitTile is! Tile_Gate) {
+              audio = "too_many_moves.mp3";
               reset();
             }
           }
+        }
+      }
+
+      if (hitTile is! Tile_Gate) {
+        FlameAudio.play(audio);
+      } else {
+        if (hitTile.field0 is GateMetadata_EntryOnly) {
+          FlameAudio.play(audio);
         }
       }
 

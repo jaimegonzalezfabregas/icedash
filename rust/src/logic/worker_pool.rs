@@ -104,7 +104,7 @@ pub fn start_search() {
         < (available_parallelism()
             .expect("couldnt get available parallelism")
             .get()
-            - 3)
+            / 2)
     {
         // while ret.len() < 1 {
         let (ctrl_tx, ctrl_rx) = mpsc::channel();
@@ -134,21 +134,17 @@ pub fn worker_thread(
     board_desc: BoardDescription,
 ) {
     let mut best_so_far = 0.;
-    // let mut iter = 0;
-    // let mut successes: i32 = 0;
+    let mut iter = 0;
 
     loop {
-        // iter += 1;
+        iter += 1;
         match messenger.try_recv() {
             Ok(CtrlMsg::Halt(time)) => {
                 thread::sleep(time::Duration::from_millis(time as u64));
                 continue;
             }
             Ok(CtrlMsg::Kill) => {
-                // println!(
-                //     "reached {iter} iter and {successes} successes (ratio of {})",
-                //     successes as f32 / iter as f32
-                // );
+                println!("reached {iter} iter, killed by ctrl msg");
 
                 return;
             }
@@ -161,7 +157,11 @@ pub fn worker_thread(
                 let fitness = analysis.compute_fitness(&board.map);
                 if fitness > best_so_far {
                     best_so_far = fitness;
-                    let _ = returns.send((analysis, board));
+                    if let Err(_) = returns.send((analysis, board)) {
+                        println!("reached {iter} iter, killed by broken pipe");
+
+                        return;
+                    }
                 }
             }
         }

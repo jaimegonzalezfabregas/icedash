@@ -4,7 +4,7 @@ import 'package:icedash/src/rust/api/main.dart';
 final easy = BoardDescriptionInterpolator(
   end: BoardDescription(
     sizeRangeMin: 7,
-    sizeRangeMax: 14,
+    sizeRangeMax: 9,
     weakWallsPercentageMin: 0,
     weakWallsPercentageMax: 0,
     pilarsPercentageMin: 2,
@@ -17,7 +17,7 @@ final easy = BoardDescriptionInterpolator(
 
   start: BoardDescription(
     sizeRangeMin: 7,
-    sizeRangeMax: 10,
+    sizeRangeMax: 8,
     weakWallsPercentageMin: 0,
     weakWallsPercentageMax: 0,
     pilarsPercentageMin: 2,

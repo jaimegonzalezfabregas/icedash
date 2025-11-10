@@ -46,7 +46,7 @@ class IceDashWorld extends World with HasGameReference {
 
     var transition = EffectController(duration: 0);
 
-    double camTransitionDuration = 1;
+    double camTransitionDuration = 0.5;
     double camTransitionStaticPortion = 0.2;
 
     if (lastRoom != null) {
@@ -104,7 +104,7 @@ class IceDashWorld extends World with HasGameReference {
         (double, double) nextTransition = zoomTransitionQueue.removeAt(0);
         zooming = true;
 
-        camera.viewfinder.add(ScaleEffect.to(Vector2.all(nextTransition.$1), CurvedEffectController(nextTransition.$2, Curves.easeInOut)));
+        camera.viewfinder.add(ScaleEffect.to(Vector2.all(nextTransition.$1), CurvedEffectController(nextTransition.$2, Curves.linear)));
 
         add(
           FunctionEffect(

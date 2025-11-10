@@ -4,28 +4,28 @@ import 'package:icedash/BoardDescriptionChains/Interpolator.dart';
 
 final hard = BoardDescriptionInterpolator(
   end: BoardDescription(
-    sizeRangeMin: 15,
-    sizeRangeMax: 20,
+    sizeRangeMin: 10,
+    sizeRangeMax: 15,
     weakWallsPercentageMin: 0,
-    weakWallsPercentageMax: 0,
+    weakWallsPercentageMax: 4,
     pilarsPercentageMin: 2,
     pilarsPercentageMax: 5,
     boxPercentageMin: 0,
-    boxPercentageMax: 0,
+    boxPercentageMax: 1,
     vignetPercentageMin: 10,
     vignetPercentageMax: 15,
   ),
 
   start: BoardDescription(
-    sizeRangeMin: 10,
+    sizeRangeMin: 7,
     sizeRangeMax: 15,
     weakWallsPercentageMin: 0,
-    weakWallsPercentageMax: 0,
+    weakWallsPercentageMax: 3,
     pilarsPercentageMin: 2,
     pilarsPercentageMax: 5,
     boxPercentageMin: 0,
-    boxPercentageMax: 0,
+    boxPercentageMax: 1,
     vignetPercentageMin: 10,
     vignetPercentageMax: 15,
   ),
-).getStack(5);
+).getStack(10);

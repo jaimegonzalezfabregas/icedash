@@ -8,7 +8,7 @@ class Box extends Actor {
   double timePerStep = 0.07;
 
   RoomComponent room;
-  Box(this.room, {super.position}) : super("box.png");
+  Box(this.room, {super.position}) : super("hit_box.png");
 
   @override
   Future<bool> hit(Direction dir) async {

@@ -46,3 +46,5 @@ app.*.map.json
 assets/tileset1.zip
 lib/src/rust/
 rust/src/frb_generated.rs
+assets/audio/audio_studio/node_modules
+assets/audio/audio_studio/.mscbackup/.src.mscz~

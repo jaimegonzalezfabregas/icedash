@@ -256,15 +256,11 @@ pub fn flood(
 }
 
 pub fn asthetic_cleanup(mut ret: Board, analysis: &Analysis, initial_gate_id: usize) -> Board {
-    println!("pre cleanup");
 
     // assert!(analysis.check_still_applies(&ret, initial_gate_id));
     let inner_pos = ret.map.all_inner_pos().collect::<Vec<_>>();
 
-    ret.print(vec![]);
-
-    println!("remove unreacheable");
-
+   
 
     let reachability = flood(
         ret.gates
@@ -311,9 +307,6 @@ pub fn asthetic_cleanup(mut ret: Board, analysis: &Analysis, initial_gate_id: us
         }
     }
 
-    ret.print(vec![]);
-
-    println!("remove borders");
 
     for _ in 0..4 {
         ret = ret.rotate_left();

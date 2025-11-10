@@ -244,6 +244,18 @@ impl Tile {
         }
     }
 
+     pub fn it_goes(&self) -> String {
+        String::from(match self {
+            Tile::Gate(_) => "",
+            Tile::Wall => "Hit50.waw",
+            Tile::Stop => "",
+            Tile::Ice => "",
+            Tile::WeakWall => "",
+            Tile::Outside => "",
+            Tile::Box => "",
+        })
+    }
+
     pub(crate) fn from_symbol(symbol: u8, gate_metadata: &HashMap<u8, GateMetadata>) -> Tile {
         match symbol {
             b'#' => Tile::Wall,
