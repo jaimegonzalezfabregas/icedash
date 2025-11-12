@@ -16,11 +16,7 @@ const outputDir = "../";
 
 const splitAudio = (inputFile, chunkNames) => {
 
-    ffmpeg.ffprobe(inputFile, (err, metadata) => {
-        if (err) {
-            console.error("Error reading audio file: ", err);
-            return;
-        }
+   
 
 
         for (let i = 0; i < chunkNames.length; i++) {
@@ -40,7 +36,7 @@ const splitAudio = (inputFile, chunkNames) => {
                 })
                 .run();
         }
-    });
+    
 };
 
 splitAudio(input_audio_file, audio_chunk_names);
