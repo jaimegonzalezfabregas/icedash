@@ -13,7 +13,7 @@ class Box extends Actor {
 
   @override
   Future<bool> hit(Direction dir) async {
-    FlameAudio.play('hit_box.mp3');
+    await FlameAudio.play('hit_box.mp3');
 
     var delta = Vector2.array(dir.dartVector());
     if (!await room.canBoxWalkInto(position + delta, dir)) {

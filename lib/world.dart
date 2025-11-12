@@ -46,8 +46,8 @@ class IceDashWorld extends World with HasGameReference {
 
     var transition = EffectController(duration: 0);
 
-    double camTransitionDuration = 0.5;
-    double camTransitionStaticPortion = 0.2;
+    double camTransitionDuration = 0.75;
+    double camTransitionStaticPortion = 0.33;
 
     if (lastRoom != null) {
       transition = EffectController(

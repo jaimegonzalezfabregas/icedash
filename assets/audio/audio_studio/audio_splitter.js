@@ -7,7 +7,7 @@ const audio_chunk_names = [
     "move_6", "move_7", "move_8", "move_9", "move_10",
     "move_11", "move_12", "move_13", "move_14", "move_15",
     "move_16", "move_17", "too_many_moves", "won_room",
-    "won_strech", "hit_box", "change_room"
+    "won_strech", "hit_box", "change_room", "start_strech"
 ];
 const chunkDuration = 4;
 

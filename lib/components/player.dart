@@ -15,9 +15,11 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   int? remainingMovesReset;
   int movementLenght = 0;
 
+  String animationState = "idle";
+
   @override
   Future<void> onLoad() async {
-    sprite = await Sprite.load('player.png');
+    sprite = await Sprite.load('player_idle.png');
 
     add(
       KeyboardListenerComponent(
@@ -71,6 +73,45 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   }
 
   void push(Direction dir, {bool userPush = true}) async {
+    late String axis;
+
+    switch (dir) {
+      case Direction.north:
+      case Direction.south:
+        axis = "vertical";
+        break;
+      case Direction.east:
+        axis = "right";
+        break;
+      case Direction.west:
+        axis = "left";
+        break;
+    }
+
+    if (animationState == "idle") {
+      add(
+        FunctionEffect(
+          (_, __) {},
+          LinearEffectController(timePerStep / 2),
+          onComplete: () async {
+            sprite = await Sprite.load('player_${axis}0001.png');
+            animationState = "${axis}0001";
+          },
+        ),
+      );
+
+      add(
+        FunctionEffect(
+          (_, __) {},
+          LinearEffectController(timePerStep),
+          onComplete: () async {
+            sprite = await Sprite.load('player_${axis}0002.png');
+            animationState = "${axis}0002";
+          },
+        ),
+      );
+    }
+
     Vector2 delta = Vector2.array(dir.dartVector());
 
     if (sliding) {
@@ -86,6 +127,29 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
     if (!(await game.idWorld.canWalkInto(position, position + delta, dir, userPush))) {
       sliding = false;
+
+      add(
+        FunctionEffect(
+          (_, __) {},
+          LinearEffectController(timePerStep / 2),
+          onComplete: () async {
+            sprite = await Sprite.load('player_${axis}0001.png');
+            animationState = "${axis}0001";
+          },
+        ),
+      );
+
+      add(
+        FunctionEffect(
+          (_, __) {},
+          LinearEffectController(timePerStep),
+          onComplete: () async {
+            sprite = await Sprite.load('player_idle.png');
+            animationState = "idle";
+          },
+        ),
+      );
+
       Tile hitTile = await game.idWorld.getTile(position + delta);
 
       bool consecuences = await game.idWorld.hit(position + delta, dir);
@@ -108,10 +172,10 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       }
 
       if (hitTile is! Tile_Gate) {
-        FlameAudio.play(audio);
+        await FlameAudio.play(audio);
       } else {
         if (hitTile.field0 is GateMetadata_EntryOnly) {
-          FlameAudio.play(audio);
+          await FlameAudio.play(audio);
         }
       }
 
