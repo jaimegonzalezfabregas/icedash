@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
@@ -9,9 +10,10 @@ import 'package:icedash/components/actors/entrance.dart';
 import 'package:icedash/components/actors/gate.dart';
 import 'package:icedash/components/actors/weak_wall.dart';
 import 'package:icedash/components/sign.dart';
+import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/src/rust/api/pos.dart';
 import 'package:icedash/src/rust/api/tile.dart';
-import 'package:icedash/src/rust/logic/pos.dart';
 
 class RoomComponent extends Component {
   DartBoard room;
@@ -19,20 +21,20 @@ class RoomComponent extends Component {
   late Direction exitDirection;
 
   Vector2 entranceWorldPos;
-  late Vector2 entranceRoomPos;
+  late Future<Vector2> entranceRoomPos;
   Map<Pos, SpriteComponent> tileSpriteGrid = {};
   List<Actor> actorList = [];
   Direction entranceDirection;
 
   BigInt entranceGateId;
 
-  Vector2 mapPos2WorldVector(Pos p) {
-    return Vector2.array(pos2DartVector(p: p)) - entranceRoomPos + entranceWorldPos;
+  Future<Vector2> mapPos2WorldVector(Pos p) async {
+    return Vector2.array(await p.dartVector()) - await entranceRoomPos + entranceWorldPos;
   }
 
-  Pos worldVector2MapPos(Vector2 v) {
-    int x = (v.x - entranceWorldPos.x + entranceRoomPos.x).round();
-    int y = (v.y - entranceWorldPos.y + entranceRoomPos.y).round();
+  Future<Pos> worldVector2MapPos(Vector2 v) async {
+    int x = (v.x - entranceWorldPos.x + (await entranceRoomPos).x).round();
+    int y = (v.y - entranceWorldPos.y + (await entranceRoomPos).y).round();
     return Pos(x: x, y: y);
   }
 
@@ -40,22 +42,9 @@ class RoomComponent extends Component {
     buildSpriteGrid(1);
   }
 
-  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, this.entranceGateId) {
-    while (room.getGateDirection(gateId: entranceGateId) != entranceDirection) {
-      room = room.rotateLeft();
-    }
+  Completer<Rect> worldBBCompleter = Completer<Rect>();
 
-    entranceRoomPos = Vector2.array(pos2DartVector(p: room.getGatePosition(gateId: entranceGateId)));
-  }
-
-  Future getWorldBB() async {
-    return Rect.fromLTWH(
-      entranceWorldPos.x - entranceRoomPos.x - 0.5,
-      entranceWorldPos.y - entranceRoomPos.y - 0.5,
-      (await room.getWidth()).toDouble(),
-      (await room.getHeight()).toDouble(),
-    );
-  }
+  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, this.entranceGateId);
 
   Future fadeIn() async {
     var fadeDuration = 0.5;
@@ -84,7 +73,7 @@ class RoomComponent extends Component {
   }
 
   Future fadeOut(BigInt exitGateId) async {
-    Vector2 exitWorldPos = mapPos2WorldVector(room.getGatePosition(gateId: exitGateId));
+    Vector2 exitWorldPos = await mapPos2WorldVector(await room.getGatePosition(gateId: exitGateId));
 
     var fadeDuration = 0.5;
     var rippleDuration = 0.1;
@@ -130,6 +119,24 @@ class RoomComponent extends Component {
 
   @override
   void onLoad() async {
+    print("room onload");
+    while (await room.getGateDirection(gateId: entranceGateId) != entranceDirection) {
+      room = await room.rotateLeft();
+    }
+
+    entranceRoomPos = room.getGatePosition(gateId: entranceGateId).then((e) => e.dartVector().then((e) => Vector2.array(e)));
+
+    entranceRoomPos.then((entranceRoomPos) async {
+      worldBBCompleter.complete(
+        Rect.fromLTWH(
+          entranceWorldPos.x - (entranceRoomPos).x - 0.5,
+          entranceWorldPos.y - (entranceRoomPos).y - 0.5,
+          (await room.getWidth()).toDouble(),
+          (await room.getHeight()).toDouble(),
+        ),
+      );
+    });
+
     buildSpriteGrid(0).then((value) => fadeIn());
   }
 
@@ -164,7 +171,7 @@ class RoomComponent extends Component {
             SpriteComponent img = SpriteComponent(
               priority: 0,
               size: Vector2.all(1.01),
-              position: mapPos2WorldVector(pos),
+              position: await mapPos2WorldVector(pos),
               anchor: Anchor.center,
               angle: bgImg.$2 * pi / 2,
             );
@@ -186,14 +193,14 @@ class RoomComponent extends Component {
             if (destination != null) {
               String? label = await room.getGateLabel(gateId: gateId);
 
-              var gate = Gate(this, gateId, destination, room.getGateDirection(gateId: gateId), label, position: mapPos2WorldVector(pos));
+              var gate = Gate(this, gateId, destination, await room.getGateDirection(gateId: gateId), label, position: await mapPos2WorldVector(pos));
               gate.opacity = startingOpacity;
               add(gate);
               actorList.add(gate);
             }
 
             if (usedEntrance) {
-              var entrance = EntranceTmpIcePatch(position: mapPos2WorldVector(pos));
+              var entrance = EntranceTmpIcePatch(position: await mapPos2WorldVector(pos));
               add(
                 FunctionEffect(
                   (_, _) {},
@@ -207,24 +214,18 @@ class RoomComponent extends Component {
               entrance.opacity = startingOpacity;
               add(entrance);
             }
-          }
-
-          if (tile is Tile_Box) {
-            var box = Box(this, position: mapPos2WorldVector(pos));
+          } else if (tile is Tile_Box) {
+            var box = Box(this, position: await mapPos2WorldVector(pos));
             box.opacity = startingOpacity;
             actorList.add(box);
             add(box);
-          }
-
-          if (tile is Tile_WeakWall) {
-            var weakWall = WeakWall(position: mapPos2WorldVector(pos));
+          } else if (tile is Tile_WeakWall) {
+            var weakWall = WeakWall(position: await mapPos2WorldVector(pos));
             actorList.add(weakWall);
             weakWall.opacity = startingOpacity;
             add(weakWall);
-          }
-
-          if (tile is Tile_Sign) {
-            var sign = Sign(tile.text, 0, position: mapPos2WorldVector(pos), width: tile.width, height: tile.height);
+          } else if (tile is Tile_Sign) {
+            var sign = Sign(tile.text, 0, position: await mapPos2WorldVector(pos), width: tile.width, height: tile.height);
             add(sign);
           }
         }),
@@ -290,7 +291,7 @@ class RoomComponent extends Component {
 
   Future<Tile> getTile(Vector2 worldPos) async {
     try {
-      Pos localPos = worldVector2MapPos(worldPos);
+      Pos localPos = await worldVector2MapPos(worldPos);
 
       return room.at(p: localPos);
     } catch (_) {

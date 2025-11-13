@@ -1,7 +1,4 @@
-use crate::{
-    api::main::{Direction},
-    logic::pos::Pos,
-};
+use crate::api::{direction::Direction, pos::Pos};
 
 #[derive(Clone, Debug)]
 pub struct GateEntry {

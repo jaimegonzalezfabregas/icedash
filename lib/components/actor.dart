@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
-import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/src/rust/api/direction.dart';
 
 abstract class Actor extends SpriteComponent {
   String asset;

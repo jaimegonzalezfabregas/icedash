@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:icedash/components/player.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/room_traversal.dart';
+import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/tile.dart';
 
 import 'src/rust/api/main.dart';
@@ -33,7 +34,7 @@ class IceDashWorld extends World with HasGameReference {
   void predictedGoToRoom(GateDestination destination, Vector2 position, Direction dir) {}
 
   Future<void> goToRoom(GateDestination destination, Vector2 worldStichPos, Direction exitDirection) async {
-    Vector2 dpos = Vector2.array(exitDirection.dartVector());
+    Vector2 dpos = Vector2.array(await exitDirection.dartVector());
     Vector2 entrancePostion = worldStichPos + dpos;
 
     var board = await roomTraversal.getRoom(destination);
@@ -44,6 +45,7 @@ class IceDashWorld extends World with HasGameReference {
   Future<void> setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) async {
     var lastRoom = _currentRoom;
     _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room, entranceGateId);
+    add(_currentRoom!);
 
     var transition = EffectController(duration: 0);
 
@@ -58,7 +60,7 @@ class IceDashWorld extends World with HasGameReference {
       );
     }
 
-    Rect newFocus = await _currentRoom!.getWorldBB();
+    Rect newFocus = await _currentRoom!.worldBBCompleter.future;
 
     queueZoomTransition(
       camTransitionDuration * (1 + camTransitionStaticPortion * 2),
@@ -67,7 +69,6 @@ class IceDashWorld extends World with HasGameReference {
 
     camera.lookAt(newFocus.center.toVector2(), transition);
 
-    add(_currentRoom!);
 
     player.remainingMovesReset = await room.getMaxMovementCount();
     if (player.remainingMovesReset != null) {
@@ -80,7 +81,6 @@ class IceDashWorld extends World with HasGameReference {
 
   double? lastZoomVal;
   List<(double, double)> zoomTransitionQueue = [];
-
 
   void queueZoomTransition(double duration, double endValue) {
     var lastVal = lastZoomVal ?? endValue;
@@ -123,7 +123,7 @@ class IceDashWorld extends World with HasGameReference {
 
   @override
   void onGameResize(Vector2 size) async {
-    Rect focus = await _currentRoom!.getWorldBB();
+    Rect focus = await _currentRoom!.worldBBCompleter.future;
     if (_currentRoom != null) {
       camera.zoomTo(min(game.size.x / focus.width, game.size.y / focus.height), LinearEffectController(0));
     }

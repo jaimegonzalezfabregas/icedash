@@ -7,6 +7,7 @@ import 'package:icedash/components/actor.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/components/sign.dart';
 import 'package:icedash/main.dart';
+import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/world.dart';
 

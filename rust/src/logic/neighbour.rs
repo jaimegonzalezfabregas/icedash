@@ -1,4 +1,4 @@
-use rand::seq::{IndexedRandom, IteratorRandom};
+use rand::seq::IteratorRandom;
 
 use crate::api::{main::GateMetadata, tile::Tile};
 
@@ -38,7 +38,7 @@ impl Neighbour<Tile> {
 
     pub fn get_asset(&self) -> Option<(String, isize)> {
         let mut rng = rand::rng();
-        rng.reseed();
+        rng.reseed().expect("random initialization failed");
 
         match self.center {
             Tile::Gate(GateMetadata::Exit { .. })
@@ -89,7 +89,10 @@ impl Neighbour<Tile> {
                             ..
                         } => (
                             100,
-                            Some(((format!("wall/{}.png",(1..=8).choose(&mut rng).unwrap())).into(), i)),
+                            Some((
+                                (format!("wall/{}.png", (1..=8).choose(&mut rng).unwrap())).into(),
+                                i,
+                            )),
                         ),
 
                         _ => (0, None),

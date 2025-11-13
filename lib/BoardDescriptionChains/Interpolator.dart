@@ -7,30 +7,30 @@ class BoardDescriptionInterpolator {
 
   BoardDescriptionInterpolator({required this.start, required this.end});
 
-  List<BoardDescription> getStack(int length){
-    return getChain(length).reversed.toList();
+  Future<List<BoardDescription>> getStack(int length) async {
+    return (await getChain(length)).reversed.toList();
   }
 
-  List<BoardDescription> getChain(int length) {
+  Future<List<BoardDescription>> getChain(int length) async {
     List<BoardDescription> ret = [];
 
     for (var i = 0; i < length; i++) {
-      ret.add(getInterpolated(i / (length - 1)));
+      ret.add(await getInterpolated(i / (length - 1)));
     }
 
     return ret;
   }
 
-  BoardDescription getInterpolated(double factor) {
-    var start_data = (start.asList()).map((i) => i.toDouble()).toList();
-    var end_data = (end.asList()).map((i) => i.toDouble()).toList();
+  Future<BoardDescription> getInterpolated(double factor) async {
+    var startData = (await start.asList()).map((i) => i.toDouble()).toList();
+    var endData = (await end.asList()).map((i) => i.toDouble()).toList();
 
-    var interpolated_data = start_data;
+    var interpolatedData = startData;
 
-    for (var i = 0; i < interpolated_data.length; i++) {
-      interpolated_data[i] += (end_data[i] - start_data[i]) * factor;
+    for (var i = 0; i < interpolatedData.length; i++) {
+      interpolatedData[i] += (endData[i] - startData[i]) * factor;
     }
 
-    return BoardDescription.fromList(data: Int64List.fromList(interpolated_data.map((e) => e.round()).toList()));
+    return BoardDescription.fromList(data: Int64List.fromList(interpolatedData.map((e) => e.round()).toList()));
   }
 }

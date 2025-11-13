@@ -1,4 +1,5 @@
-use crate::logic::pos::Pos;
+use crate::api::pos::Pos;
+
 
 #[derive(Debug, Clone)]
 pub struct Visitations(Vec<u128>, isize);

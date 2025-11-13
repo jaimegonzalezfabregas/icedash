@@ -3,7 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/src/rust/api/direction.dart';
 
 import 'package:icedash/src/rust/frb_generated.dart';
 import 'package:icedash/world.dart';

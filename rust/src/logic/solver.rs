@@ -3,8 +3,8 @@ use std::{collections::VecDeque, rc::Rc};
 use itertools::Itertools;
 
 use crate::{
-    api::{main::Direction, tile::Tile},
-    logic::{board::Board, matrix::TileMap, pos::Pos, visitations::Visitations},
+    api::{direction::Direction, pos::Pos, tile::Tile},
+    logic::{board::Board, matrix::TileMap,  visitations::Visitations},
 };
 
 const EXTRA_MOVES_SEARCH_MARGIN: usize = 3;
@@ -149,7 +149,6 @@ impl Route {
                     new_cursor
                 }
                 Err(_) => {
-
                     return false;
                 }
             };

@@ -3,9 +3,9 @@ use std::{collections::VecDeque, vec};
 use rand::{random};
 
 use crate::{
-    api::{main::{Direction, LeftRotatable}, tile::Tile},
+    api::{direction::Direction, main::LeftRotatable, pos::Pos, tile::Tile},
     logic::{
-        board::{Board, TileMapWrap},  matrix::TileMap, pos::Pos, solver::Analysis, visitations::Visitations
+        board::{Board, TileMapWrap},  matrix::TileMap,  solver::Analysis, visitations::Visitations
     },
 };
 

@@ -6,4 +6,3 @@ pub mod worker_pool;
 mod visitations;
 pub mod gate;
 pub mod neighbour;
-pub mod pos;

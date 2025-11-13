@@ -1,6 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:icedash/components/actor.dart';
-import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/src/rust/api/direction.dart';
 
 class WeakWall extends Actor {
   WeakWall({super.position}) : super("lock.png");

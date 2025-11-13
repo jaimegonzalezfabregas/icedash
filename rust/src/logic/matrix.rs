@@ -1,8 +1,8 @@
 use flutter_rust_bridge::frb;
 
 use crate::{
-    api::{main::{Direction, LeftRotatable}, tile::Tile},
-    logic::{ neighbour::Neighbour, pos::Pos},
+    api::{direction::Direction, main::LeftRotatable, pos::Pos, tile::Tile},
+    logic::neighbour::Neighbour,
 };
 
 pub(crate) type TileMap = Matrix<Tile>;
@@ -29,7 +29,6 @@ impl<T: Clone + LeftRotatable + Default> LeftRotatable for Matrix<T> {
 }
 
 impl<T: Clone> Matrix<T> {
-
     pub fn rotate_left_keeping_elements(&self) -> Matrix<T>
     where
         T: Default,
@@ -56,7 +55,6 @@ impl<T: Clone> Matrix<T> {
             T::default()
         }
     }
-
 
     pub fn new(width: isize, height: isize) -> Matrix<T>
     where

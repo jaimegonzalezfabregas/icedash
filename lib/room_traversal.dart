@@ -59,68 +59,7 @@ Future<DartBoard> endOfGameRoom(String time, String level) async {
 }
 
 class RoomTraversal {
-  Map<String, (String, Map<int, GateMetadata>, List<(String, int, int)>)> lobbyRooms = {
-    "StartLobby": (
-      '''
-# # # X # # # 
-# S         # 
-#   #       # 
-T     s     M 
-#           # 
-# #   S     # 
-# # # E # # # 
-''',
-      {
-        'T'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.roomIdWithGate(roomId: "tutorial", gateId: BigInt.from(0), gameMode: "tutorial"),
-          label: "Tutorial",
-        ),
-        'X'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.roomIdWithGate(roomId: "singleplayer", gateId: BigInt.from(4)),
-          label: "Single Player",
-        ),
-        'M'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.roomIdWithGate(roomId: "multiplayer", gateId: BigInt.from(0)),
-          label: "Multi Player",
-        ),
-      },
-      [("Soy un cartel muy largo", 1, 1), ("Soy otro cartel", 3, 1)],
-    ),
-
-    "singleplayer": (
-      '''
-# # # # # # # 
-#           # 
-3     s     4 
-#           # 
-1     s     2 
-#           # 
-# # # R # # # 
-''',
-      {
-        'R'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(0)),
-        ),
-        '1'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(boardDescriptionStack: easy, gameMode: "easy"),
-          label: "Easy",
-        ),
-        '2'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(boardDescriptionStack: normal, gameMode: "easy"),
-          label: "Normal",
-        ),
-        '3'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(boardDescriptionStack: hard, gameMode: "hard"),
-          label: "Hard",
-        ),
-        '4'.codeUnitAt(0): GateMetadata.exit(
-          destination: GateDestination.firstAutogen(boardDescriptionStack: extreme, gameMode: "expert"),
-          label: "Extreme",
-        ),
-      },
-      [],
-    ),
-  };
+  
 
   GateDestination getOnLoadDestination() {
     return GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(3));
@@ -130,6 +69,68 @@ T     s     M
   String? gameMode;
 
   Future<DartBoard> getRoom(GateDestination gateDestination) async {
+    Map<String, (String, Map<int, GateMetadata>, List<(String, int, int)>)> lobbyRooms = {
+      "StartLobby": (
+        '''
+# # # X # # # 
+# S         # 
+#   #       # 
+T     s     M 
+#           # 
+# #   S     # 
+# # # E # # # 
+''',
+        {
+          'T'.codeUnitAt(0): GateMetadata.exit(
+            destination: GateDestination.roomIdWithGate(roomId: "tutorial", gateId: BigInt.from(0), gameMode: "tutorial"),
+            label: "Tutorial",
+          ),
+          'X'.codeUnitAt(0): GateMetadata.exit(
+            destination: GateDestination.roomIdWithGate(roomId: "singleplayer", gateId: BigInt.from(4)),
+            label: "Single Player",
+          ),
+          'M'.codeUnitAt(0): GateMetadata.exit(
+            destination: GateDestination.roomIdWithGate(roomId: "multiplayer", gateId: BigInt.from(0)),
+            label: "Multi Player",
+          ),
+        },
+        [("Soy un cartel muy largo", 1, 1), ("Soy otro cartel", 3, 1)],
+      ),
+
+      "singleplayer": (
+        '''
+# # # # # # # 
+#           # 
+3     s     4 
+#           # 
+1     s     2 
+#           # 
+# # # R # # # 
+''',
+        {
+          'R'.codeUnitAt(0): GateMetadata.exit(
+            destination: GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: BigInt.from(0)),
+          ),
+          '1'.codeUnitAt(0): GateMetadata.exit(
+            destination: GateDestination.firstAutogen(boardDescriptionStack: await easy, gameMode: "easy"),
+            label: "Easy",
+          ),
+          '2'.codeUnitAt(0): GateMetadata.exit(
+            destination: GateDestination.firstAutogen(boardDescriptionStack: await normal, gameMode: "easy"),
+            label: "Normal",
+          ),
+          '3'.codeUnitAt(0): GateMetadata.exit(
+            destination: GateDestination.firstAutogen(boardDescriptionStack: await hard, gameMode: "hard"),
+            label: "Hard",
+          ),
+          '4'.codeUnitAt(0): GateMetadata.exit(
+            destination: GateDestination.firstAutogen(boardDescriptionStack: await extreme, gameMode: "expert"),
+            label: "Extreme",
+          ),
+        },
+        [],
+      ),
+    };
     if (gateDestination is GateDestination_FirstAutogen) {
       await dartLoadBoardDescriptionStack(boardDescStack: gateDestination.boardDescriptionStack);
     }
@@ -151,7 +152,7 @@ T     s     M
         return ret.field0;
       } else if (ret is AutoGenOutput_NoMoreDescriptionsLoaded) {
         await FlameAudio.play('won_strech.mp3');
-        var millis = DateTime.now().millisecondsSinceEpoch.toDouble() - start;
+        var millis = DateTime.now().millisecondsSinceEpoch - start;
         var secs = millis / 1000;
         
         return endOfGameRoom(secs.toStringAsFixed(2), gameMode ?? "...");

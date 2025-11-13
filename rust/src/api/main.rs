@@ -1,86 +1,18 @@
 use std::{collections::HashMap, ops::Deref};
 
-use crate::{api::tile::Tile, logic::{
-    board::Board, gate::GateEntry, matrix::{Matrix, TileMap}, pos::Pos, solver::Analysis, worker_pool::{get_new_room, load_board_description_stack, worker_halt}
-}};
-
-#[frb(sync)]
-pub fn pos2dart_vector(p: Pos) -> Vec<f32> {
-    p.dart_vector()
-}
-
-#[derive(Clone, PartialEq, Copy, Debug)]
-pub enum Direction {
-    North,
-    South,
-    East,
-    West,
-}
+use crate::{
+    api::{direction::Direction, pos::Pos, tile::Tile},
+    logic::{
+        board::Board,
+        gate::GateEntry,
+        matrix::{Matrix, TileMap},
+        solver::Analysis,
+        worker_pool::{get_new_room, load_board_description_stack, worker_halt},
+    },
+};
 
 pub trait LeftRotatable {
     fn rotate_left(&self) -> Self;
-}
-
-
-impl Direction {
-    pub fn icon(&self) -> &str {
-        match self {
-            Direction::North => "^",
-            Direction::South => "v",
-            Direction::East => ">",
-            Direction::West => "<",
-        }
-    }
-
-    pub(crate) fn vector(&self) -> Pos {
-        match self {
-            Direction::North => Pos::new(0, -1),
-            Direction::South => Pos::new(0, 1),
-            Direction::East => Pos::new(1, 0),
-            Direction::West => Pos::new(-1, 0),
-        }
-    }
-
-    #[frb(sync)]
-    pub fn dart_vector(&self) -> Vec<f32> {
-        match self {
-            Direction::North => vec![0., -1.],
-            Direction::South => vec![0., 1.],
-            Direction::East => vec![1., 0.],
-            Direction::West => vec![-1., 0.],
-        }
-    }
-
-    pub fn reverse(&self) -> Self {
-        match self {
-            Direction::North => Direction::South,
-            Direction::South => Direction::North,
-            Direction::East => Direction::West,
-            Direction::West => Direction::East,
-        }
-    }
-
-    pub fn left(&self) -> Self {
-        match self {
-            Direction::North => Direction::West,
-            Direction::South => Direction::East,
-            Direction::West => Direction::South,
-            Direction::East => Direction::North,
-        }
-    }
-
-    pub fn right(&self) -> Self {
-        self.left().reverse()
-    }
-
-    pub(crate) fn all() -> Vec<Direction> {
-        vec![
-            Direction::North,
-            Direction::East,
-            Direction::South,
-            Direction::West,
-        ]
-    }
 }
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
@@ -98,7 +30,6 @@ pub struct BoardDescription {
 }
 
 impl BoardDescription {
-    #[frb(sync)]
     pub fn from_list(data: Vec<isize>) -> BoardDescription {
         BoardDescription {
             size_range_min: data[0],
@@ -114,7 +45,6 @@ impl BoardDescription {
         }
     }
 
-    #[frb(sync)]
     pub fn as_list(&self) -> Vec<isize> {
         vec![
             self.size_range_min,
@@ -163,7 +93,6 @@ pub enum GateMetadata {
     },
     EntryOnly,
 }
-
 
 type AssetMap = Matrix<Option<(String, isize)>>;
 
@@ -250,12 +179,10 @@ impl Deref for DartBoard {
 }
 
 impl DartBoard {
-    #[frb(sync)]
     pub fn get_gate_direction(&self, gate_id: usize) -> Direction {
         self.board.get_gate_direction(gate_id)
     }
 
-    #[frb(sync)]
     pub fn get_gate_position(&self, gate_id: usize) -> Pos {
         self.board.get_gate_position(gate_id)
     }
@@ -328,18 +255,15 @@ impl DartBoard {
         }
     }
 
-    #[frb(sync)]
     pub fn rotate_left(&self) -> Self {
         Self {
             board: self.board.clone().rotate_left(),
-            asset_map: self
-                .asset_map
-                .clone()
-                .rotate_left_keeping_elements()
-                .map(|asset| match asset {
+            asset_map: self.asset_map.clone().rotate_left_keeping_elements().map(
+                |asset| match asset {
                     Some((asset, rotation)) => Some((asset, rotation - 1)),
                     None => None,
-                }),
+                },
+            ),
             analysis: self.analysis.clone(),
         }
     }
