@@ -151,7 +151,7 @@ T     s     M
         return ret.field0;
       } else if (ret is AutoGenOutput_NoMoreDescriptionsLoaded) {
         await FlameAudio.play('won_strech.mp3');
-        var millis = DateTime.now().millisecondsSinceEpoch - start;
+        var millis = DateTime.now().millisecondsSinceEpoch.toDouble() - start;
         var secs = millis / 1000;
         
         return endOfGameRoom(secs.toStringAsFixed(2), gameMode ?? "...");
