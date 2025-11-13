@@ -15,6 +15,10 @@ class Box extends Actor {
   Future<bool> hit(Direction dir) async {
     await FlameAudio.play('hit_box.mp3');
 
+    return push(dir);
+  }
+
+  Future<bool> push(Direction dir) async {
     var delta = Vector2.array(dir.dartVector());
     if (!await room.canBoxWalkInto(position + delta, dir)) {
       await room.hit(position + delta, dir, box: true);
@@ -29,7 +33,7 @@ class Box extends Actor {
         onComplete: () {
           super.colision = true;
 
-          hit(dir);
+          push(dir);
         },
       ),
     );

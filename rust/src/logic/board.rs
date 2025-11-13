@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use rand::{random, seq::IteratorRandom};
 
 use crate::{
-    api::main::{BoardDescription, Direction, GateDestination, GateMetadata, Tile},
+    api::main::{BoardDescription, Direction, GateDestination, GateMetadata, LeftRotatable, Tile},
     logic::{
         gate::GateEntry,
         matrix::{Matrix, TileMap},
@@ -220,13 +220,15 @@ impl Board {
 
         Ok(ret)
     }
+}
 
-    pub fn rotate_left(self) -> Self {
+impl LeftRotatable for Board {
+    fn rotate_left(&self) -> Self {
         let ret = Board {
             gates: self
                 .gates
                 .iter()
-                .map(|e| e.rotate_left(self.get_width()))
+                .map(|e| e.rotate_left(self.map.get_width()))
                 .collect(),
             map: self.map.rotate_left(),
         };

@@ -1,6 +1,7 @@
-use crate::{api::main::Direction, logic::pos::Pos};
-
-
+use crate::{
+    api::main::{Direction, LeftRotatable},
+    logic::pos::Pos,
+};
 
 #[derive(Clone, Debug)]
 pub struct GateEntry {
@@ -9,13 +10,6 @@ pub struct GateEntry {
 }
 
 impl GateEntry {
-    pub fn rotate_left(&self, width: isize) -> GateEntry {
-        GateEntry {
-            pos: self.pos.rotate_left(width),
-            inwards_direction: self.inwards_direction.left(),
-        }
-    }
-
     pub fn new(p: Pos, width: isize) -> GateEntry {
         GateEntry {
             pos: p,
@@ -28,6 +22,13 @@ impl GateEntry {
             } else {
                 Direction::North
             },
+        }
+    }
+
+    pub fn rotate_left(&self, width: isize) -> GateEntry {
+        GateEntry {
+            pos: self.pos.rotate_left(width), // Width is not needed here
+            inwards_direction: self.inwards_direction.left(),
         }
     }
 }

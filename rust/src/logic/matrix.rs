@@ -1,6 +1,9 @@
 use flutter_rust_bridge::frb;
 
-use crate::{api::main::{Direction,  Tile}, logic::{neighbour::Neighbour, pos::Pos}};
+use crate::{
+    api::main::{Direction, LeftRotatable, Tile},
+    logic::{ neighbour::Neighbour, pos::Pos},
+};
 
 pub(crate) type TileMap = Matrix<Tile>;
 
@@ -8,7 +11,41 @@ pub(crate) type TileMap = Matrix<Tile>;
 #[frb(opaque)]
 pub struct Matrix<T: Clone>(pub Vec<Vec<T>>);
 
+impl<T: Clone + LeftRotatable + Default> LeftRotatable for Matrix<T> {
+    fn rotate_left(&self) -> Matrix<T> {
+        let mut ret = Matrix(vec![
+            vec![T::default(); self.get_height() as usize];
+            self.get_width() as usize
+        ]);
+
+        for p in self.all_pos() {
+            ret.set(&p.rotate_left(self.get_width()), self.at(&p).rotate_left());
+        }
+
+        // ret.print(vec![]);
+
+        ret
+    }
+}
+
 impl<T: Clone> Matrix<T> {
+
+    pub fn rotate_left_keeping_elements(&self) -> Matrix<T>
+    where
+        T: Default,
+    {
+        let mut ret = Matrix(vec![
+            vec![T::default(); self.get_height() as usize];
+            self.get_width() as usize
+        ]);
+
+        for p in self.all_pos() {
+            ret.set(&p.rotate_left(self.get_width()), self.at(&p));
+        }
+
+        ret
+    }
+
     pub fn at(&self, p: &Pos) -> T
     where
         T: Default,
@@ -19,6 +56,7 @@ impl<T: Clone> Matrix<T> {
             T::default()
         }
     }
+
 
     pub fn new(width: isize, height: isize) -> Matrix<T>
     where
@@ -86,37 +124,18 @@ impl<T: Clone> Matrix<T> {
         p.x >= 0 && p.y >= 0 && p.x < self.get_width() && p.y < self.get_height()
     }
 
-    pub(crate) fn rotate_left(self) -> Matrix<T>
-    where
-        T: Default,
-    {
-        let mut ret = Matrix(vec![
-            vec![T::default(); self.get_height() as usize];
-            self.get_width() as usize
-        ]);
-
-        for p in self.all_pos() {
-            ret.set(&p.rotate_left(self.get_width()), self.at(&p));
-        }
-
-        // ret.print(vec![]);
-
-        ret
-    }
-
     pub fn map<B: Clone>(self, f: fn(T) -> B) -> Matrix<B> {
         Matrix(
             self.0
                 .iter()
                 .cloned()
                 .map(|e| e.iter().cloned().map(|e| f(e)).collect())
-                .collect()
+                .collect(),
         )
     }
 }
 
 impl TileMap {
-  
     pub fn print(&self, highlight: Vec<Pos>) {
         for (y, row) in self.0.iter().enumerate() {
             for (x, tile) in row.iter().enumerate() {

@@ -8,6 +8,7 @@ import 'package:icedash/components/actors/box.dart';
 import 'package:icedash/components/actors/entrance.dart';
 import 'package:icedash/components/actors/gate.dart';
 import 'package:icedash/components/actors/weak_wall.dart';
+import 'package:icedash/components/sign.dart';
 import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/src/rust/logic/pos.dart';
 
@@ -151,6 +152,7 @@ class RoomComponent extends Component {
     armClean();
 
     List<Future> tileLoadFutures = [];
+    room.print();
 
     for (var pos in await room.getAllPositions()) {
       tileLoadFutures.add(
@@ -218,6 +220,11 @@ class RoomComponent extends Component {
             actorList.add(weakWall);
             weakWall.opacity = startingOpacity;
             add(weakWall);
+          }
+
+          if (tile is Tile_Sign) {
+            var sign = Sign(tile.text, 0, position: mapPos2WorldVector(pos), width: tile.width, height: tile.height);
+            add(sign);
           }
         }),
       );

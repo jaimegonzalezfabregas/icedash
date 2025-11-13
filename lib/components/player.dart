@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame_audio/flame_audio.dart';
@@ -154,9 +156,9 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
       bool consecuences = await game.idWorld.hit(position + delta, dir);
 
-      int move_i = remainingMoves == null ? 1 : remainingMoves!;
+      int moveI = remainingMoves == null ? 1 : remainingMoves!;
 
-      String audio = 'move_$move_i.mp3';
+      String audio = 'move_${min(moveI, 17)}.mp3';
 
       if (movementLenght != 0 || consecuences) {
         if (remainingMoves != null) {

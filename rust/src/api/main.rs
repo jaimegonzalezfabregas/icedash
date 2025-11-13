@@ -1,12 +1,7 @@
 use std::{collections::HashMap, ops::Deref};
 
 use crate::logic::{
-    board::Board,
-    gate::GateEntry,
-    matrix::{Matrix, TileMap},
-    pos::Pos,
-    solver::Analysis,
-    worker_pool::{get_new_room, load_board_description_stack, worker_halt},
+    board::Board, gate::GateEntry, matrix::{Matrix, TileMap}, pos::Pos, solver::Analysis, worker_pool::{get_new_room, load_board_description_stack, worker_halt}
 };
 
 #[frb(sync)]
@@ -21,6 +16,11 @@ pub enum Direction {
     East,
     West,
 }
+
+pub trait LeftRotatable {
+    fn rotate_left(&self) -> Self;
+}
+
 
 impl Direction {
     pub fn icon(&self) -> &str {
@@ -136,10 +136,12 @@ pub enum GateDestination {
     NextAutoGen,
     FirstAutogen {
         board_description_stack: Vec<BoardDescription>,
+        game_mode: Option<String>,
     },
     RoomIdWithGate {
         room_id: String,
         gate_id: usize,
+        game_mode: Option<String>,
     },
 }
 
@@ -171,6 +173,30 @@ pub enum Tile {
     WeakWall,
     Box,
     Outside,
+    Sign {
+        text: String,
+        width: isize,
+        height: isize,
+    },
+}
+
+impl LeftRotatable for Tile {
+    fn rotate_left(&self) -> Self {
+        match self {
+            Tile::Gate(metadata) => Tile::Gate(metadata.clone()),
+            Tile::Wall => Tile::Wall,
+            Tile::Ice => Tile::Ice,
+            Tile::Stop => Tile::Stop,
+            Tile::WeakWall => Tile::WeakWall,
+            Tile::Outside => Tile::Outside,
+            Tile::Box => Tile::Box,
+            Tile::Sign { text, width, height } => Tile::Sign {
+                text: text.clone(),
+                width: *height,
+                height: *width,
+            },
+        }
+    }
 }
 
 impl Default for Tile {
@@ -190,6 +216,7 @@ impl Tile {
             Tile::WeakWall => "w",
             Tile::Outside => " ",
             Tile::Box => "b",
+            Tile::Sign { .. } => "S",
         }
     }
 
@@ -203,6 +230,7 @@ impl Tile {
             Tile::WeakWall => true,
             Tile::Outside => true,
             Tile::Box => true,
+            Tile::Sign { .. } => false,
         }
     }
 
@@ -216,6 +244,7 @@ impl Tile {
             Tile::WeakWall => false,
             Tile::Outside => true,
             Tile::Box => false,
+            Tile::Sign { .. } => false,
         }
     }
 
@@ -229,6 +258,7 @@ impl Tile {
             Tile::WeakWall => false,
             Tile::Outside => true,
             Tile::Box => false,
+            Tile::Sign { .. } => false,
         }
     }
 
@@ -241,28 +271,29 @@ impl Tile {
             Tile::WeakWall => false,
             Tile::Outside => true,
             Tile::Box => false,
+            Tile::Sign { .. } => false,
         }
     }
 
-     pub fn it_goes(&self) -> String {
-        String::from(match self {
-            Tile::Gate(_) => "",
-            Tile::Wall => "Hit50.waw",
-            Tile::Stop => "",
-            Tile::Ice => "",
-            Tile::WeakWall => "",
-            Tile::Outside => "",
-            Tile::Box => "",
-        })
-    }
-
-    pub(crate) fn from_symbol(symbol: u8, gate_metadata: &HashMap<u8, GateMetadata>) -> Tile {
+    pub(crate) fn from_symbol(
+        symbol: u8,
+        gate_metadata: &HashMap<u8, GateMetadata>,
+        sign_metadata: &mut Vec<(String, isize, isize)>,
+    ) -> Tile {
         match symbol {
             b'#' => Tile::Wall,
             b' ' => Tile::Ice,
             b'w' => Tile::WeakWall,
             b'b' => Tile::Box,
             b's' => Tile::Stop,
+            b'S' => {
+                let metadata = sign_metadata.remove(0);
+                Tile::Sign {
+                    text: metadata.0,
+                    width: metadata.1,
+                    height: metadata.2,
+                }
+            }
             e => {
                 let metadata = gate_metadata.get(&e).cloned();
                 Tile::Gate(metadata.unwrap_or(GateMetadata::EntryOnly))
@@ -385,7 +416,11 @@ impl DartBoard {
         }
     }
 
-    pub fn new_lobby(serialized: String, gate_metadata: HashMap<u8, GateMetadata>) -> Self {
+    pub fn new_lobby(
+        serialized: String,
+        gate_metadata: HashMap<u8, GateMetadata>,
+        mut sign_text: Vec<(String, isize, isize)>,
+    ) -> Self {
         let mut map: Vec<Vec<Tile>> = vec![];
         let mut gates = vec![];
         let mut x: usize;
@@ -397,7 +432,7 @@ impl DartBoard {
             x = 0;
 
             while line.len() != 0 {
-                let tile = Tile::from_symbol(line[0], &gate_metadata);
+                let tile = Tile::from_symbol(line[0], &gate_metadata, &mut sign_text);
 
                 if let Tile::Gate(_) = tile {
                     gates.push(GateEntry::new(
@@ -437,7 +472,7 @@ impl DartBoard {
             asset_map: self
                 .asset_map
                 .clone()
-                .rotate_left()
+                .rotate_left_keeping_elements()
                 .map(|asset| match asset {
                     Some((asset, rotation)) => Some((asset, rotation - 1)),
                     None => None,

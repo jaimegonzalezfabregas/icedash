@@ -5,13 +5,15 @@ import 'package:flame/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 
-
 final bigNum = 100.0;
 
 class Sign extends Component {
   String text;
   double angle;
-  Sign(this.text, this.angle);
+  Vector2? position;
+  int width;
+  int height;
+  Sign(this.text, this.angle, {this.position, this.width = 1, this.height = 1});
 
   @override
   FutureOr<void> onLoad() {
@@ -23,7 +25,16 @@ class Sign extends Component {
       (Color.fromARGB(255, 255, 255, 255), Vector2(0, 0)),
     ]) {
       Future(() {
-        add(MyTextBox(text, delta: x.$2, color: x.$1, size: Vector2(1, 1), position: Vector2(0.5, 0.5), angle: angle));
+        add(
+          MyTextBox(
+            text,
+            delta: x.$2,
+            color: x.$1,
+            size: Vector2(width.toDouble(), height.toDouble()),
+            position: (position ?? Vector2.all(0.5)),
+            angle: angle,
+          ),
+        );
       });
     }
 
@@ -46,5 +57,6 @@ class MyTextBox extends TextBoxComponent {
         boxConfig: TextBoxConfig(maxWidth: 3, margins: EdgeInsets.all(0)),
         align: Anchor.center,
         anchor: Anchor.center,
+        priority: 19,
       );
 }
