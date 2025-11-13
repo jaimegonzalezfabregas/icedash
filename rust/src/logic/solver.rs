@@ -3,7 +3,7 @@ use std::{collections::VecDeque, rc::Rc};
 use itertools::Itertools;
 
 use crate::{
-    api::main::{Direction, Tile},
+    api::{main::Direction, tile::Tile},
     logic::{board::Board, matrix::TileMap, pos::Pos, visitations::Visitations},
 };
 

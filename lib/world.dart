@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:icedash/components/player.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/room_traversal.dart';
+import 'package:icedash/src/rust/api/tile.dart';
 
 import 'src/rust/api/main.dart';
 
@@ -21,12 +22,12 @@ class IceDashWorld extends World with HasGameReference {
 
   @override
   Future<void> onLoad() async {
-    player = Player(position: Vector2(0, 4));
+    player = Player(position: Vector2(100, 104));
     add(player);
 
     var destination = roomTraversal.getOnLoadDestination();
 
-    await goToRoom(destination, Vector2(0, 0), Direction.north);
+    await goToRoom(destination, Vector2(100, 100), Direction.north);
   }
 
   void predictedGoToRoom(GateDestination destination, Vector2 position, Direction dir) {}

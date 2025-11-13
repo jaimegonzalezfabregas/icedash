@@ -1,4 +1,6 @@
-use crate::api::main::{GateMetadata, Tile};
+use rand::seq::{IndexedRandom, IteratorRandom};
+
+use crate::api::{main::GateMetadata, tile::Tile};
 
 #[derive(Clone)]
 pub struct Neighbour<T> {
@@ -35,11 +37,14 @@ impl Neighbour<Tile> {
     }
 
     pub fn get_asset(&self) -> Option<(String, isize)> {
+        let mut rng = rand::rng();
+        rng.reseed();
+
         match self.center {
             Tile::Gate(GateMetadata::Exit { .. })
             | Tile::Ice
             | Tile::WeakWall
-            | Tile::Sign{..}
+            | Tile::Sign { .. }
             | Tile::Box => Some(("ice.png".into(), 0)),
             Tile::Outside => None,
             Tile::Stop => Some(("stop.png".into(), 0)),
@@ -82,7 +87,10 @@ impl Neighbour<Tile> {
                             south: false,
                             north: true,
                             ..
-                        } => (100, Some(("wall.png".into(), i))),
+                        } => (
+                            100,
+                            Some(((format!("wall/{}.png",(1..=8).choose(&mut rng).unwrap())).into(), i)),
+                        ),
 
                         _ => (0, None),
                     };

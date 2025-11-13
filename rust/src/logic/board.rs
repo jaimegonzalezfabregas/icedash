@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 use rand::{random, seq::IteratorRandom};
 
 use crate::{
-    api::main::{BoardDescription, Direction, GateDestination, GateMetadata, LeftRotatable, Tile},
+    api::{main::{BoardDescription, Direction, GateDestination, GateMetadata, LeftRotatable}, tile::Tile},
     logic::{
         gate::GateEntry,
         matrix::{Matrix, TileMap},

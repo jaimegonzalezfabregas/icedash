@@ -1,7 +1,7 @@
 use flutter_rust_bridge::frb;
 
 use crate::{
-    api::main::{Direction, LeftRotatable, Tile},
+    api::{main::{Direction, LeftRotatable}, tile::Tile},
     logic::{ neighbour::Neighbour, pos::Pos},
 };
 

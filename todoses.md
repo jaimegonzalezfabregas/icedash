@@ -6,3 +6,6 @@
     - Optimal run
     - Find a Way out
     - 
+- Snow decorations
+- NPCs
+- Progresion,

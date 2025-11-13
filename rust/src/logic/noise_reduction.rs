@@ -3,7 +3,7 @@ use std::{collections::VecDeque, vec};
 use rand::{random};
 
 use crate::{
-    api::main::{Direction, LeftRotatable, Tile},
+    api::{main::{Direction, LeftRotatable}, tile::Tile},
     logic::{
         board::{Board, TileMapWrap},  matrix::TileMap, pos::Pos, solver::Analysis, visitations::Visitations
     },

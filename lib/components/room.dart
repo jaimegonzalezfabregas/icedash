@@ -10,6 +10,7 @@ import 'package:icedash/components/actors/gate.dart';
 import 'package:icedash/components/actors/weak_wall.dart';
 import 'package:icedash/components/sign.dart';
 import 'package:icedash/src/rust/api/main.dart';
+import 'package:icedash/src/rust/api/tile.dart';
 import 'package:icedash/src/rust/logic/pos.dart';
 
 class RoomComponent extends Component {
@@ -162,7 +163,7 @@ class RoomComponent extends Component {
           if (bgImg != null) {
             SpriteComponent img = SpriteComponent(
               priority: 0,
-              size: Vector2.all(1),
+              size: Vector2.all(1.01),
               position: mapPos2WorldVector(pos),
               anchor: Anchor.center,
               angle: bgImg.$2 * pi / 2,

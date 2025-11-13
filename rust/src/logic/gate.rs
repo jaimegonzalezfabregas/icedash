@@ -1,5 +1,5 @@
 use crate::{
-    api::main::{Direction, LeftRotatable},
+    api::main::{Direction},
     logic::pos::Pos,
 };
 
