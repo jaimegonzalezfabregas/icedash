@@ -119,7 +119,6 @@ class RoomComponent extends Component {
 
   @override
   void onLoad() async {
-    print("room onload");
     while (await room.getGateDirection(gateId: entranceGateId) != entranceDirection) {
       room = await room.rotateLeft();
     }
@@ -253,7 +252,7 @@ class RoomComponent extends Component {
 
     if (canWalk == true) {
       for (var actor in actorList) {
-        if (worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
+        if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(dst)) {
           canWalk &= !actor.colision;
         }
       }
@@ -268,7 +267,7 @@ class RoomComponent extends Component {
 
     if (canWalk == true) {
       for (var actor in actorList) {
-        if (worldVector2MapPos(actor.position) == worldVector2MapPos(dst)) {
+        if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(dst)) {
           canWalk &= !actor.colision;
         }
       }
@@ -278,9 +277,10 @@ class RoomComponent extends Component {
   }
 
   Future<bool> hit(Vector2 pos, Direction dir, {bool box = false}) async {
+
     var consecuences = false;
     for (var actor in actorList) {
-      if (worldVector2MapPos(actor.position) == worldVector2MapPos(pos)) {
+      if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(pos)) {
         if (!box || actor is Box) {
           consecuences |= await actor.hit(dir);
         }
@@ -299,11 +299,13 @@ class RoomComponent extends Component {
     }
   }
 
-  void predictedHit(Vector2 og, Vector2 pos, Direction dir) {
+  void predictedHit(Vector2 og, Vector2 pos, Direction dir) async{
     for (var actor in actorList) {
-      if (worldVector2MapPos(actor.position) == worldVector2MapPos(pos)) {
+      if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(pos)) {
         actor.predictedHit(og, dir);
       }
     }
   }
 }
+
+// TODO optimize await worldVector2MapPos(actor.position) == await worldVector2MapPos(pos)

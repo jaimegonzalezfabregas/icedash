@@ -45,7 +45,8 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
 
   @override
   Future<bool> hit(Direction dir) async {
-    await world.goToRoom(destination, position, dir);
+    print("gate hit");
+    world.goToRoom(destination, position, dir);
 
     add(
       OpacityEffect.fadeOut(
