@@ -14,7 +14,7 @@ import 'package:icedash/world.dart';
 class Gate extends Actor with HasGameReference<IceDashGame> {
   RoomComponent room;
   BigInt gateId;
-  double timePerStep = 0.07;
+  double secPerStep = 0.07;
   late IceDashWorld world;
 
   Direction innerDirection;
@@ -45,12 +45,18 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
 
   @override
   Future<bool> hit(Direction dir) async {
-    print("gate hit");
-    world.goToRoom(destination, position, dir);
+    return false;
+  }
+
+  @override
+  void predictedHit(Vector2 startingPos, Direction dir) {
+    var secsToExit = secPerStep * ((startingPos - position).length);
+
+    dartWorkerHalt(millis: BigInt.from(secsToExit * 1000 + 1));
 
     add(
       OpacityEffect.fadeOut(
-        LinearEffectController(timePerStep),
+        LinearEffectController(secsToExit),
         onComplete: () {
           room.fadeOut(gateId);
           removeFromParent();
@@ -58,13 +64,6 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
       ),
     );
 
-    return false;
-  }
-
-  @override
-  void predictedHit(Vector2 startingPos, Direction dir) {
-    dartWorkerHalt(millis: BigInt.from(timePerStep * 1000 * ((startingPos - position).length + 1)));
-
-    world.predictedGoToRoom(destination, position, dir);
+    world.loadRoom(destination, position, dir);
   }
 }

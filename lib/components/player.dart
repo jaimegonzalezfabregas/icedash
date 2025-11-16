@@ -12,7 +12,7 @@ import 'package:icedash/src/rust/api/tile.dart';
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   Player({super.position}) : super(priority: 20, size: Vector2.all(1), anchor: Anchor.center);
 
-  double timePerStep = 0.07;
+  double secPerStep = 0.07;
   bool sliding = false;
   Direction? buffered;
   int? remainingMoves;
@@ -96,7 +96,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       add(
         FunctionEffect(
           (_, __) {},
-          LinearEffectController(timePerStep / 2),
+          LinearEffectController(secPerStep / 2),
           onComplete: () async {
             sprite = await Sprite.load('player_${axis}0001.png');
             animationState = "${axis}0001";
@@ -107,7 +107,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       add(
         FunctionEffect(
           (_, __) {},
-          LinearEffectController(timePerStep),
+          LinearEffectController(secPerStep),
           onComplete: () async {
             sprite = await Sprite.load('player_${axis}0002.png');
             animationState = "${axis}0002";
@@ -135,7 +135,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       add(
         FunctionEffect(
           (_, __) {},
-          LinearEffectController(timePerStep / 2),
+          LinearEffectController(secPerStep / 2),
           onComplete: () async {
             sprite = await Sprite.load('player_${axis}0001.png');
             animationState = "${axis}0001";
@@ -146,7 +146,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       add(
         FunctionEffect(
           (_, __) {},
-          LinearEffectController(timePerStep),
+          LinearEffectController(secPerStep),
           onComplete: () async {
             sprite = await Sprite.load('player_idle.png');
             animationState = "idle";
@@ -194,7 +194,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       return;
     }
 
-    EffectController ec = LinearEffectController(timePerStep);
+    EffectController ec = LinearEffectController(secPerStep);
 
     MoveByEffect effect = MoveByEffect(delta, ec);
 

@@ -7,7 +7,7 @@ use crate::{
         gate::GateEntry,
         matrix::{Matrix, TileMap},
         solver::Analysis,
-        worker_pool::{get_new_room, load_board_description_stack, worker_halt},
+        worker_pool::{get_new_room, halt_search, start_search, stop_search},
     },
 };
 
@@ -65,7 +65,8 @@ impl BoardDescription {
 pub enum GateDestination {
     NextAutoGen,
     FirstAutogen {
-        board_description_stack: Vec<BoardDescription>,
+        board_description: BoardDescription,
+        board_count: isize,
         game_mode: Option<String>,
     },
     RoomIdWithGate {
@@ -301,22 +302,27 @@ impl DartBoard {
 
 #[frb(non_opaque)]
 pub enum AutoGenOutput {
-    NoMoreDescriptionsLoaded,
     NotReady,
     Ok(DartBoard),
+    NoMoreBufferedBoards,
 }
 
-pub fn dart_get_new_board() -> AutoGenOutput {
-    get_new_room()
+pub fn dart_start_search(board_desc: BoardDescription, max_buffered_boards: isize) {
+    start_search(board_desc, max_buffered_boards);
+}
+
+pub fn dart_get_new_board(entry_direction: Direction) -> AutoGenOutput {
+    get_new_room(entry_direction)
 }
 
 pub fn dart_worker_halt(millis: usize) {
-    worker_halt(millis)
+    halt_search(millis)
 }
 
-pub fn dart_load_board_description_stack(board_desc_stack: Vec<BoardDescription>) {
-    load_board_description_stack(board_desc_stack)
+pub fn dart_stop_search() {
+    stop_search()
 }
+
 // use cap::Cap;
 use flutter_rust_bridge::frb;
 // use std::alloc;

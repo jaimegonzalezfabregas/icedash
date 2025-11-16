@@ -44,7 +44,22 @@ class RoomComponent extends Component {
 
   Completer<Rect> worldBBCompleter = Completer<Rect>();
 
-  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, this.entranceGateId);
+  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, this.entranceGateId) {
+    entranceRoomPos = room.getGatePosition(gateId: entranceGateId).then((e) => e.dartVector().then((e) => Vector2.array(e)));
+
+    (() async {
+      entranceRoomPos.then((entranceRoomPos) async {
+        worldBBCompleter.complete(
+          Rect.fromLTWH(
+            entranceWorldPos.x - (entranceRoomPos).x - 0.5,
+            entranceWorldPos.y - (entranceRoomPos).y - 0.5,
+            (await room.getWidth()).toDouble(),
+            (await room.getHeight()).toDouble(),
+          ),
+        );
+      });
+    })();
+  }
 
   Future fadeIn() async {
     var fadeDuration = 0.5;
@@ -119,23 +134,6 @@ class RoomComponent extends Component {
 
   @override
   void onLoad() async {
-    while (await room.getGateDirection(gateId: entranceGateId) != entranceDirection) {
-      room = await room.rotateLeft();
-    }
-
-    entranceRoomPos = room.getGatePosition(gateId: entranceGateId).then((e) => e.dartVector().then((e) => Vector2.array(e)));
-
-    entranceRoomPos.then((entranceRoomPos) async {
-      worldBBCompleter.complete(
-        Rect.fromLTWH(
-          entranceWorldPos.x - (entranceRoomPos).x - 0.5,
-          entranceWorldPos.y - (entranceRoomPos).y - 0.5,
-          (await room.getWidth()).toDouble(),
-          (await room.getHeight()).toDouble(),
-        ),
-      );
-    });
-
     buildSpriteGrid(0).then((value) => fadeIn());
   }
 
@@ -157,9 +155,7 @@ class RoomComponent extends Component {
 
   Future<void> buildSpriteGrid(double startingOpacity) async {
     armClean();
-
     List<Future> tileLoadFutures = [];
-    room.print();
 
     for (var pos in await room.getAllPositions()) {
       tileLoadFutures.add(
@@ -277,7 +273,6 @@ class RoomComponent extends Component {
   }
 
   Future<bool> hit(Vector2 pos, Direction dir, {bool box = false}) async {
-
     var consecuences = false;
     for (var actor in actorList) {
       if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(pos)) {
@@ -299,7 +294,7 @@ class RoomComponent extends Component {
     }
   }
 
-  void predictedHit(Vector2 og, Vector2 pos, Direction dir) async{
+  void predictedHit(Vector2 og, Vector2 pos, Direction dir) async {
     for (var actor in actorList) {
       if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(pos)) {
         actor.predictedHit(og, dir);

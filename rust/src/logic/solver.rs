@@ -3,8 +3,8 @@ use std::{collections::VecDeque, rc::Rc};
 use itertools::Itertools;
 
 use crate::{
-    api::{direction::Direction, pos::Pos, tile::Tile},
-    logic::{board::Board, matrix::TileMap,  visitations::Visitations},
+    api::{ direction::Direction, pos::Pos, tile::Tile},
+    logic::{ board::Board, matrix::TileMap, visitations::Visitations},
 };
 
 const EXTRA_MOVES_SEARCH_MARGIN: usize = 3;

@@ -1,12 +1,10 @@
 use std::{collections::VecDeque, vec};
 
-use rand::{random};
+use rand::random;
 
 use crate::{
-    api::{direction::Direction, main::LeftRotatable, pos::Pos, tile::Tile},
-    logic::{
-        board::{Board, TileMapWrap},  matrix::TileMap,  solver::Analysis, visitations::Visitations
-    },
+    api::{ direction::Direction, main::LeftRotatable, pos::Pos, tile::Tile},
+    logic::{board::Board, matrix::TileMap, solver::Analysis, tile_map_wrap::TileMapWrap, visitations::Visitations},
 };
 
 pub fn asthetic_filter(
@@ -251,12 +249,9 @@ pub fn flood(
     reachability
 }
 
-pub fn asthetic_cleanup(mut ret: Board, analysis: &Analysis, initial_gate_id: usize) -> Board {
-
+pub fn asthetic_cleanup(mut ret: Board, _: &Analysis, _: usize) -> Board {
     // assert!(analysis.check_still_applies(&ret, initial_gate_id));
     let inner_pos = ret.map.all_inner_pos().collect::<Vec<_>>();
-
-   
 
     let reachability = flood(
         ret.gates
@@ -302,7 +297,6 @@ pub fn asthetic_cleanup(mut ret: Board, analysis: &Analysis, initial_gate_id: us
             ret.map.set(p, Tile::Wall);
         }
     }
-
 
     for _ in 0..4 {
         ret = ret.rotate_left();

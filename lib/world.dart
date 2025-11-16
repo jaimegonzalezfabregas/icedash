@@ -28,18 +28,18 @@ class IceDashWorld extends World with HasGameReference {
 
     var destination = roomTraversal.getOnLoadDestination();
 
-    await goToRoom(destination, Vector2(100, 100), Direction.north);
+    await loadRoom(destination, Vector2(100, 100), Direction.north);
   }
 
   void predictedGoToRoom(GateDestination destination, Vector2 position, Direction dir) {}
 
-  Future<void> goToRoom(GateDestination destination, Vector2 worldStichPos, Direction exitDirection) async {
-    Vector2 dpos = Vector2.array(await exitDirection.dartVector());
+  Future<void> loadRoom(GateDestination destination, Vector2 worldStichPos, Direction stichDirection) async {
+    Vector2 dpos = Vector2.array(await stichDirection.dartVector());
     Vector2 entrancePostion = worldStichPos + dpos;
 
-    var board = await roomTraversal.getRoom(destination);
+    var board = await roomTraversal.getRoom(destination, stichDirection);
 
-    await setCurrentRoom(board, entrancePostion, exitDirection, await destination.getGateId());
+    await setCurrentRoom(board, entrancePostion, stichDirection, await destination.getGateId());
   }
 
   Future<void> setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) async {
@@ -69,14 +69,13 @@ class IceDashWorld extends World with HasGameReference {
 
     camera.lookAt(newFocus.center.toVector2(), transition);
 
-
     player.remainingMovesReset = await room.getMaxMovementCount();
     if (player.remainingMovesReset != null) {
-      player.remainingMoves = player.remainingMovesReset! + 1;
+      player.remainingMoves = player.remainingMovesReset!;
     } else {
       player.remainingMoves = null;
     }
-    player.push(stichDirection);
+    // player.push(stichDirection);
   }
 
   double? lastZoomVal;
