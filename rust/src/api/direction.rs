@@ -27,14 +27,7 @@ impl Direction {
         }
     }
 
-    pub fn dart_vector(&self) -> Vec<f32> {
-        match self {
-            Direction::North => vec![0., -1.],
-            Direction::South => vec![0., 1.],
-            Direction::East => vec![1., 0.],
-            Direction::West => vec![-1., 0.],
-        }
-    }
+  
 
     pub fn reverse(&self) -> Self {
         match self {

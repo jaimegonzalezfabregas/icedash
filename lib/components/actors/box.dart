@@ -3,6 +3,7 @@ import 'package:flame/effects.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:icedash/components/actor.dart';
 import 'package:icedash/components/room.dart';
+import 'package:icedash/extensions.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 
 class Box extends Actor {
@@ -19,7 +20,7 @@ class Box extends Actor {
   }
 
   Future<bool> push(Direction dir) async {
-    var delta = Vector2.array(await dir.dartVector());
+    var delta = dir.dartVector();
     if (!await room.canBoxWalkInto(position + delta, dir)) {
       await room.hit(position + delta, dir, box: true);
       return false;
@@ -28,7 +29,7 @@ class Box extends Actor {
     super.colision = false;
     add(
       MoveByEffect(
-        Vector2.array(await dir.dartVector()),
+        dir.dartVector(),
         LinearEffectController(secPerStep),
         onComplete: () {
           super.colision = true;

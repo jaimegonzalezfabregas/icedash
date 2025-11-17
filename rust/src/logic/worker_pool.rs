@@ -7,12 +7,11 @@ use std::{
     time::{self},
 };
 
-use sorted_vec::{partial::ReverseSortedVec, partial::SortedVec};
+use sorted_vec::partial::SortedVec;
 
 use crate::{
     api::{
-        direction::Direction,
-        main::{AutoGenOutput, BoardDescription, DartBoard, LeftRotatable},
+        dart_board::DartBoard, direction::Direction, main::{AutoGenOutput, BoardDescription, LeftRotatable}
     },
     logic::{
         board::Board,
@@ -24,7 +23,6 @@ use crate::{
 pub enum CtrlMsg {
     Kill,
     Halt(usize),
-    SetBestFitness(f32),
 }
 
 struct Candidate {
@@ -64,7 +62,9 @@ fn submit(candidate: Candidate) -> f32 {
 
     while result.len() > *(G_RESULT_MAX_SIZE.lock().unwrap()) {
         result.remove_index(0);
-        ret = result[0].fitness;
+        if (result.len() != 0) {
+            ret = result[0].fitness;
+        }
     }
 
     println!("  >  new fitness goal is {ret}");
@@ -107,7 +107,7 @@ pub fn get_new_room(entry_direction: Direction) -> AutoGenOutput {
 
             let board = asthetic_cleanup(board, &candidate.analysis, 0);
 
-            AutoGenOutput::Ok(DartBoard::new(board, candidate.analysis))
+            AutoGenOutput::Ok(DartBoard::new(board, Some(candidate.analysis)))
         }
     }
 }
@@ -185,9 +185,6 @@ pub fn worker_thread(messenger: mpsc::Receiver<CtrlMsg>, board_desc: BoardDescri
                 println!("reached {iter} iter, killed by ctrl msg");
 
                 return;
-            }
-            Ok(CtrlMsg::SetBestFitness(fitness)) => {
-                fitness_filter = fitness;
             }
             Err(_) => {}
         }

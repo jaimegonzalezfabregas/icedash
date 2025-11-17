@@ -7,11 +7,13 @@ import 'package:flame_camera_tools/flame_camera_tools.dart';
 import 'package:flutter/material.dart';
 import 'package:icedash/components/player.dart';
 import 'package:icedash/components/room.dart';
+import 'package:icedash/extensions.dart';
 import 'package:icedash/room_traversal.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/tile.dart';
 
 import 'src/rust/api/main.dart';
+
 
 class IceDashWorld extends World with HasGameReference {
   late CameraComponent camera;
@@ -29,30 +31,22 @@ class IceDashWorld extends World with HasGameReference {
     var destination = roomTraversal.getOnLoadDestination();
 
     await loadRoom(destination, Vector2(100, 100), Direction.north);
+    player.push(Direction.north);
   }
 
-  void predictedGoToRoom(GateDestination destination, Vector2 position, Direction dir) {}
+  Future<RoomComponent> getRoom(Vector2 worldEntrancePosition, Direction stichDirection, GateDestination destination) async {
+    var (board, entranceGateId) = await roomTraversal.getRoom(destination, stichDirection);
+
+    return RoomComponent(worldEntrancePosition, stichDirection, board, entranceGateId);
+  }
 
   Future<void> loadRoom(GateDestination destination, Vector2 worldStichPos, Direction stichDirection) async {
-    Vector2 dpos = Vector2.array(await stichDirection.dartVector());
-    Vector2 entrancePostion = worldStichPos + dpos;
-
-    var board = await roomTraversal.getRoom(destination, stichDirection);
-
-    await setCurrentRoom(board, entrancePostion, stichDirection, await destination.getGateId());
-  }
-
-  Future<void> setCurrentRoom(DartBoard room, Vector2 worldEntrancePosition, Direction stichDirection, BigInt entranceGateId) async {
-    var lastRoom = _currentRoom;
-    _currentRoom = RoomComponent(worldEntrancePosition, stichDirection, room, entranceGateId);
-    add(_currentRoom!);
-
-    var transition = EffectController(duration: 0);
-
     double camTransitionDuration = 0.75;
     double camTransitionStaticPortion = 0.33;
 
-    if (lastRoom != null) {
+    var transition = EffectController(duration: 0);
+
+    if (_currentRoom != null) {
       transition = EffectController(
         curve: Curves.easeInOut,
         duration: camTransitionDuration,
@@ -60,7 +54,13 @@ class IceDashWorld extends World with HasGameReference {
       );
     }
 
-    Rect newFocus = await _currentRoom!.worldBBCompleter.future;
+    Vector2 dpos = stichDirection.dartVector();
+    Vector2 worldEntrancePosition = worldStichPos + dpos;
+
+    _currentRoom = await getRoom(worldEntrancePosition, stichDirection, destination);
+    add(_currentRoom!);
+
+    Rect newFocus = _currentRoom!.worldBB;
 
     queueZoomTransition(
       camTransitionDuration * (1 + camTransitionStaticPortion * 2),
@@ -69,13 +69,15 @@ class IceDashWorld extends World with HasGameReference {
 
     camera.lookAt(newFocus.center.toVector2(), transition);
 
-    player.remainingMovesReset = await room.getMaxMovementCount();
+    player.remainingMovesReset = _currentRoom!.room.maxMovementCount;
     if (player.remainingMovesReset != null) {
       player.remainingMoves = player.remainingMovesReset!;
     } else {
       player.remainingMoves = null;
     }
     // player.push(stichDirection);
+
+    player.rescueIfOutside(stichDirection);
   }
 
   double? lastZoomVal;
@@ -121,8 +123,8 @@ class IceDashWorld extends World with HasGameReference {
   }
 
   @override
-  void onGameResize(Vector2 size) async {
-    Rect focus = await _currentRoom!.worldBBCompleter.future;
+  void onGameResize(Vector2 size) {
+    Rect focus = _currentRoom!.worldBB;
     if (_currentRoom != null) {
       camera.zoomTo(min(game.size.x / focus.width, game.size.y / focus.height), LinearEffectController(0));
     }
@@ -133,8 +135,8 @@ class IceDashWorld extends World with HasGameReference {
     camera = cam;
   }
 
-  Future<bool> canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush) async {
-    bool ret = await _currentRoom!.canWalkInto(og, dst, dir, userPush);
+  Future<bool> canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush, bool predicting) async {
+    bool ret = await _currentRoom!.canWalkInto(og, dst, dir, userPush, predicting);
     return ret;
   }
 

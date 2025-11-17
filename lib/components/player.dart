@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/services.dart';
+import 'package:icedash/extensions.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/main.dart';
@@ -66,9 +67,9 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   void predictHit(Direction dir) async {
     Vector2 cursor = position;
     bool userPush = true;
-    Vector2 delta = Vector2.array(await dir.dartVector());
+    Vector2 delta =  dir.dartVector();
 
-    while ((await game.idWorld.canWalkInto(cursor, cursor + delta, dir, userPush))) {
+    while ((await game.idWorld.canWalkInto(cursor, cursor + delta, dir, userPush, true))) {
       userPush = false;
       cursor = cursor + delta;
     }
@@ -116,10 +117,12 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       );
     }
 
-    Vector2 delta = Vector2.array(await dir.dartVector());
+    Vector2 delta = dir.dartVector();
 
     if (sliding) {
-      buffered = dir;
+      if (userPush) {
+        buffered = dir;
+      }
       return;
     }
 
@@ -129,7 +132,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       predictHit(dir);
     }
 
-    if (!(await game.idWorld.canWalkInto(position, position + delta, dir, userPush))) {
+    if (!(await game.idWorld.canWalkInto(position, position + delta, dir, userPush, false))) {
       sliding = false;
 
       add(
@@ -205,5 +208,12 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
     };
 
     add(effect);
+  }
+
+  void rescueIfOutside(Direction rescueDir) async {
+
+    if ((await game.idWorld.getTile(position)) is Tile_Outside) {
+      push(rescueDir, userPush: false);
+    }
   }
 }

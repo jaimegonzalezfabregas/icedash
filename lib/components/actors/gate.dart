@@ -13,7 +13,7 @@ import 'package:icedash/world.dart';
 
 class Gate extends Actor with HasGameReference<IceDashGame> {
   RoomComponent room;
-  BigInt gateId;
+  int gateId;
   double secPerStep = 0.07;
   late IceDashWorld world;
 
@@ -45,6 +45,7 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
 
   @override
   Future<bool> hit(Direction dir) async {
+    // UNREACHEABLE
     return false;
   }
 

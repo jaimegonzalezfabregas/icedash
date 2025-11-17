@@ -90,19 +90,19 @@ impl Route {
         for (start, end) in self.solution.iter().tuple_windows() {
             if !tile_map
                 .at(&(start.1 + end.0.right().vector()))
-                .stops_player_during_gameplay()
+                .stops_player_during_gameplay(false)
                 && !tile_map
                     .at(&(start.1 + end.0.right().vector() * 2))
-                    .stops_player_during_gameplay()
+                    .stops_player_during_gameplay(false)
             {
                 decision_positions += 1;
             }
             if !tile_map
                 .at(&(start.1 + end.0.left().vector()))
-                .stops_player_during_gameplay()
+                .stops_player_during_gameplay(false)
                 && !tile_map
                     .at(&(start.1 + end.0.left().vector() * 2))
-                    .stops_player_during_gameplay()
+                    .stops_player_during_gameplay(false)
             {
                 decision_positions += 1;
             }

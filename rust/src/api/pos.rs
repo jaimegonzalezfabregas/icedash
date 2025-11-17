@@ -12,10 +12,6 @@ impl Pos {
         Self { x, y }
     }
 
-    pub fn dart_vector(&self) -> Vec<f32> {
-        vec![self.x as f32, self.y as f32]
-    }
-
     pub(crate) fn rotate_left(self, width: isize) -> Pos {
         Self {
             x: self.y,
