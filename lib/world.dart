@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:icedash/components/player.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/extensions.dart';
-import 'package:icedash/room_traversal.dart';
+import 'package:icedash/room_traversal/room_traversal.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/tile.dart';
 
