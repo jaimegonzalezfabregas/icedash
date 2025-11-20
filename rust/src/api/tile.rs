@@ -11,6 +11,7 @@ pub enum Tile {
     WeakWall,
     Box,
     Outside,
+    Lock,
     Sign {
         text: String,
         width: isize,
@@ -22,17 +23,17 @@ impl LeftRotatable for Tile {
     fn rotate_left(&self) -> Self {
         match self {
             Tile::Gate(metadata) => Tile::Gate(metadata.clone()),
-            Tile::Wall => Tile::Wall,
-            Tile::Ice => Tile::Ice,
-            Tile::Stop => Tile::Stop,
-            Tile::WeakWall => Tile::WeakWall,
-            Tile::Outside => Tile::Outside,
-            Tile::Box => Tile::Box,
-            Tile::Sign { text, width, height } => Tile::Sign {
+
+            Tile::Sign {
+                text,
+                width,
+                height,
+            } => Tile::Sign {
                 text: text.clone(),
                 width: *height,
                 height: *width,
             },
+            t => t.clone(),
         }
     }
 }
@@ -54,6 +55,7 @@ impl Tile {
             Tile::WeakWall => "w",
             Tile::Outside => " ",
             Tile::Box => "b",
+            Tile::Lock => "l",
             Tile::Sign { .. } => "S",
         }
     }
@@ -67,6 +69,7 @@ impl Tile {
             Tile::Ice => false,
             Tile::WeakWall => true,
             Tile::Outside => true,
+            Tile::Lock => true,
             Tile::Box => true,
             Tile::Sign { .. } => false,
         }
@@ -81,6 +84,7 @@ impl Tile {
             Tile::Ice => false,
             Tile::WeakWall => false,
             Tile::Outside => true,
+            Tile::Lock => true,
             Tile::Box => false,
             Tile::Sign { .. } => false,
         }
@@ -95,6 +99,7 @@ impl Tile {
             Tile::Ice => false,
             Tile::WeakWall => false,
             Tile::Outside => true,
+            Tile::Lock => false,
             Tile::Box => false,
             Tile::Sign { .. } => false,
         }
@@ -109,6 +114,7 @@ impl Tile {
             Tile::WeakWall => false,
             Tile::Outside => true,
             Tile::Box => false,
+            Tile::Lock => true,
             Tile::Sign { .. } => false,
         }
     }
@@ -124,6 +130,7 @@ impl Tile {
             b'w' => Tile::WeakWall,
             b'b' => Tile::Box,
             b's' => Tile::Stop,
+            b'l' => Tile::Lock,
             b'S' => {
                 let metadata = sign_metadata.remove(0);
                 Tile::Sign {

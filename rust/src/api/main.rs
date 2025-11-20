@@ -59,12 +59,11 @@ pub enum GateDestination {
     FirstAutogen {
         board_description: BoardDescription,
         board_count: isize,
-        game_mode: Option<String>,
+        game_mode: Option<(String, String)>,
     },
     RoomIdWithGate {
         room_id: String,
         gate_id: isize,
-        game_mode: Option<String>,
     },
 }
 

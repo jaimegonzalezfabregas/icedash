@@ -16,6 +16,7 @@ dependencies:
   flutter_rust_bridge: 2.11.1
   freezed_annotation: 3.1.0
   flame_audio: ^2.11.11
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:

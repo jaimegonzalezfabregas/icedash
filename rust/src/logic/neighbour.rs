@@ -46,6 +46,7 @@ impl Neighbour<Tile> {
             | Tile::WeakWall
             | Tile::Sign { .. }
             | Tile::Box => Some(("ice.png".into(), 0)),
+            Tile::Lock => Some(("lock.png".into(), 0)),
             Tile::Outside => None,
             Tile::Stop => Some(("stop.png".into(), 0)),
             Tile::Wall | Tile::Gate(_) => {

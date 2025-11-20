@@ -36,26 +36,6 @@ Future<DartBoard> waitRoom(Direction entranceDirection) {
   );
 }
 
-Future<DartBoard> endOfGameRoom(String time, String level, Direction entranceDirection) async {
-  return DartBoard.newLobby(
-    serialized: '''
-# # E # # 
-#       # 
-# S s   # 
-#       # 
-# # G # # 
-''',
-    gateMetadata: {
-      'G'.codeUnitAt(0): GateMetadata.exit(
-        destination: GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: 3),
-        label: "Back to lobby",
-      ),
-    },
-    signText: [("Tardaste $time segundos en completar el nivel $level", 1, 3)],
-    entranceDirection: (BigInt.from(0), entranceDirection),
-  );
-}
-
 Future<DartBoard> turnRoom(GateDestination gateDestination, Direction entranceDirection) async {
   return DartBoard.newLobby(
     serialized: '''

@@ -13,11 +13,11 @@ enum RoomType { lobby, game }
 
 class RoomTraversal {
   GateDestination getOnLoadDestination() {
-    return GateDestination.roomIdWithGate(roomId: "StartLobby", gateId: 3);
+    return GateDestination.roomIdWithGate(roomId: "lev_0_lobby", gateId: 3);
   }
 
   double start = 0;
-  String? gameMode;
+  (String, String)? gameMode;
 
   Future<(DartBoard, int)> getRoom(GateDestination gateDestination, Direction entryDirection) async {
     if (gateDestination is GateDestination_FirstAutogen) {
@@ -42,7 +42,7 @@ class RoomTraversal {
       } else if (ret is AutoGenOutput_NoMoreBufferedBoards) {
         await FlameAudio.play('won_strech.mp3');
         return (
-          await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000).toStringAsFixed(2), gameMode!, entryDirection),
+          await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000), gameMode!, entryDirection),
           0,
         );
       }
