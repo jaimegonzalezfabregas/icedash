@@ -3,8 +3,13 @@ use std::{collections::VecDeque, rc::Rc};
 use itertools::Itertools;
 
 use crate::{
-    api::{ direction::Direction, pos::Pos, tile::Tile},
-    logic::{ board::Board, matrix::TileMap, visitations::Visitations},
+    api::{
+        board_description::{ BoardDescription, GameMode},
+        direction::Direction,
+        pos::Pos,
+        tile::{ Tile},
+    },
+    logic::{board::Board, matrix::TileMap, visitations::Visitations},
 };
 
 const EXTRA_MOVES_SEARCH_MARGIN: usize = 3;
@@ -18,19 +23,35 @@ pub struct Analysis {
 }
 
 impl Analysis {
-    pub fn compute_fitness(&self, tile_map: &TileMap) -> f32 {
-        let mut good_route_fitness = self.routes[0][0].fitness(tile_map);
+    pub fn compute_fitness(&self, tile_map: &TileMap, board_description: &BoardDescription) -> f32 {
+        if let GameMode::FindPerfectPath = board_description.game_mode {
+            let mut good_route_fitness = self.routes[0][0].prefect_path_fitness(tile_map);
 
-        for analysis in self.routes[0].iter() {
-            good_route_fitness = good_route_fitness.min(analysis.fitness(tile_map))
+            for analysis in self.routes[0].iter() {
+                good_route_fitness = good_route_fitness.min(analysis.prefect_path_fitness(tile_map))
+            }
+
+            let solution_distribution = (self.routes[1].len() as f32 + self.routes[2].len() as f32)
+                / (1. + self.routes[0].len() as f32);
+
+            let ret = good_route_fitness * solution_distribution;
+
+            ret
+        } else {
+            let mut solution_count = 0.;
+            let mut min_fitness = self.routes[0][0].any_path_fitness(tile_map);
+
+            for same_lenght_routes in self.routes.iter() {
+                for route in same_lenght_routes.iter() {
+                    solution_count += 1.;
+                    min_fitness = min_fitness.min(route.any_path_fitness(tile_map));
+                }
+            }
+
+            let ret = min_fitness / solution_count;
+
+            ret
         }
-
-        let solution_distribution = (self.routes[1].len() as f32 + self.routes[2].len() as f32)
-            / (1. + self.routes[0].len() as f32);
-
-        let ret = good_route_fitness * solution_distribution;
-
-        ret
     }
 
     pub fn check_still_applies(&self, board: &Board, initial_gate_id: usize) -> bool {
@@ -62,7 +83,7 @@ pub struct Route {
 }
 
 impl Route {
-    pub fn fitness(&self, tile_map: &TileMap) -> f32 {
+    pub fn prefect_path_fitness(&self, tile_map: &TileMap) -> f32 {
         let mut move_sizes = vec![];
 
         for (start, end) in self.solution.iter().tuple_windows() {
@@ -118,6 +139,39 @@ impl Route {
         let negative_factors = [weakwalls_in_the_way as f32, boxes_in_the_way as f32];
 
         positive_factors.iter().sum::<f32>() / (negative_factors.iter().sum::<f32>() + 1.)
+    }
+
+    pub fn any_path_fitness(&self, tile_map: &TileMap) -> f32 {
+
+        let mut decision_positions = 0;
+        for (start, end) in self.solution.iter().tuple_windows() {
+            if !tile_map
+                .at(&(start.1 + end.0.right().vector()))
+                .stops_player_during_gameplay(false)
+                && !tile_map
+                    .at(&(start.1 + end.0.right().vector() * 2))
+                    .stops_player_during_gameplay(false)
+            {
+                decision_positions += 1;
+            }
+            if !tile_map
+                .at(&(start.1 + end.0.left().vector()))
+                .stops_player_during_gameplay(false)
+                && !tile_map
+                    .at(&(start.1 + end.0.left().vector() * 2))
+                    .stops_player_during_gameplay(false)
+            {
+                decision_positions += 1;
+            }
+        }
+
+        let positive_factors = [
+            decision_positions as f32 * 100.,
+            self.solution.len() as f32,
+        ];
+
+
+        positive_factors.iter().sum::<f32>()
     }
 
     fn solves(&self, board: &Board, initial_gate_id: usize) -> bool {

@@ -3,6 +3,7 @@ use std::{collections::HashMap, ops::Deref};
 use crate::{
     api::{
         asset_map::AssetMap,
+        board_description::GameMode,
         direction::Direction,
         main::{GateDestination, GateMetadata, LeftRotatable},
         pos::Pos,
@@ -15,7 +16,7 @@ use crate::{
 pub struct DartBoard {
     pub board: Board,
     pub asset_map: AssetMap,
-    pub analysis: Option<Analysis>,
+    pub board_metadata: Option<(Analysis, GameMode)>,
     pub gate_destinations: Vec<Option<GateDestination>>,
     pub gate_positions: Vec<Pos>,
     pub gate_directions: Vec<Direction>,
@@ -35,12 +36,16 @@ impl Deref for DartBoard {
 }
 
 impl DartBoard {
-    pub(crate) fn new(board: Board, analysis: Option<Analysis>) -> Self {
+    pub(crate) fn new(board: Board, board_metadata: Option<(Analysis, GameMode)>) -> Self {
         Self {
             asset_map: AssetMap::from_tilemap(&board.map),
-            max_movement_count: analysis
-                .clone()
-                .map(|analysis| analysis.optimal_movement_count as isize),
+            max_movement_count: match &board_metadata {
+                None => None,
+                Some((_, GameMode::FindExit)) => None,
+                Some((analysis, GameMode::FindPerfectPath)) => {
+                    Some(analysis.optimal_movement_count as isize)
+                }
+            },
             gate_directions: board.gates.iter().map(|g| g.inwards_direction).collect(),
             gate_positions: board.gates.iter().map(|g| g.pos).collect(),
             gate_destinations: board
@@ -63,7 +68,7 @@ impl DartBoard {
                 .collect(),
             width: board.get_width(),
             height: board.get_height(),
-            analysis: analysis,
+            board_metadata: board_metadata,
             board,
         }
     }
@@ -120,10 +125,6 @@ impl DartBoard {
         }
 
         Self::new(board, None)
-    }
-
-    pub fn rotate_left(&self) -> Self {
-        Self::new(self.board.rotate_left(), self.analysis.clone())
     }
 
     pub fn at(&self, p: &Pos) -> Tile {

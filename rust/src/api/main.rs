@@ -1,5 +1,5 @@
 use crate::{
-    api::{dart_board::DartBoard, direction::Direction},
+    api::{board_description::BoardDescription, dart_board::DartBoard, direction::Direction},
     logic::worker_pool::{get_new_room, halt_search, start_search, stop_search},
 };
 
@@ -8,49 +8,17 @@ pub trait LeftRotatable {
 }
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
-pub struct BoardDescription {
-    pub size_range_min: isize,
-    pub size_range_max: isize,
-    pub weak_walls_percentage_min: isize,
-    pub weak_walls_percentage_max: isize,
-    pub pilars_percentage_min: isize,
-    pub pilars_percentage_max: isize,
-    pub box_percentage_min: isize,
-    pub box_percentage_max: isize,
-    pub vignet_percentage_min: isize,
-    pub vignet_percentage_max: isize,
+pub struct EndOfGameMetadata {
+    pub level: isize,
+    pub gamemode_desc: String,
+    pub return_gate: RoomIdAndGate,
+    pub best_score_id: String,
 }
 
-impl BoardDescription {
-    pub fn from_list(data: Vec<isize>) -> BoardDescription {
-        BoardDescription {
-            size_range_min: data[0],
-            size_range_max: data[1],
-            weak_walls_percentage_min: data[2],
-            weak_walls_percentage_max: data[3],
-            pilars_percentage_min: data[4],
-            pilars_percentage_max: data[5],
-            box_percentage_min: data[6],
-            box_percentage_max: data[7],
-            vignet_percentage_min: data[8],
-            vignet_percentage_max: data[9],
-        }
-    }
-
-    pub fn as_list(&self) -> Vec<isize> {
-        vec![
-            self.size_range_min,
-            self.size_range_max,
-            self.weak_walls_percentage_min,
-            self.weak_walls_percentage_max,
-            self.pilars_percentage_min,
-            self.pilars_percentage_max,
-            self.box_percentage_min,
-            self.box_percentage_max,
-            self.vignet_percentage_min,
-            self.vignet_percentage_max,
-        ]
-    }
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+pub struct RoomIdAndGate {
+    pub room_id: String,
+    pub gate_id: isize,
 }
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
@@ -59,12 +27,9 @@ pub enum GateDestination {
     FirstAutogen {
         board_description: BoardDescription,
         board_count: isize,
-        game_mode: Option<(String, String)>,
+        end_of_game_metadata: EndOfGameMetadata,
     },
-    RoomIdWithGate {
-        room_id: String,
-        gate_id: isize,
-    },
+    RoomIdWithGate(RoomIdAndGate),
 }
 
 impl GateDestination {
@@ -72,7 +37,7 @@ impl GateDestination {
         match self {
             GateDestination::NextAutoGen => 0,
             GateDestination::FirstAutogen { .. } => 0,
-            GateDestination::RoomIdWithGate { gate_id, .. } => *gate_id,
+            GateDestination::RoomIdWithGate(RoomIdAndGate { gate_id, .. }) => *gate_id,
         }
     }
 }

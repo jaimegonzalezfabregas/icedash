@@ -7,14 +7,17 @@ use std::{
     time::{self},
 };
 
-use sorted_vec::partial::SortedVec;
+use sorted_vec::partial::{SortedSet, SortedVec};
 
 use crate::{
     api::{
-        dart_board::DartBoard, direction::Direction, main::{AutoGenOutput, BoardDescription, LeftRotatable}
+        board_description::BoardDescription,
+        dart_board::DartBoard,
+        direction::Direction,
+        main::{AutoGenOutput, LeftRotatable},
     },
     logic::{
-        board::Board,
+        board::{self, Board},
         noise_reduction::asthetic_cleanup,
         solver::{analyze, Analysis},
     },
@@ -29,6 +32,14 @@ struct Candidate {
     pub fitness: f32,
     pub board: Board,
     pub analysis: Analysis,
+}
+
+impl std::fmt::Debug for Candidate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Candidate")
+            .field("fitness", &self.fitness)
+            .finish()
+    }
 }
 
 impl PartialOrd for Candidate {
@@ -49,33 +60,38 @@ struct Worker {
 }
 
 static G_WORKER: Mutex<Option<Vec<Worker>>> = Mutex::new(None);
-static G_RESULT_QUEUE: Mutex<SortedVec<Candidate>> = Mutex::new(SortedVec::new());
+static G_RESULT_QUEUE: Mutex<SortedSet<Candidate>> = Mutex::new(SortedSet::new());
+static G_BOARD_DESC: Mutex<Option<BoardDescription>> = Mutex::new(None);
 static G_RESULT_MAX_SIZE: Mutex<usize> = Mutex::new(0);
 
 fn submit(candidate: Candidate) -> f32 {
-    println!("submiting a candidate with fitness {}", candidate.fitness);
+    // println!("submiting a candidate with fitness {}", candidate.fitness);
     let mut result = G_RESULT_QUEUE.lock().unwrap();
 
     result.insert(candidate);
 
     let mut ret = 0.;
 
+    if result.len() != 0 {
+        ret = result[0].fitness;
+    }
+
     while result.len() > *(G_RESULT_MAX_SIZE.lock().unwrap()) {
         result.remove_index(0);
-        if (result.len() != 0) {
+        if result.len() != 0 {
             ret = result[0].fitness;
         }
     }
 
-    println!("  >  new fitness goal is {ret}");
+    // println!("  >  new fitness goal is {ret} {result:?}");
 
     ret
 }
 
 pub fn get_new_room(entry_direction: Direction) -> AutoGenOutput {
-    let ret = G_RESULT_QUEUE.lock().unwrap().pop();
+    let mut ret = G_RESULT_QUEUE.lock().unwrap();
 
-    match ret {
+    match ret.pop() {
         None => {
             if *G_RESULT_MAX_SIZE.lock().unwrap() == 0 {
                 AutoGenOutput::NoMoreBufferedBoards
@@ -107,7 +123,12 @@ pub fn get_new_room(entry_direction: Direction) -> AutoGenOutput {
 
             let board = asthetic_cleanup(board, &candidate.analysis, 0);
 
-            AutoGenOutput::Ok(DartBoard::new(board, Some(candidate.analysis)))
+            let board_desc = G_BOARD_DESC.lock().unwrap();
+
+            AutoGenOutput::Ok(DartBoard::new(
+                board,
+                Some((candidate.analysis, board_desc.clone().unwrap().game_mode)),
+            ))
         }
     }
 }
@@ -115,6 +136,9 @@ pub fn get_new_room(entry_direction: Direction) -> AutoGenOutput {
 pub fn start_search(board_desc: BoardDescription, max_buffered_boards: isize) {
     {
         *(G_RESULT_MAX_SIZE.lock().unwrap()) = max_buffered_boards as usize;
+    }
+    {
+        *(G_BOARD_DESC.lock().unwrap()) = Some(board_desc.clone());
     }
 
     let mut g_worker_queue = G_WORKER.lock().unwrap();
@@ -191,7 +215,7 @@ pub fn worker_thread(messenger: mpsc::Receiver<CtrlMsg>, board_desc: BoardDescri
 
         if let Ok(board) = Board::new_random(&board_desc) {
             if let Ok(analysis) = analyze(&board, 0, 1) {
-                let fitness = analysis.compute_fitness(&board.map);
+                let fitness = analysis.compute_fitness(&board.map, &board_desc);
 
                 if fitness > fitness_filter {
                     fitness_filter = submit(Candidate {

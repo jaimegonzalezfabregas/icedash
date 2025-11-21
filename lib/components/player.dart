@@ -170,7 +170,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
           remainingMoves = remainingMoves! - 1;
           print("remaining moves: $remainingMoves");
           if (remainingMoves == 0) {
-            if (hitTile is! Tile_Gate) {
+            if (hitTile is! Tile_Outside) {
               audio = "too_many_moves.mp3";
               reset();
             }

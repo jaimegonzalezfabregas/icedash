@@ -1,8 +1,4 @@
 import 'package:flame_audio/flame_audio.dart';
-import 'package:icedash/BoardDescriptionChains/easy.dart';
-import 'package:icedash/BoardDescriptionChains/extreme.dart';
-import 'package:icedash/BoardDescriptionChains/hard.dart';
-import 'package:icedash/BoardDescriptionChains/normal.dart';
 import 'package:icedash/room_traversal/lobby_map.dart';
 import 'package:icedash/room_traversal/single_rooms.dart';
 import 'package:icedash/src/rust/api/dart_board.dart';
@@ -13,11 +9,11 @@ enum RoomType { lobby, game }
 
 class RoomTraversal {
   GateDestination getOnLoadDestination() {
-    return GateDestination.roomIdWithGate(roomId: "lev_0_lobby", gateId: 3);
+    return GateDestination.roomIdWithGate(RoomIdAndGate(roomId: "lev_0_lobby", gateId: 3));
   }
 
   double start = 0;
-  (String, String)? gameMode;
+  EndOfGameMetadata? endOfGameMetadata;
 
   Future<(DartBoard, int)> getRoom(GateDestination gateDestination, Direction entryDirection) async {
     if (gateDestination is GateDestination_FirstAutogen) {
@@ -29,7 +25,7 @@ class RoomTraversal {
 
       if (ret is AutoGenOutput_Ok) {
         if (gateDestination is GateDestination_FirstAutogen) {
-          gameMode = gateDestination.gameMode;
+          endOfGameMetadata = gateDestination.endOfGameMetadata;
 
           // TODO play audio feedback for starting a new game
           await FlameAudio.play('start_strech.mp3');
@@ -42,7 +38,7 @@ class RoomTraversal {
       } else if (ret is AutoGenOutput_NoMoreBufferedBoards) {
         await FlameAudio.play('won_strech.mp3');
         return (
-          await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000), gameMode!, entryDirection),
+          await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000), endOfGameMetadata!, entryDirection),
           0,
         );
       }
