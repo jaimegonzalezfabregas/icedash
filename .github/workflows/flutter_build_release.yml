@@ -26,6 +26,11 @@ jobs:
 
       - name: Install Dependencies
         run: flutter pub get
+      
+      - name: Install FRB
+        uses: baptiste0928/cargo-install@v3
+        with:
+          crate: flutter_rust_bridge_codegen
 
       - name: Run Flutter Analyzer
         run: flutter analyze
