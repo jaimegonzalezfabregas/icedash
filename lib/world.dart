@@ -25,7 +25,7 @@ class IceDashWorld extends World with HasGameReference {
 
   @override
   Future<void> onLoad() async {
-    player = Player(position: Vector2(100, 104));
+    player = Player(position: Vector2(0, 4));
     add(player);
 
     var destination = roomTraversal.getOnLoadDestination();
@@ -164,5 +164,18 @@ class IceDashWorld extends World with HasGameReference {
 
   void predictedHit(Vector2 startingPos, Vector2 hitPos, Direction dir) {
     return _currentRoom!.predictedHit(startingPos, hitPos, dir);
+  }
+
+  double timeElapsed = 0;
+  static const timePerFrame = 1 / 30;
+
+  @override
+  void updateTree(double dt) {
+    timeElapsed += dt;
+
+    if (timeElapsed > timePerFrame) {
+      timeElapsed -= timePerFrame;
+      super.updateTree(timePerFrame);
+    }
   }
 }
