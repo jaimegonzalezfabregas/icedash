@@ -28,22 +28,22 @@ class RoomTraversal {
           endOfGameMetadata = gateDestination.endOfGameMetadata;
 
           // TODO play audio feedback for starting a new game
-          await FlameAudio.play('start_strech.mp3');
+           FlameAudio.play('start_strech.mp3');
           start = DateTime.now().millisecondsSinceEpoch.toDouble();
         } else if (gateDestination is GateDestination_NextAutoGen) {
-          await FlameAudio.play('won_room.mp3');
+           FlameAudio.play('won_room.mp3');
         }
 
         return (ret.field0, 0);
       } else if (ret is AutoGenOutput_NoMoreBufferedBoards) {
-        await FlameAudio.play('won_strech.mp3');
+         FlameAudio.play('won_strech.mp3');
         return (
           await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000), endOfGameMetadata!, entryDirection),
           0,
         );
       }
     } else if (gateDestination is GateDestination_RoomIdWithGate) {
-      await FlameAudio.play('change_room.mp3');
+       FlameAudio.play('change_room.mp3');
 
       return lobbyRoom(gateDestination, entryDirection);
     }

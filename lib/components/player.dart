@@ -179,10 +179,10 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
       }
 
       if (hitTile is! Tile_Gate) {
-        await FlameAudio.play(audio);
+         FlameAudio.play(audio);
       } else {
         if (hitTile.field0 is GateMetadata_EntryOnly) {
-          await FlameAudio.play(audio);
+           FlameAudio.play(audio);
         }
       }
 

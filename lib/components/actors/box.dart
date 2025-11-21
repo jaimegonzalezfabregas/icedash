@@ -14,7 +14,7 @@ class Box extends Actor {
 
   @override
   Future<bool> hit(Direction dir) async {
-    await FlameAudio.play('hit_box.mp3');
+     FlameAudio.play('hit_box.mp3');
 
     return push(dir);
   }
