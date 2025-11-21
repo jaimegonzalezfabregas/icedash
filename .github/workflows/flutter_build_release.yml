@@ -19,10 +19,10 @@ jobs:
           java-version: '11'
           distribution: 'adopt'  # or 'zulu', 'temurin', etc.
       
-      - name: Install Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'  # or specify a version
+          channel: stable  # or 'beta', 'dev'
 
       - name: Install Dependencies
         run: flutter pub get
