@@ -1,0 +1,74 @@
+name: Flutter Build and Release
+
+on:
+  push:
+    branches:
+      - main  # Change to your main branch if necessary
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'  # or specify a version
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Run Flutter Analyzer
+        run: flutter analyze
+
+      - name: Generate Version from Date
+        id: set_version
+        run: |
+          echo "VERSION=$(date +'%Y.%m.%d.%H%M')" >> $GITHUB_ENV
+          echo "Version set to $VERSION"  # Optional logging
+
+      - name: Update pubspec.yaml Version
+        run: |
+          sed -i '' "s/version: .*/version: $VERSION+1/" pubspec.yaml
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Build App Bundle
+        run: flutter build appbundle --release
+
+      # To release on GitHub Releases
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}  # Use the generated version as the tag
+          release_name: Release ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload APK to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/app/outputs/flutter-apk/app-release.apk
+          asset_name: app-release.apk
+          asset_content_type: application/octet-stream
+
+      - name: Upload AAB to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/app/outputs/bundle/release/app.aab
+          asset_name: app.aab
+          asset_content_type: application/octet-stream
