@@ -63,13 +63,13 @@ A       s       B
         destination: GateDestination.firstAutogen(
           boardDescription: BoardDescription(
             sizeRangeMin: 7 + lev,
-            sizeRangeMax: 8 + lev,
+            sizeRangeMax: 10 + lev,
             weakWallsPercentageMin: 0,
             weakWallsPercentageMax: 0,
             pilarsPercentageMin: 0,
             pilarsPercentageMax: 5,
             boxPercentageMin: 0,
-            boxPercentageMax: 3,
+            boxPercentageMax: 0,
             vignetPercentageMin: 0,
             vignetPercentageMax: 10,
             gameMode: GameMode.findExit,
@@ -88,9 +88,9 @@ A       s       B
         destination: GateDestination.firstAutogen(
           boardDescription: BoardDescription(
             sizeRangeMin: 7 + lev,
-            sizeRangeMax: 8 + lev,
+            sizeRangeMax: 10 + lev,
             weakWallsPercentageMin: 0,
-            weakWallsPercentageMax: 0,
+            weakWallsPercentageMax: 5,
             pilarsPercentageMin: 0,
             pilarsPercentageMax: 5,
             boxPercentageMin: 0,
