@@ -144,10 +144,11 @@ pub fn start_search(board_desc: BoardDescription, max_buffered_boards: isize) {
     let mut g_worker_queue = G_WORKER.lock().unwrap();
 
     if let None = *g_worker_queue {
-        let paralelism = available_parallelism()
-            .expect("couldnt get available parallelism")
-            .get()
-            / 2;
+        // let paralelism = available_parallelism()
+        //     .expect("couldnt get available parallelism")
+        //     .get()
+        //     / 2;
+        let paralelism = 1;
 
         *g_worker_queue = Some(
             (0..paralelism)

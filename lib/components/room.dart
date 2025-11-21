@@ -61,12 +61,20 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
   Future fadeIn() async {
     var fadeDuration = 0.5;
     var rippleDuration = 0.1;
+    double maxDelay = 0;
+
     for (var sprite in tileSpriteGrid.values) {
+      double d = (sprite.position - entranceWorldPos).length * rippleDuration;
       sprite.opacity = 0;
+
+      maxDelay = max(maxDelay, fadeDuration + d);
     }
 
     for (var sprite in actorList) {
+      double d = (sprite.position - entranceWorldPos).length * rippleDuration;
       sprite.opacity = 0;
+
+      maxDelay = max(maxDelay, fadeDuration + d);
     }
 
     for (var sprite in tileSpriteGrid.values) {
@@ -82,6 +90,11 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
         await actor.add(OpacityEffect.fadeIn(EffectController(duration: fadeDuration, startDelay: d)));
       }
     }
+
+    add(
+      FunctionEffect((_, __) {
+      }, EffectController(duration: maxDelay + fadeDuration + 1)),
+    );
   }
 
   void fadeOut(int exitGateId) {
@@ -119,12 +132,13 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
 
     add(
       FunctionEffect(
-        (_, __) {},
+        (_, __) {
+        },
         onComplete: () {
           clean();
           removeFromParent();
         },
-        EffectController(duration: maxDelay + fadeDuration),
+        EffectController(duration: maxDelay + fadeDuration + 1),
       ),
     );
   }
@@ -162,18 +176,19 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
           (String, int)? bgImg = await room.assetAt(p: pos);
 
           if (bgImg != null) {
-            SpriteComponent img = SpriteComponent(
+            SpriteComponent backgroundTile = SpriteComponent(
+              sprite: await Sprite.load(bgImg.$1),
               priority: 0,
-              size: Vector2.all(1.01),
+              size: Vector2.all(1),
               position: mapPos2WorldVector(pos),
               anchor: Anchor.center,
               angle: bgImg.$2 * pi / 2,
+              bleed: 0.01,
             );
 
-            img.sprite = await Sprite.load(bgImg.$1);
-            img.opacity = startingOpacity;
-            add(img);
-            tileSpriteGrid[pos] = img;
+            backgroundTile.opacity = startingOpacity;
+            add(backgroundTile);
+            tileSpriteGrid[pos] = backgroundTile;
           }
 
           var tile = await room.at(p: pos);

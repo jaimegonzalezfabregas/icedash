@@ -30,7 +30,9 @@ class IceDashWorld extends World with HasGameReference {
 
     var destination = roomTraversal.getOnLoadDestination();
 
-    await loadRoom(destination, Vector2(100, 100), Direction.north);
+    // camera.viewfinder.add(FpsTextComponent(position: Vector2.all(0), size: Vector2.all(1)));
+
+    await loadRoom(destination, Vector2(0, 0), Direction.north);
     player.push(Direction.north);
   }
 

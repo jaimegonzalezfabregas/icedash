@@ -59,6 +59,7 @@ pub enum AutoGenOutput {
 }
 
 pub fn dart_start_search(board_desc: BoardDescription, max_buffered_boards: isize) {
+    print!("start search");
     start_search(board_desc, max_buffered_boards);
 }
 
