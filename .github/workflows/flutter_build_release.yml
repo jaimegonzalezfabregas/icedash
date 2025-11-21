@@ -17,7 +17,8 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
-
+          distribution: 'adopt'  # or 'zulu', 'temurin', etc.
+      
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
