@@ -75,10 +75,10 @@ impl Tile {
         }
     }
 
-    pub fn stops_player_during_gameplay(&self, predicting: bool) -> bool {
+    pub fn stops_player_during_gameplay(&self) -> bool {
         match self {
             Tile::Gate(GateMetadata::EntryOnly) => true,
-            Tile::Gate(_) => predicting,
+            Tile::Gate(_) => true,
             Tile::Wall => true,
             Tile::Stop => false,
             Tile::Ice => false,

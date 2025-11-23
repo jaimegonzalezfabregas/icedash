@@ -17,7 +17,7 @@ use crate::{
         main::{AutoGenOutput, LeftRotatable},
     },
     logic::{
-        board::{self, Board},
+        board::Board,
         noise_reduction::asthetic_cleanup,
         solver::{analyze, Analysis},
     },

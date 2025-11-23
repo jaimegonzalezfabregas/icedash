@@ -112,7 +112,7 @@ pub fn connected(seed1: Pos, seed2: Pos, board1: &TileMapWrap, board2: &TileMapW
             let next_pos1 = direction.vector() + p1.pos;
 
             if board2.base.in_bounds(&next_pos1) && !found1.contains(&next_pos1) {
-                if !board1.at(&next_pos1).stops_player_during_gameplay(false) {
+                if !board1.at(&next_pos1).stops_player_during_gameplay() {
                     if found2.contains(&next_pos1) {
                         return true;
                     }
@@ -127,7 +127,7 @@ pub fn connected(seed1: Pos, seed2: Pos, board1: &TileMapWrap, board2: &TileMapW
             let next_pos2 = direction.vector() + p2.pos;
 
             if board2.base.in_bounds(&next_pos2) && !found2.contains(&next_pos2) {
-                if !board2.at(&next_pos2).stops_player_during_gameplay(false) {
+                if !board2.at(&next_pos2).stops_player_during_gameplay() {
                     if found1.contains(&next_pos2) {
                         return true;
                     }
@@ -162,14 +162,14 @@ pub fn remove_rooms(board: &mut TileMap, start: &Pos, start_direction: &Directio
         rep = false;
 
         for p1 in &all_pos {
-            if board.at(&p1).stops_player_during_gameplay(false) {
+            if board.at(&p1).stops_player_during_gameplay() {
                 continue;
             }
 
             for (dx, dy) in [(0, 1), (1, 0)] {
                 let p2 = *p1 + Pos::new(dx, dy);
 
-                if board.at(&p2).stops_player_during_gameplay(false) {
+                if board.at(&p2).stops_player_during_gameplay() {
                     continue;
                 }
 

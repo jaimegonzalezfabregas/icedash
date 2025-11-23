@@ -14,27 +14,36 @@ class Box extends Actor {
 
   @override
   Future<bool> hit(Direction dir) async {
-     FlameAudio.play('hit_box.mp3');
+    FlameAudio.play('hit_box.mp3');
 
     return push(dir);
   }
 
-  Future<bool> push(Direction dir) async {
-    var delta = dir.dartVector();
-    if (!await room.canBoxWalkInto(position + delta, dir)) {
-      await room.hit(position + delta, dir, box: true);
-      return false;
+  Future<Vector2> predictHit(Direction dir) async {
+    Vector2 cursor = position;
+    Vector2 delta = dir.dartVector();
+
+    while ((await room.canBoxWalkInto(cursor + delta, dir))) {
+      cursor = cursor + delta;
     }
+
+    return cursor;
+  }
+
+  Future<bool> push(Direction dir) async {
+    Vector2 destination = await predictHit(dir);
+    int movementLenght = (destination - position).length.floor();
+
+    print("moving box from $position to $destination, in $movementLenght ");
 
     super.colision = false;
     add(
-      MoveByEffect(
-        dir.dartVector(),
-        LinearEffectController(secPerStep),
+      MoveToEffect(
+        destination,
+        LinearEffectController(secPerStep * movementLenght),
         onComplete: () {
           super.colision = true;
-
-          push(dir);
+          room.hit(destination + dir.dartVector(), dir, box: true);
         },
       ),
     );

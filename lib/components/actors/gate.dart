@@ -36,7 +36,7 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
   @override
   Future<void> onLoad() async {
     if (lable != null) {
-      add(Sign(lable!, -angle));
+      add(Sign(lable!, -angle, position: Vector2(0.5, 0.5)));
     }
     world = game.idWorld;
 

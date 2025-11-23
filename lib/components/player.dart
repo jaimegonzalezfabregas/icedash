@@ -15,10 +15,8 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
   double secPerStep = 0.07;
   bool sliding = false;
-  Direction? buffered;
   int? remainingMoves;
   int? remainingMovesReset;
-  int movementLenght = 0;
 
   String animationState = "idle";
 
@@ -57,27 +55,27 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   void reset() {
     if (!sliding) {
       game.idWorld.reset();
-      buffered = null;
       position = game.idWorld.resetPlayerPos();
-      push(game.idWorld.getResetDirection(), userPush: true);
+      push(game.idWorld.getResetDirection());
       remainingMoves = remainingMovesReset;
     }
   }
 
-  void predictHit(Direction dir) async {
+  Future<Vector2> predictHit(Direction dir, bool firstPush) async {
     Vector2 cursor = position;
-    bool userPush = true;
-    Vector2 delta =  dir.dartVector();
+    Vector2 delta = dir.dartVector();
 
-    while ((await game.idWorld.canWalkInto(cursor, cursor + delta, dir, userPush, true))) {
-      userPush = false;
+    while ((await game.idWorld.canMove(cursor, cursor + delta, dir, firstPush))) {
+      firstPush = false;
       cursor = cursor + delta;
     }
 
     game.idWorld.predictedHit(position, cursor + delta, dir);
+
+    return cursor;
   }
 
-  void push(Direction dir, {bool userPush = true}) async {
+  void animate(Direction dir, double secondsToHit) {
     late String axis;
 
     switch (dir) {
@@ -93,127 +91,115 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         break;
     }
 
-    if (animationState == "idle") {
-      add(
-        FunctionEffect(
-          (_, __) {},
-          LinearEffectController(secPerStep / 2),
-          onComplete: () async {
-            sprite = await Sprite.load('player_${axis}0001.png');
-            animationState = "${axis}0001";
-          },
-        ),
-      );
+    add(
+      FunctionEffect(
+        (_, __) {},
+        LinearEffectController(secPerStep / 2),
+        onComplete: () async {
+          sprite = await Sprite.load('player_${axis}0001.png');
+          animationState = "${axis}0001";
+        },
+      ),
+    );
 
-      add(
-        FunctionEffect(
-          (_, __) {},
-          LinearEffectController(secPerStep),
-          onComplete: () async {
-            sprite = await Sprite.load('player_${axis}0002.png');
-            animationState = "${axis}0002";
-          },
-        ),
-      );
-    }
+    add(
+      FunctionEffect(
+        (_, __) {},
+        LinearEffectController(secPerStep),
+        onComplete: () async {
+          sprite = await Sprite.load('player_${axis}0002.png');
+          animationState = "${axis}0002";
+        },
+      ),
+    );
 
-    Vector2 delta = dir.dartVector();
+    add(
+      FunctionEffect(
+        (_, __) {},
+        LinearEffectController(secondsToHit - secPerStep / 2),
+        onComplete: () async {
+          sprite = await Sprite.load('player_${axis}0001.png');
+          animationState = "${axis}0001";
+        },
+      ),
+    );
 
-    if (sliding) {
-      if (userPush) {
-        buffered = dir;
-      }
-      return;
-    }
+    add(
+      FunctionEffect(
+        (_, __) {},
+        LinearEffectController(secondsToHit),
+        onComplete: () async {
+          sprite = await Sprite.load('player_idle.png');
+          animationState = "idle";
+        },
+      ),
+    );
+  }
 
-    sliding = true;
+  Future<void> onHit(Direction dir, int movementLenght) async {
+    sliding = false;
 
-    if (userPush) {
-      predictHit(dir);
-    }
+    Tile hitTile = await game.idWorld.getTile(position + dir.dartVector());
 
-    if (!(await game.idWorld.canWalkInto(position, position + delta, dir, userPush, false))) {
-      sliding = false;
+    bool consecuences = await game.idWorld.hit(position + dir.dartVector(), dir);
 
-      add(
-        FunctionEffect(
-          (_, __) {},
-          LinearEffectController(secPerStep / 2),
-          onComplete: () async {
-            sprite = await Sprite.load('player_${axis}0001.png');
-            animationState = "${axis}0001";
-          },
-        ),
-      );
+    int moveI = remainingMoves == null ? 1 : remainingMoves!;
 
-      add(
-        FunctionEffect(
-          (_, __) {},
-          LinearEffectController(secPerStep),
-          onComplete: () async {
-            sprite = await Sprite.load('player_idle.png');
-            animationState = "idle";
-          },
-        ),
-      );
+    String audio = 'move_${min(moveI, 17)}.mp3';
 
-      Tile hitTile = await game.idWorld.getTile(position + delta);
-
-      bool consecuences = await game.idWorld.hit(position + delta, dir);
-
-      int moveI = remainingMoves == null ? 1 : remainingMoves!;
-
-      String audio = 'move_${min(moveI, 17)}.mp3';
-
-      if (movementLenght != 0 || consecuences) {
-        if (remainingMoves != null) {
-          remainingMoves = remainingMoves! - 1;
-          print("remaining moves: $remainingMoves");
-          if (remainingMoves == 0) {
-            if (hitTile is! Tile_Outside) {
-              audio = "too_many_moves.mp3";
-              reset();
-            }
+    if (movementLenght != 0 || consecuences) {
+      if (remainingMoves != null) {
+        remainingMoves = remainingMoves! - 1;
+        print("remaining moves: $remainingMoves");
+        if (remainingMoves == 0) {
+          if (hitTile is! Tile_Outside) {
+            audio = "too_many_moves.mp3";
+            reset();
           }
         }
       }
-
-      if (hitTile is! Tile_Gate) {
-         FlameAudio.play(audio);
-      } else {
-        if (hitTile.field0 is GateMetadata_EntryOnly) {
-           FlameAudio.play(audio);
-        }
-      }
-
-      movementLenght = 0;
-
-      if (buffered != null) {
-        Direction d = buffered!;
-        buffered = null;
-        push(d);
-      }
-
-      return;
     }
 
-    EffectController ec = LinearEffectController(secPerStep);
+    if (hitTile is! Tile_Gate) {
+      FlameAudio.play(audio);
+    } else {
+      if (hitTile.field0 is GateMetadata_EntryOnly) {
+        FlameAudio.play(audio);
+      }
+    }
+  }
 
-    MoveByEffect effect = MoveByEffect(delta, ec);
+  bool moving = false;
 
-    effect.onComplete = () {
-      sliding = false;
-      movementLenght += 1;
-      push(dir, userPush: false);
-    };
+  void push(Direction dir, {bool firstPush = true}) async {
+    if (moving) {
+      return;
+    }
+    moving = true;
+
+    Vector2 destination = await predictHit(dir, firstPush);
+
+    int movementLenght = (destination - position).length.floor();
+
+    MoveToEffect effect = MoveToEffect(
+      destination,
+      LinearEffectController(movementLenght * secPerStep),
+      onComplete: () {
+        onHit(dir, movementLenght);
+        moving = false;
+      },
+    );
 
     add(effect);
   }
 
   void rescueIfOutside(Direction rescueDir) async {
+    while (moving) {
+      await Future.delayed(Duration.zero);
+    }
 
     if ((await game.idWorld.getTile(position)) is Tile_Outside) {
-      push(rescueDir, userPush: false);
+      push(rescueDir, firstPush: false);
     }
   }
 }

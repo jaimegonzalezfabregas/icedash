@@ -91,10 +91,7 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
       }
     }
 
-    add(
-      FunctionEffect((_, __) {
-      }, EffectController(duration: maxDelay + fadeDuration + 1)),
-    );
+    add(FunctionEffect((_, __) {}, EffectController(duration: maxDelay + fadeDuration + 1)));
   }
 
   void fadeOut(int exitGateId) {
@@ -132,8 +129,7 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
 
     add(
       FunctionEffect(
-        (_, __) {
-        },
+        (_, __) {},
         onComplete: () {
           clean();
           removeFromParent();
@@ -234,7 +230,8 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
             weakWall.opacity = startingOpacity;
             add(weakWall);
           } else if (tile is Tile_Sign) {
-            var sign = Sign(tile.text, 0, position: mapPos2WorldVector(pos), width: tile.width, height: tile.height);
+            var sign = Sign(tile.text, 0, position: mapPos2WorldVector(pos), textBoxWidth: tile.width.toDouble(), textBoxheight: tile.height.toDouble(),
+            );
             add(sign);
           }
         }),
@@ -246,19 +243,19 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
     clean();
   }
 
-  Future<bool> canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush, bool predicting) async {
+  Future<bool> canMove(Vector2 og, Vector2 dst, Direction dir, bool firstPush) async {
     Tile ogTile = await getTile(og);
 
-    if (ogTile is Tile_Stop && !userPush) {
+    if (ogTile is Tile_Stop && !firstPush) {
       return false;
     }
 
-    if (await ogTile.stopsPlayerDuringGameplay(predicting: predicting)) {
+    if (await ogTile.stopsPlayerDuringGameplay()) {
       return true;
     }
 
     Tile dstTile = await getTile(dst);
-    var canWalk = !(await dstTile.stopsPlayerDuringGameplay(predicting: predicting));
+    var canWalk = !(await dstTile.stopsPlayerDuringGameplay());
 
     if (canWalk == true) {
       for (var actor in actorList) {

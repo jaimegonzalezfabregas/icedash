@@ -12,6 +12,7 @@ abstract class Actor extends SpriteComponent {
     super.priority = 10;
     super.size = Vector2.all(1);
     super.anchor = Anchor.center;
+    super.bleed = 0.01;
   }
 
   Future<bool> hit(Direction dir);

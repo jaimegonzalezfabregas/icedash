@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flame/components.dart';
@@ -25,7 +26,7 @@ class IceDashWorld extends World with HasGameReference {
 
   @override
   Future<void> onLoad() async {
-    player = Player(position: Vector2(0, 4));
+    player = Player();
     add(player);
 
     var destination = roomTraversal.getOnLoadDestination();
@@ -33,7 +34,6 @@ class IceDashWorld extends World with HasGameReference {
     // camera.viewfinder.add(FpsTextComponent(position: Vector2.all(0), size: Vector2.all(1)));
 
     await loadRoom(destination, Vector2(0, 0), Direction.north);
-    player.push(Direction.north);
   }
 
   Future<RoomComponent> getRoom(Vector2 worldEntrancePosition, Direction stichDirection, GateDestination destination) async {
@@ -77,7 +77,6 @@ class IceDashWorld extends World with HasGameReference {
     } else {
       player.remainingMoves = null;
     }
-    // player.push(stichDirection);
 
     player.rescueIfOutside(stichDirection);
   }
@@ -137,8 +136,8 @@ class IceDashWorld extends World with HasGameReference {
     camera = cam;
   }
 
-  Future<bool> canWalkInto(Vector2 og, Vector2 dst, Direction dir, bool userPush, bool predicting) async {
-    bool ret = await _currentRoom!.canWalkInto(og, dst, dir, userPush, predicting);
+  Future<bool> canMove(Vector2 og, Vector2 dst, Direction dir, bool firstPush) async {
+    bool ret = await _currentRoom!.canMove(og, dst, dir, firstPush);
     return ret;
   }
 
@@ -171,11 +170,14 @@ class IceDashWorld extends World with HasGameReference {
 
   @override
   void updateTree(double dt) {
-    timeElapsed += dt;
+    sleep(Duration(milliseconds: (1000/40).floor()));
 
-    if (timeElapsed > timePerFrame) {
-      timeElapsed -= timePerFrame;
-      super.updateTree(timePerFrame);
-    }
+    // timeElapsed += dt;
+
+    // if (timeElapsed > timePerFrame) {
+    //   timeElapsed -= timePerFrame;
+    // }
+          super.updateTree(dt);
+
   }
 }

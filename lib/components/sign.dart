@@ -7,13 +7,14 @@ import 'package:flutter/painting.dart';
 
 final bigNum = 100.0;
 
-class Sign extends Component {
+class Sign extends PositionComponent {
   String text;
-  double angle;
-  Vector2? position;
-  int width;
-  int height;
-  Sign(this.text, this.angle, {this.position, this.width = 1, this.height = 1});
+  double textBoxWidth;
+  double textBoxheight;
+  Sign(this.text, double angle, {super.position, this.textBoxWidth = 1, this.textBoxheight = 1}){
+    super.angle = angle;
+    super.anchor = Anchor.center;
+  }
 
   @override
   FutureOr<void> onLoad() {
@@ -25,18 +26,11 @@ class Sign extends Component {
       (Color.fromARGB(255, 255, 255, 255), Vector2(0, 0)),
     ]) {
       Future(() {
-        add(
-          MyTextBox(
-            text,
-            delta: x.$2,
-            color: x.$1,
-            size: Vector2(width.toDouble(), height.toDouble()),
-            position: (position ?? Vector2.all(0.5)),
-            angle: angle,
-          ),
-        );
+        add(MyTextBox(text, delta: x.$2, color: x.$1, size: Vector2(textBoxWidth.toDouble(), textBoxheight.toDouble())));
       });
     }
+
+    // takeSnapshot();
 
     return super.onLoad();
   }
@@ -45,9 +39,9 @@ class Sign extends Component {
 class MyTextBox extends TextBoxComponent {
   Color color;
 
-  MyTextBox(String text, {required Vector2 size, required this.color, required Vector2 delta, required position, super.angle})
+  MyTextBox(String text, {required Vector2 size, required this.color, required Vector2 delta, super.angle})
     : super(
-        position: position + delta / 16 / 4,
+        position: delta / 16 / 4,
         scale: Vector2.all(1 / bigNum),
         size: size * bigNum,
         text: text,
