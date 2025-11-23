@@ -4,7 +4,7 @@ import 'package:flame/components.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 
 abstract class Actor extends SpriteComponent {
-  String asset;
+  String? asset;
   bool colision;
   bool selffade;
 
@@ -19,10 +19,11 @@ abstract class Actor extends SpriteComponent {
 
   void predictedHit(Vector2 startOfMovement, Direction dir);
 
-
   @override
   FutureOr<void> onLoad() async {
-    super.sprite = await Sprite.load(asset);
+    if (asset != null) {
+      super.sprite = await Sprite.load(asset!);
+    }
     await super.onLoad();
   }
 }

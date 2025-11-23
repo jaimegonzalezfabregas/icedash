@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/services.dart';
+import 'package:icedash/config.dart';
 import 'package:icedash/extensions.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/direction.dart';
@@ -12,8 +13,6 @@ import 'package:icedash/src/rust/api/tile.dart';
 
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
   Player({super.position}) : super(priority: 20, size: Vector2.all(1), anchor: Anchor.center);
-
-  double secPerStep = 0.07;
 
   List<Direction> movementQueue = [];
 

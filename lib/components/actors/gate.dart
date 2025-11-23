@@ -6,6 +6,7 @@ import 'package:flame/effects.dart';
 import 'package:icedash/components/actor.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/components/sign.dart';
+import 'package:icedash/config.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/main.dart';
@@ -14,7 +15,6 @@ import 'package:icedash/world.dart';
 class Gate extends Actor with HasGameReference<IceDashGame> {
   RoomComponent room;
   int gateId;
-  double secPerStep = 0.07;
   late IceDashWorld world;
 
   Direction innerDirection;

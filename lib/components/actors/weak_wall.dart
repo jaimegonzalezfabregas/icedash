@@ -8,6 +8,7 @@ class WeakWall extends Actor {
   @override
   Future<bool> hit(Direction dir) async {
     removeFromParent();
+    // TODO particles
     super.colision = false;
     return true;
   }

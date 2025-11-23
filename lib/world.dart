@@ -123,6 +123,8 @@ class IceDashWorld extends World with HasGameReference {
     }
   }
 
+  // TODO snow particles
+
   @override
   void onGameResize(Vector2 size) {
     Rect focus = _currentRoom!.worldBB;
