@@ -7,7 +7,7 @@ use std::{
     time::{self},
 };
 
-use sorted_vec::partial::{SortedSet, SortedVec};
+use sorted_vec::partial::{SortedSet};
 
 use crate::{
     api::{

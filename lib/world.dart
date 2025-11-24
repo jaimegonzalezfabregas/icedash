@@ -123,7 +123,6 @@ class IceDashWorld extends World with HasGameReference {
     }
   }
 
-  // TODO snow particles
 
   @override
   void onGameResize(Vector2 size) {
@@ -183,7 +182,7 @@ class IceDashWorld extends World with HasGameReference {
     super.updateTree(dt);
   }
 
-  double snow_debt = 0;
+  double snowDebt = 0;
 
   void spawnSnow() {
     if (_currentRoom == null) {
@@ -193,10 +192,10 @@ class IceDashWorld extends World with HasGameReference {
     Rect boundingBox = _currentRoom!.worldBB.inflate(3);
 
     double snowCount = (boundingBox.width * boundingBox.height / 1000);
-    snow_debt += snowCount;
+    snowDebt += snowCount;
 
-    while (snow_debt > 1) {
-      snow_debt -= 1;
+    while (snowDebt > 1) {
+      snowDebt -= 1;
       var pos = boundingBox.randomPoint();
       add(Snow(pos));
     }
