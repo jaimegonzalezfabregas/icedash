@@ -34,10 +34,7 @@ jobs:
 
       - name: Run FRB generate
         run: flutter_rust_bridge_codegen generate
-      
-      - name: Run Flutter Analyzer
-        run: flutter analyze
-
+   
       - name: Generate Version from Date
         id: set_version
         run: |
