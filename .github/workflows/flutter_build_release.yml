@@ -5,6 +5,9 @@ on:
     branches:
       - master  # Change to your main branch if necessary
 
+permissions:
+  contents: write  # Required to create releases
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -50,6 +53,7 @@ jobs:
 
       - name: Build App Bundle
         run: flutter build appbundle --release
+
 
       # To release on GitHub Releases
       - name: Create Release
