@@ -43,7 +43,7 @@ jobs:
 
       - name: Update pubspec.yaml Version
         run: |
-          sed -i '' "s/version: .*/version: $VERSION+1/" pubspec.yaml
+          sed -i "s/version: .*/version: $VERSION+1/" pubspec.yaml
 
       - name: Build APK
         run: flutter build apk --release
