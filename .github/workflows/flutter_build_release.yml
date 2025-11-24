@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write  # Required to create releases
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -65,7 +65,7 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_4_RELEASE }}
 
       - name: Upload APK to Release
         uses: actions/upload-release-asset@v1
