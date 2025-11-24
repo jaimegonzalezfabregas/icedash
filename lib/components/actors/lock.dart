@@ -3,7 +3,7 @@ import 'package:icedash/components/actor.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 
 class WeakWall extends Actor {
-  WeakWall({super.position}) : super("lock.png");
+  WeakWall(opacity, {super.position}) : super("lock.png");
 
   @override
   Future<bool> hit(Direction dir) async {

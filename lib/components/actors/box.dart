@@ -9,10 +9,10 @@ import 'package:icedash/extensions.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 
 class Box extends Actor {
-
   RoomComponent room;
   late SpriteAnimationComponent boxDisplay;
   Box(this.room, {super.position}) : super(null);
+  bool moving = false;
 
   @override
   void onLoad() async {
@@ -20,7 +20,7 @@ class Box extends Actor {
       await Flame.images.load('box.png'),
       size: Vector2.all(1),
       playing: false,
-      SpriteAnimationData.sequenced(textureSize: Vector2(16, 16), amount: 16, stepTime: secPerStep/3),
+      SpriteAnimationData.sequenced(textureSize: Vector2(16, 16), amount: 16, stepTime: 1/16/3),
     );
     add(boxDisplay);
   }
@@ -33,6 +33,7 @@ class Box extends Actor {
     int movementLenght = (destination - position).length.floor();
 
     if (movementLenght != 0) {
+      moving = true;
       boxDisplay.position = position - destination;
 
       position = destination;
@@ -45,14 +46,15 @@ class Box extends Actor {
           onComplete: () {
             boxDisplay.playing = false;
 
-            room.hit(destination + dir.dartVector(), dir, box: true); // TODO not working
+            room.hit(destination + dir.dartVector(), dir, box: true);
+            moving = false;
           },
         ),
       );
 
       return true;
     }
-    return false;
+    return await room.hit(destination + dir.dartVector(), dir, box: true);
   }
 
   Future<Vector2> predictHit(Direction dir) async {
@@ -68,4 +70,18 @@ class Box extends Actor {
 
   @override
   void predictedHit(Vector2 startOfMovement, Direction dir) {}
+
+  bool shinyTime() {
+    int time = (DateTime.now().millisecondsSinceEpoch).floor() % 7000;
+    // print("$time ${time < 2000}");
+    return time < 500;
+  }
+
+  @override
+  void update(double dt) {
+    bool shiny = shinyTime();
+    // print("$moving $shiny");
+
+    boxDisplay.playing = moving || shiny;
+  }
 }

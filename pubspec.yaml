@@ -31,6 +31,10 @@ flutter:
   assets:
     - assets/images/
     - assets/images/wall/
+    - assets/images/wall/wall_simple/
+    - assets/images/player/
+    - assets/images/snow_flakes/
+    - assets/images/player/
     - assets/audio/
 
   fonts:

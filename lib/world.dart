@@ -10,11 +10,11 @@ import 'package:icedash/components/player.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/extensions.dart';
 import 'package:icedash/room_traversal/room_traversal.dart';
+import 'package:icedash/snow.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/tile.dart';
 
 import 'src/rust/api/main.dart';
-
 
 class IceDashWorld extends World with HasGameReference {
   late CameraComponent camera;
@@ -29,7 +29,7 @@ class IceDashWorld extends World with HasGameReference {
     player = Player();
     add(player);
 
-    var destination = roomTraversal.getOnLoadDestination();
+    var destination = await roomTraversal.getOnLoadDestination();
 
     // camera.viewfinder.add(FpsTextComponent(position: Vector2.all(0), size: Vector2.all(1)));
 
@@ -172,14 +172,33 @@ class IceDashWorld extends World with HasGameReference {
 
   @override
   void updateTree(double dt) {
-    sleep(Duration(milliseconds: (1000/40).floor()));
+    sleep(Duration(milliseconds: (1000 / 40).floor()));
+    spawnSnow();
 
     // timeElapsed += dt;
 
     // if (timeElapsed > timePerFrame) {
     //   timeElapsed -= timePerFrame;
     // }
-          super.updateTree(dt);
+    super.updateTree(dt);
+  }
 
+  double snow_debt = 0;
+
+  void spawnSnow() {
+    if (_currentRoom == null) {
+      return;
+    }
+
+    Rect boundingBox = _currentRoom!.worldBB.inflate(3);
+
+    double snowCount = (boundingBox.width * boundingBox.height / 1000);
+    snow_debt += snowCount;
+
+    while (snow_debt > 1) {
+      snow_debt -= 1;
+      var pos = boundingBox.randomPoint();
+      add(Snow(pos));
+    }
   }
 }

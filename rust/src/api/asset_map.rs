@@ -61,7 +61,7 @@ impl Matrix<Option<(String, isize)>> {
 
         for p in wip_tilemap.all_pos() {
             if let None = ret.at(&p) {
-                ret.set(&p, wip_tilemap.neighbour_at(&p).get_asset());
+                ret.set(&p, wip_tilemap.neighbour_at(&p).get_asset(p));
             }
         }
 

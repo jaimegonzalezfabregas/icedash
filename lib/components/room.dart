@@ -109,10 +109,12 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
     }
 
     for (var actor in actorList) {
-      double d = (actor.position - exitWorldPos).length * rippleDuration;
-      actor.opacity = 1;
+      if (!actor.selffade) {
+        double d = (actor.position - exitWorldPos).length * rippleDuration;
+        actor.opacity = 1;
 
-      maxDelay = max(maxDelay, fadeDuration + d);
+        maxDelay = max(maxDelay, fadeDuration + d);
+      }
     }
 
     for (var sprite in tileSpriteGrid.values) {
@@ -230,7 +232,12 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
             weakWall.opacity = startingOpacity;
             add(weakWall);
           } else if (tile is Tile_Sign) {
-            var sign = Sign(tile.text, 0, position: mapPos2WorldVector(pos), textBoxWidth: tile.width.toDouble(), textBoxheight: tile.height.toDouble(),
+            var sign = Sign(
+              tile.text,
+              0,
+              position: mapPos2WorldVector(pos),
+              textBoxWidth: tile.width.toDouble(),
+              textBoxheight: tile.height.toDouble(),
             );
             add(sign);
           }

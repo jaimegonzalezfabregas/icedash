@@ -1,6 +1,6 @@
 use rand::seq::IteratorRandom;
 
-use crate::api::{main::GateMetadata, tile::Tile};
+use crate::api::{main::GateMetadata, pos::Pos, tile::Tile};
 
 #[derive(Clone)]
 pub struct Neighbour<T> {
@@ -36,7 +36,7 @@ impl Neighbour<Tile> {
         }
     }
 
-    pub fn get_asset(&self) -> Option<(String, isize)> {
+    pub fn get_asset(&self, p: Pos) -> Option<(String, isize)> {
         let mut rng = rand::rng();
         rng.reseed().expect("random initialization failed");
 
@@ -66,7 +66,7 @@ impl Neighbour<Tile> {
                             north: true,
                             east: true,
                             ..
-                        } => (500, Some(("wall_double_corner.png".into(), i))),
+                        } => (500, Some(("wall/wall_double_corner.png".into(), i))),
 
                         Neighbour {
                             southwest: false,
@@ -75,7 +75,7 @@ impl Neighbour<Tile> {
                             north: true,
                             east: true,
                             ..
-                        } => (300, Some(("wall_corner_in.png".into(), i))),
+                        } => (300, Some(("wall/wall_corner_in.png".into(), i))),
                         Neighbour {
                             south: false,
                             west: false,
@@ -83,7 +83,7 @@ impl Neighbour<Tile> {
                             east: true,
                             northeast: true,
                             ..
-                        } => (200, Some(("wall_corner_out.png".into(), i))),
+                        } => (200, Some(("wall/wall_corner_out.png".into(), i))),
                         Neighbour {
                             south: false,
                             north: true,
@@ -91,7 +91,13 @@ impl Neighbour<Tile> {
                         } => (
                             100,
                             Some((
-                                (format!("wall/{}.png", (1..=8).choose(&mut rng).unwrap())).into(),
+                                (format!(
+                                    "wall/wall_simple/{}.png",
+                                    (if p.parity() { 1..=4 } else { 5..=8 })
+                                        .choose(&mut rng)
+                                        .unwrap()
+                                ))
+                                .into(),
                                 i,
                             )),
                         ),

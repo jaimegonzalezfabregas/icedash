@@ -21,6 +21,6 @@ class EntranceTmpIcePatch extends Actor {
   }
 
   @override
-  void predictedHit(Vector2 startOfMovement, Direction dir) {
-  }
+  void predictedHit(Vector2 startOfMovement, Direction dir) {}
+
 }

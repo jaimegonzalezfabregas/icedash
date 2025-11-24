@@ -13,6 +13,7 @@ class Sign extends PositionComponent {
   double textBoxheight;
   Sign(this.text, double angle, {super.position, this.textBoxWidth = 1, this.textBoxheight = 1}){
     super.angle = angle;
+    super.priority = 19;
     super.anchor = Anchor.center;
   }
 

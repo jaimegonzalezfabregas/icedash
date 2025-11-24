@@ -8,6 +8,10 @@ pub struct Pos {
 }
 
 impl Pos {
+    pub fn parity(&self) -> bool{
+        (self.x + self.y) % 2 == 0
+    }
+
     pub fn new(x: isize, y: isize) -> Self {
         Self { x, y }
     }

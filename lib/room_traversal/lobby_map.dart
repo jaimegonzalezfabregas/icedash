@@ -122,7 +122,12 @@ A       s       B
 Future<(String, Map<int, GateMetadata>, List<(String, int, int)>, Direction)> getLobbyRoom(String id) async {
   var matchLobby = RegExp(r'lev_(?<lev>[0-9]+)_lobby').firstMatch(id);
   if (matchLobby != null) {
-    return await lobbyRoomByLev(int.parse(matchLobby.namedGroup("lev")!));
+    int lev = int.parse(matchLobby.namedGroup("lev")!);
+
+    final SharedPreferencesAsync prefs = SharedPreferencesAsync();
+    await prefs.setInt("lastPlayedLevel", lev);
+
+    return await lobbyRoomByLev(lev);
   }
 
   throw UnimplementedError();

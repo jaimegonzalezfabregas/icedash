@@ -45,7 +45,6 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
 
   @override
   Future<bool> hit(Direction dir) async {
-    // UNREACHEABLE
     return false;
   }
 

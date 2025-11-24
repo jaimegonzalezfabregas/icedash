@@ -1,14 +1,16 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame/particles.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:icedash/config.dart';
 import 'package:icedash/extensions.dart';
 import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/direction.dart';
-import 'package:icedash/src/rust/api/main.dart';
 import 'package:icedash/src/rust/api/tile.dart';
 
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
@@ -21,9 +23,12 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
   String animationState = "idle";
 
+  Random rnd = Random();
+  Vector2 randomVector2() => (Vector2.random(rnd)- Vector2.random(rnd)) * 2;
+
   @override
   Future<void> onLoad() async {
-    sprite = await Sprite.load('player_idle.png');
+    sprite = await Sprite.load('player/player_idle.png');
 
     add(
       KeyboardListenerComponent(
@@ -102,7 +107,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         (_, __) {},
         LinearEffectController(secPerStep / 2),
         onComplete: () async {
-          sprite = await Sprite.load('player_${axis}0001.png');
+          sprite = await Sprite.load('player/player_${axis}0001.png');
           animationState = "${axis}0001";
         },
       ),
@@ -113,7 +118,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         (_, __) {},
         LinearEffectController(secPerStep),
         onComplete: () async {
-          sprite = await Sprite.load('player_${axis}0002.png');
+          sprite = await Sprite.load('player/player_${axis}0002.png');
           animationState = "${axis}0002";
         },
       ),
@@ -124,7 +129,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         (_, __) {},
         LinearEffectController(secondsToHit - secPerStep / 2),
         onComplete: () async {
-          sprite = await Sprite.load('player_${axis}0001.png');
+          sprite = await Sprite.load('player/player_${axis}0001.png');
           animationState = "${axis}0001";
         },
       ),
@@ -135,7 +140,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         (_, __) {},
         LinearEffectController(secondsToHit),
         onComplete: () async {
-          sprite = await Sprite.load('player_idle.png');
+          sprite = await Sprite.load('player/player_idle.png');
           animationState = "idle";
         },
       ),
@@ -178,7 +183,7 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         if ((movementLenght != 0 || consecuences) && !exiting) {
           if (remainingMoves != null) {
             remainingMoves = remainingMoves! - 1;
-            print("remaining moves: $remainingMoves, exiting $exiting, $hitTile");
+            // print("remaining moves: $remainingMoves");
             if (remainingMoves == 0) {
               if (hitTile is! Tile_Outside) {
                 audio = "too_many_moves.mp3";

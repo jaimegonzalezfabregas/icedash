@@ -4,12 +4,15 @@ import 'package:icedash/room_traversal/single_rooms.dart';
 import 'package:icedash/src/rust/api/dart_board.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum RoomType { lobby, game }
 
 class RoomTraversal {
-  GateDestination getOnLoadDestination() {
-    return GateDestination.roomIdWithGate(RoomIdAndGate(roomId: "lev_0_lobby", gateId: 3));
+  Future<GateDestination> getOnLoadDestination() async {
+    final SharedPreferencesAsync prefs = SharedPreferencesAsync();
+    int lastPlayedLevel = await prefs.getInt("lastPlayedLevel") ?? 0;
+    return GateDestination.roomIdWithGate(RoomIdAndGate(roomId: "lev_${lastPlayedLevel}_lobby", gateId: 3));
   }
 
   double start = 0;
@@ -28,22 +31,19 @@ class RoomTraversal {
           endOfGameMetadata = gateDestination.endOfGameMetadata;
 
           // TODO play audio feedback for starting a new game
-           FlameAudio.play('start_strech.mp3');
+          FlameAudio.play('start_strech.mp3');
           start = DateTime.now().millisecondsSinceEpoch.toDouble();
         } else if (gateDestination is GateDestination_NextAutoGen) {
-           FlameAudio.play('won_room.mp3');
+          FlameAudio.play('won_room.mp3');
         }
 
         return (ret.field0, 0);
       } else if (ret is AutoGenOutput_NoMoreBufferedBoards) {
-         FlameAudio.play('won_strech.mp3');
-        return (
-          await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000), endOfGameMetadata!, entryDirection),
-          0,
-        );
+        FlameAudio.play('won_strech.mp3');
+        return (await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000), endOfGameMetadata!, entryDirection), 0);
       }
     } else if (gateDestination is GateDestination_RoomIdWithGate) {
-       FlameAudio.play('change_room.mp3');
+      FlameAudio.play('change_room.mp3');
 
       return lobbyRoom(gateDestination, entryDirection);
     }
