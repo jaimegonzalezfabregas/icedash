@@ -33,6 +33,9 @@ jobs:
           crate: flutter_rust_bridge_codegen
 
       - name: Run FRB integrate
+        run: rm -rf rust_builder
+
+      - name: Run FRB integrate
         run: flutter_rust_bridge_codegen integrate
 
       - name: Run FRB generate
