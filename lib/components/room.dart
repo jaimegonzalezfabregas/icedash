@@ -11,7 +11,7 @@ import 'package:icedash/components/actors/gate.dart';
 import 'package:icedash/components/actors/weak_wall.dart';
 import 'package:icedash/components/sign.dart';
 import 'package:icedash/extensions.dart';
-import 'package:icedash/main.dart';
+import 'package:icedash/game.dart';
 import 'package:icedash/src/rust/api/dart_board.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/main.dart';
