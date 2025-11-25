@@ -81,7 +81,7 @@ jobs:
 
   build_windows:
     name: Build Windows
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: create_release
 
     steps:
@@ -91,8 +91,8 @@ jobs:
       - name: Extract version from pubspec.yaml
         id: extract_version
         run: |
-          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
-          echo "VERSION=$version" >> $GITHUB_ENV
+          $version = (Get-Content pubspec.yaml | Where-Object {$_ -match '^version: '} | ForEach-Object {$_ -replace '^version: ', ''}).Trim()
+          echo "VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Set Up Flutter
         uses: subosito/flutter-action@v2
