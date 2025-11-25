@@ -35,16 +35,28 @@ jobs:
 
       - name: Run FRB generate
         run: flutter_rust_bridge_codegen generate
-   
-      - name: Generate Version from Date
-        id: set_version
+      
+      - name: Extract version from pubspec.yaml
+        id: extract_version
         run: |
-          echo "VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
-          echo "Version set to $VERSION"  # Optional logging
+          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
+          echo "VERSION=$version" >> $GITHUB_ENV
 
-      - name: Update pubspec.yaml Version
+      - name: Check if Tag Exists
+        id: check_tag
         run: |
-          sed -i "s/version: .*/version: 0.0.0+$VERSION/" pubspec.yaml
+          if git rev-parse "${{ env.VERSION }}" >/dev/null 2>&1; then
+            echo "TAG_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "TAG_EXISTS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Modify Tag
+        if: env.TAG_EXISTS == 'true'
+        id: modify_tag
+        run: |
+          new_version="${{ env.VERSION }}-build-${{ github.run_number }}"
+          echo "VERSION=$new_version" >> $GITHUB_ENV
 
       - name: Build APK
         run: flutter build apk --release
