@@ -1,69 +1,126 @@
-name: Flutter Build and Release
+name: "Create Release"
 
 on:
   push:
     branches:
-      - master  # Change to your main branch if necessary
+      - master
 
+permissions:
+  actions: write
+  contents: read
+  issues: write
 
 jobs:
-  build:
+  create_release:
+    name: Create Release Draft
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
-        with:
-          java-version: '17'
-          distribution: 'adopt'  # or 'zulu', 'temurin', etc.
-      
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable  # or 'beta', 'dev'
-
-      - name: Install Dependencies
-        run: flutter pub get
-      
-      - name: Install FRB
-        uses: baptiste0928/cargo-install@v3
-        with:
-          crate: flutter_rust_bridge_codegen
-
-      - name: Run FRB generate
-        run: flutter_rust_bridge_codegen generate
-      
       - name: Extract version from pubspec.yaml
         id: extract_version
         run: |
           version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
           echo "VERSION=$version" >> $GITHUB_ENV
 
-      - name: Check if Tag Exists
-        id: check_tag
+      - name: Create Draft Release
+        id: release
         run: |
-          if git rev-parse "${{ env.VERSION }}" >/dev/null 2>&1; then
-            echo "TAG_EXISTS=true" >> $GITHUB_ENV
-          else
-            echo "TAG_EXISTS=false" >> $GITHUB_ENV
-          fi
+          gh release create ${{ env.VERSION }} --draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Modify Tag
-        if: env.TAG_EXISTS == 'true'
-        id: modify_tag
+  build_linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    needs: create_release
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Linux
+        run: flutter build linux --release
+
+      - name: Upload Artifacts to Release
         run: |
-          new_version="${{ env.VERSION }}-build-${{ github.run_number }}"
-          echo "VERSION=$new_version" >> $GITHUB_ENV
+          gh release upload ${{ env.VERSION }} build/linux/x64/release/bundle/*.deb --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_windows:
+    name: Build Windows
+    runs-on: windows-latest
+    needs: create_release
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Upload Artifacts to Release
+        run: |
+          gh release upload ${{ env.VERSION }} build/windows/runner/Release/*.exe --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_android:
+    name: Build APK
+    runs-on: ubuntu-latest
+    needs: create_release
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
 
       - name: Build APK
         run: flutter build apk --release
-     
-      - name: Create Release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "build/app/outputs/flutter-apk/app-release.apk"
-          tag: ${{ env.VERSION }}
-          token: ${{ secrets.PAT_4_ICEDASH_RELEASE }}
+
+      - name: Upload Artifacts to Release
+        run: |
+          gh release upload ${{ env.VERSION }} build/app/outputs/flutter-apk/app-release.apk --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  finalize_release:
+    name: Finalize Release
+    runs-on: ubuntu-latest
+    needs: [build_linux, build_windows, build_android]
+
+    steps:
+      - name: Finalize Draft Release
+        run: |
+          gh release edit ${{ env.VERSION }} --draft=false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
