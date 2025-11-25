@@ -37,11 +37,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Extract version from pubspec.yaml
+        id: extract_version
+        run: |
+          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
+          echo "VERSION=$version" >> $GITHUB_ENV
+
       - name: Install Required Packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev pkg-config cmake
-
+          sudo apt-get install -y \
+          libgtk-3-dev \
+          pkg-config \
+          cmake \
+          gstreamer1.0-tools \
+          libgstreamer1.0-dev \
+          libgstreamer-plugins-base1.0-dev
       - name: Set Up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -76,6 +87,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+
+      - name: Extract version from pubspec.yaml
+        id: extract_version
+        run: |
+          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
+          echo "VERSION=$version" >> $GITHUB_ENV
 
       - name: Set Up Flutter
         uses: subosito/flutter-action@v2
@@ -112,6 +129,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Extract version from pubspec.yaml
+        id: extract_version
+        run: |
+          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
+          echo "VERSION=$version" >> $GITHUB_ENV
+
       - name: Set Up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -144,6 +167,15 @@ jobs:
     needs: [build_linux, build_windows, build_android]
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Extract version from pubspec.yaml
+        id: extract_version
+        run: |
+          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
+          echo "VERSION=$version" >> $GITHUB_ENV
+
       - name: Finalize Draft Release
         run: |
           gh release edit ${{ env.VERSION }} --draft=false
