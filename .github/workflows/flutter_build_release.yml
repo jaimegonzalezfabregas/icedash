@@ -5,10 +5,6 @@ on:
     branches:
       - master
 
-permissions:
-  actions: write
-  contents: read
-  issues: write
 
 jobs:
   create_release:
@@ -30,7 +26,7 @@ jobs:
         run: |
           gh release create ${{ env.VERSION }} --draft
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_4_ICEDASH_RELEASE }}
 
   build_linux:
     name: Build Linux
@@ -57,7 +53,7 @@ jobs:
         run: |
           gh release upload ${{ env.VERSION }} build/linux/x64/release/bundle/*.deb --clobber
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_4_ICEDASH_RELEASE }}
 
   build_windows:
     name: Build Windows
@@ -84,7 +80,7 @@ jobs:
         run: |
           gh release upload ${{ env.VERSION }} build/windows/runner/Release/*.exe --clobber
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_4_ICEDASH_RELEASE }}
 
   build_android:
     name: Build APK
@@ -111,7 +107,7 @@ jobs:
         run: |
           gh release upload ${{ env.VERSION }} build/app/outputs/flutter-apk/app-release.apk --clobber
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_4_ICEDASH_RELEASE }}
 
   finalize_release:
     name: Finalize Release
@@ -123,4 +119,4 @@ jobs:
         run: |
           gh release edit ${{ env.VERSION }} --draft=false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_4_ICEDASH_RELEASE }}
