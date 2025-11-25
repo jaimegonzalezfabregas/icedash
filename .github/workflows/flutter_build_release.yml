@@ -60,8 +60,6 @@ jobs:
 
       - name: Build APK
         run: flutter build apk --release
-
-
      
       - name: Create Release
         uses: ncipollo/release-action@v1
