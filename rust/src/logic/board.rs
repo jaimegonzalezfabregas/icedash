@@ -1,9 +1,15 @@
 use std::ops::{Deref, DerefMut};
 
-use rand::{random, seq::IteratorRandom};
+use rand::{random, seq::IteratorRandom, Rng};
 
 use crate::{
-    api::{board_description::BoardDescription, direction::Direction, main::{GateDestination, GateMetadata, LeftRotatable}, pos::Pos, tile::Tile},
+    api::{
+        board_description::BoardDescription,
+        direction::Direction,
+        main::{GateDestination, GateMetadata, LeftRotatable},
+        pos::Pos,
+        tile::Tile,
+    },
     logic::{
         gate::GateEntry,
         matrix::{Matrix, TileMap},
@@ -96,14 +102,10 @@ impl Board {
 
     pub fn new_random(desc: &BoardDescription) -> Result<Self, String> {
         let mut rng = rand::rng();
-        let width = (desc.size_range_min..=desc.size_range_max)
-            .choose(&mut rng)
-            .unwrap_or(10);
-        let height = (desc.size_range_min..=desc.size_range_max)
-            .clone()
-            .into_iter()
-            .choose(&mut rng)
-            .unwrap_or(10);
+        let width = (desc.area.isqrt() as i32 + rng.random_range(-2..=2)).max(7) as isize;
+        let height =  (desc.area.isqrt() as i32 + rng.random_range(-2..=2)).max(7) as isize;
+
+        // println!("{} ({}x{}) vs {} ({}x{})", desc.area,  desc.area.isqrt(), desc.area.isqrt(), width * height, width, height);
 
         let gate_range_horizontal = &(3..height - 3);
         let gate_range_vertical = &(3..width - 3);
@@ -139,18 +141,20 @@ impl Board {
             }
         }
 
-        for (percentage, tile) in [
+        for (percentage, tile, can_be_close_to_exit) in [
             (
                 ((desc.weak_walls_percentage_min..=desc.weak_walls_percentage_max)
                     .choose(&mut rng)
                     .unwrap_or(0)),
                 Tile::WeakWall,
+                true,
             ),
             (
                 ((desc.pilars_percentage_min..=desc.pilars_percentage_max)
                     .choose(&mut rng)
                     .unwrap_or(0)),
                 Tile::Wall,
+                true,
             ),
             (
                 ((desc.box_percentage_min..=desc.box_percentage_max)
@@ -159,11 +163,18 @@ impl Board {
                     .choose(&mut rng)
                     .unwrap_or(0)),
                 Tile::Box,
+                false,
             ),
         ] {
             for _ in 0..((width - 2) * (height - 2)) * percentage / 100 {
                 let x = (1..(width - 1) as usize).choose(&mut rng).unwrap();
                 let y = (1..(height - 1) as usize).choose(&mut rng).unwrap();
+
+                if !can_be_close_to_exit
+                    && ((x as isize - end.x).abs() < 3 || (y as isize - end.y).abs() > 3)
+                {
+                    continue;
+                }
 
                 map[y][x] = tile.clone();
             }

@@ -123,7 +123,6 @@ class IceDashWorld extends World with HasGameReference {
     }
   }
 
-
   @override
   void onGameResize(Vector2 size) {
     Rect focus = _currentRoom!.worldBB;
@@ -169,17 +168,36 @@ class IceDashWorld extends World with HasGameReference {
   double timeElapsed = 0;
   static const timePerFrame = 1 / 30;
 
+  bool waitUpdate = false;
+  double waitUpdateDt = 0;
+
   @override
-  void updateTree(double dt) {
-    sleep(Duration(milliseconds: (1000 / 40).floor()));
+  void updateTree(double dt) async {
+    waitUpdateDt += dt;
+    if (waitUpdate) {
+      return;
+    }
+    waitUpdate = true;
+
+    await Future.delayed(Duration(milliseconds: (1000 / 40).floor()));
     spawnSnow();
+    super.updateTree(waitUpdateDt);
+    waitUpdateDt = 0;
+    waitUpdate = false;
+  }
 
-    // timeElapsed += dt;
+  bool waitRender = false;
 
-    // if (timeElapsed > timePerFrame) {
-    //   timeElapsed -= timePerFrame;
-    // }
-    super.updateTree(dt);
+  @override
+  void renderTree(Canvas canvas) async {
+    if (waitRender) {
+      return;
+    }
+    waitRender = true;
+    await Future.delayed(Duration(milliseconds: (1000 / 20).floor()));
+
+    super.renderTree(canvas);
+    waitRender = false;
   }
 
   double snowDebt = 0;

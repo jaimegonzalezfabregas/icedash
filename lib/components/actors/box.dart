@@ -1,11 +1,11 @@
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/flame.dart';
-import 'package:flame_audio/flame_audio.dart';
 import 'package:icedash/components/actor.dart';
 import 'package:icedash/components/room.dart';
 import 'package:icedash/config.dart';
 import 'package:icedash/extensions.dart';
+import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 
 class Box extends Actor {
@@ -20,14 +20,14 @@ class Box extends Actor {
       await Flame.images.load('box.png'),
       size: Vector2.all(1),
       playing: false,
-      SpriteAnimationData.sequenced(textureSize: Vector2(16, 16), amount: 16, stepTime: 1/16/3),
+      SpriteAnimationData.sequenced(textureSize: Vector2(16, 16), amount: 16, stepTime: 1 / 16 / 3),
     );
     add(boxDisplay);
   }
 
   @override
   Future<bool> hit(Direction dir) async {
-    FlameAudio.play('hit_box.mp3');
+    playAudio('hit_box.mp3');
 
     Vector2 destination = await predictHit(dir);
     int movementLenght = (destination - position).length.floor();

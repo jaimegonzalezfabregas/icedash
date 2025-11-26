@@ -1,4 +1,4 @@
-import 'package:flame_audio/flame_audio.dart';
+import 'package:icedash/main.dart';
 import 'package:icedash/room_traversal/lobby_map.dart';
 import 'package:icedash/room_traversal/single_rooms.dart';
 import 'package:icedash/src/rust/api/dart_board.dart';
@@ -31,19 +31,19 @@ class RoomTraversal {
           endOfGameMetadata = gateDestination.endOfGameMetadata;
 
           // TODO play audio feedback for starting a new game
-          FlameAudio.play('start_strech.mp3');
+          playAudio('start_strech.mp3');
           start = DateTime.now().millisecondsSinceEpoch.toDouble();
         } else if (gateDestination is GateDestination_NextAutoGen) {
-          FlameAudio.play('won_room.mp3');
+          playAudio('won_room.mp3');
         }
 
         return (ret.field0, 0);
       } else if (ret is AutoGenOutput_NoMoreBufferedBoards) {
-        FlameAudio.play('won_strech.mp3');
+        playAudio('won_strech.mp3');
         return (await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000), endOfGameMetadata!, entryDirection), 0);
       }
     } else if (gateDestination is GateDestination_RoomIdWithGate) {
-      FlameAudio.play('change_room.mp3');
+      playAudio('change_room.mp3');
 
       return lobbyRoom(gateDestination, entryDirection);
     }

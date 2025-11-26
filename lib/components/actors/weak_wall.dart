@@ -6,6 +6,7 @@ import 'package:flame/image_composition.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
 import 'package:icedash/components/actor.dart';
+import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 
 class PixelParticle extends Particle {
@@ -30,6 +31,10 @@ class WeakWall extends Actor {
   Future<bool> hit(Direction dir) async {
     super.colision = false;
     super.selffade = true;
+
+    super.display?.removeFromParent();
+
+    playAudio("hit_weak_wall.mp3");
 
     add(
       ParticleSystemComponent(
@@ -80,7 +85,6 @@ class WeakWall extends Actor {
         ),
       ),
     );
-    opacity = 0;
 
     add(
       FunctionEffect(

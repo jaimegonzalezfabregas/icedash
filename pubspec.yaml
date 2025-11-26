@@ -1,7 +1,7 @@
 name: icedash
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.0.0
+version: 2.0.0
 
 environment:
   sdk: ^3.9.2
@@ -15,8 +15,8 @@ dependencies:
     path: rust_builder
   flutter_rust_bridge: 2.11.1
   freezed_annotation: 3.1.0
-  flame_audio: ^2.11.11
   shared_preferences: ^2.5.3
+  just_audio: ^0.10.5
 
 dev_dependencies:
   flutter_test:

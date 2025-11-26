@@ -26,8 +26,7 @@ impl From<&GameMode> for isize {
 
 #[derive(Clone, PartialEq, Debug, Eq, Hash)]
 pub struct BoardDescription {
-    pub size_range_min: isize,
-    pub size_range_max: isize,
+    pub area: isize,
     pub weak_walls_percentage_min: isize,
     pub weak_walls_percentage_max: isize,
     pub pilars_percentage_min: isize,
@@ -42,24 +41,22 @@ pub struct BoardDescription {
 impl BoardDescription {
     pub fn from_list(data: Vec<isize>) -> BoardDescription {
         BoardDescription {
-            size_range_min: data[0],
-            size_range_max: data[1],
-            weak_walls_percentage_min: data[2],
-            weak_walls_percentage_max: data[3],
-            pilars_percentage_min: data[4],
-            pilars_percentage_max: data[5],
-            box_percentage_min: data[6],
-            box_percentage_max: data[7],
-            vignet_percentage_min: data[8],
-            vignet_percentage_max: data[9],
-            game_mode: data[10].into(),
+            area: data[0],
+            weak_walls_percentage_min: data[1],
+            weak_walls_percentage_max: data[2],
+            pilars_percentage_min: data[3],
+            pilars_percentage_max: data[4],
+            box_percentage_min: data[5],
+            box_percentage_max: data[6],
+            vignet_percentage_min: data[7],
+            vignet_percentage_max: data[8],
+            game_mode: data[9].into(),
         }
     }
 
     pub fn as_list(&self) -> Vec<isize> {
         vec![
-            self.size_range_min,
-            self.size_range_max,
+            self.area,
             self.weak_walls_percentage_min,
             self.weak_walls_percentage_max,
             self.pilars_percentage_min,

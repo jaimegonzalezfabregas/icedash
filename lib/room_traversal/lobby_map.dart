@@ -62,8 +62,7 @@ A       s       B
       'A'.codeUnitAt(0): GateMetadata.exit(
         destination: GateDestination.firstAutogen(
           boardDescription: BoardDescription(
-            sizeRangeMin: 7 + lev,
-            sizeRangeMax: 10 + lev,
+            area: (7*7) + lev * 5,
             weakWallsPercentageMin: 0,
             weakWallsPercentageMax: 0,
             pilarsPercentageMin: 5,
@@ -87,8 +86,7 @@ A       s       B
       'B'.codeUnitAt(0): GateMetadata.exit(
         destination: GateDestination.firstAutogen(
           boardDescription: BoardDescription(
-            sizeRangeMin: 7 + lev,
-            sizeRangeMax: 10 + lev,
+            area: (7 * 7) + lev * 5,
             weakWallsPercentageMin: 0,
             weakWallsPercentageMax: 5,
             pilarsPercentageMin: 0,
