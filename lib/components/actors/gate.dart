@@ -21,17 +21,23 @@ class Gate extends Actor with HasGameReference<IceDashGame> {
   GateDestination destination;
   String? lable;
 
-  Gate(this.room, this.gateId, this.destination, this.innerDirection, this.lable, {super.position})
-    : super(
-        "fade.png",
-        colision: false,
-        angle: switch (innerDirection) {
-          Direction.west => pi / 2,
-          Direction.north => pi,
-          Direction.east => -pi / 2,
-          Direction.south => 0,
-        },
-      );
+  Gate(
+    this.room,
+    this.gateId,
+    this.destination,
+    this.innerDirection,
+    this.lable, {
+    super.position,
+  }) : super(
+         "fade.png",
+         colision: false,
+         angle: switch (innerDirection) {
+           Direction.west => pi / 2,
+           Direction.north => pi,
+           Direction.east => -pi / 2,
+           Direction.south => 0,
+         },
+       );
 
   @override
   Future<void> onLoad() async {

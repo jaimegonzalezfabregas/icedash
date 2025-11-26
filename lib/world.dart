@@ -36,13 +36,29 @@ class IceDashWorld extends World with HasGameReference {
     await loadRoom(destination, Vector2(0, 0), Direction.north);
   }
 
-  Future<RoomComponent> getRoom(Vector2 worldEntrancePosition, Direction stichDirection, GateDestination destination) async {
-    var (board, entranceGateId) = await roomTraversal.getRoom(destination, stichDirection);
+  Future<RoomComponent> getRoom(
+    Vector2 worldEntrancePosition,
+    Direction stichDirection,
+    GateDestination destination,
+  ) async {
+    var (board, entranceGateId) = await roomTraversal.getRoom(
+      destination,
+      stichDirection,
+    );
 
-    return RoomComponent(worldEntrancePosition, stichDirection, board, entranceGateId);
+    return RoomComponent(
+      worldEntrancePosition,
+      stichDirection,
+      board,
+      entranceGateId,
+    );
   }
 
-  Future<void> loadRoom(GateDestination destination, Vector2 worldStichPos, Direction stichDirection) async {
+  Future<void> loadRoom(
+    GateDestination destination,
+    Vector2 worldStichPos,
+    Direction stichDirection,
+  ) async {
     double camTransitionDuration = 0.75;
     double camTransitionStaticPortion = 0.33;
 
@@ -59,7 +75,11 @@ class IceDashWorld extends World with HasGameReference {
     Vector2 dpos = stichDirection.dartVector();
     Vector2 worldEntrancePosition = worldStichPos + dpos;
 
-    _currentRoom = await getRoom(worldEntrancePosition, stichDirection, destination);
+    _currentRoom = await getRoom(
+      worldEntrancePosition,
+      stichDirection,
+      destination,
+    );
     add(_currentRoom!);
 
     Rect newFocus = _currentRoom!.worldBB;
@@ -107,7 +127,12 @@ class IceDashWorld extends World with HasGameReference {
         (double, double) nextTransition = zoomTransitionQueue.removeAt(0);
         zooming = true;
 
-        camera.viewfinder.add(ScaleEffect.to(Vector2.all(nextTransition.$1), CurvedEffectController(nextTransition.$2, Curves.linear)));
+        camera.viewfinder.add(
+          ScaleEffect.to(
+            Vector2.all(nextTransition.$1),
+            CurvedEffectController(nextTransition.$2, Curves.linear),
+          ),
+        );
 
         add(
           FunctionEffect(
@@ -127,7 +152,10 @@ class IceDashWorld extends World with HasGameReference {
   void onGameResize(Vector2 size) {
     Rect focus = _currentRoom!.worldBB;
     if (_currentRoom != null) {
-      camera.zoomTo(min(game.size.x / focus.width, game.size.y / focus.height), LinearEffectController(0));
+      camera.zoomTo(
+        min(game.size.x / focus.width, game.size.y / focus.height),
+        LinearEffectController(0),
+      );
     }
     super.onGameResize(size);
   }
@@ -136,7 +164,12 @@ class IceDashWorld extends World with HasGameReference {
     camera = cam;
   }
 
-  Future<bool> canMove(Vector2 og, Vector2 dst, Direction dir, bool firstPush) async {
+  Future<bool> canMove(
+    Vector2 og,
+    Vector2 dst,
+    Direction dir,
+    bool firstPush,
+  ) async {
     bool ret = await _currentRoom!.canMove(og, dst, dir, firstPush);
     return ret;
   }
@@ -209,7 +242,7 @@ class IceDashWorld extends World with HasGameReference {
 
     Rect boundingBox = _currentRoom!.worldBB.inflate(3);
 
-    double snowCount = (boundingBox.width * boundingBox.height / 1000);
+    double snowCount = (boundingBox.width * boundingBox.height / 100);
     snowDebt += snowCount;
 
     while (snowDebt > 1) {

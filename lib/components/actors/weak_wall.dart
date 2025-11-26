@@ -17,7 +17,10 @@ class PixelParticle extends Particle {
 
   @override
   void render(Canvas canvas) {
-    canvas.drawRect(Rect.fromCenter(center: Offset(0, 0), width: side, height: side), paint);
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(0, 0), width: side, height: side),
+      paint,
+    );
   }
 }
 

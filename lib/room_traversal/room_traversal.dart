@@ -12,18 +12,27 @@ class RoomTraversal {
   Future<GateDestination> getOnLoadDestination() async {
     final SharedPreferencesAsync prefs = SharedPreferencesAsync();
     int lastPlayedLevel = await prefs.getInt("lastPlayedLevel") ?? 0;
-    return GateDestination.roomIdWithGate(RoomIdAndGate(roomId: "lev_${lastPlayedLevel}_lobby", gateId: 3));
+    return GateDestination.roomIdWithGate(
+      RoomIdAndGate(roomId: "lev_${lastPlayedLevel}_lobby", gateId: 3),
+    );
   }
 
   double start = 0;
   EndOfGameMetadata? endOfGameMetadata;
 
-  Future<(DartBoard, int)> getRoom(GateDestination gateDestination, Direction entryDirection) async {
+  Future<(DartBoard, int)> getRoom(
+    GateDestination gateDestination,
+    Direction entryDirection,
+  ) async {
     if (gateDestination is GateDestination_FirstAutogen) {
-      await dartStartSearch(boardDesc: gateDestination.boardDescription, maxBufferedBoards: gateDestination.boardCount);
+      await dartStartSearch(
+        boardDesc: gateDestination.boardDescription,
+        maxBufferedBoards: gateDestination.boardCount,
+      );
     }
 
-    if (gateDestination is GateDestination_NextAutoGen || gateDestination is GateDestination_FirstAutogen) {
+    if (gateDestination is GateDestination_NextAutoGen ||
+        gateDestination is GateDestination_FirstAutogen) {
       AutoGenOutput ret = await dartGetNewBoard(entryDirection: entryDirection);
 
       if (ret is AutoGenOutput_Ok) {
@@ -40,7 +49,14 @@ class RoomTraversal {
         return (ret.field0, 0);
       } else if (ret is AutoGenOutput_NoMoreBufferedBoards) {
         playAudio('won_strech.mp3');
-        return (await endOfGameRoom(((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000), endOfGameMetadata!, entryDirection), 0);
+        return (
+          await endOfGameRoom(
+            ((DateTime.now().millisecondsSinceEpoch.toDouble() - start) / 1000),
+            endOfGameMetadata!,
+            entryDirection,
+          ),
+          0,
+        );
       }
     } else if (gateDestination is GateDestination_RoomIdWithGate) {
       playAudio('change_room.mp3');

@@ -19,7 +19,6 @@ Map<String, AudioPlayer> audioPlayerCache = {};
 void playAudio(String assetPath) async {
   if (audioPlayerCache[assetPath] != null) {
     audioPlayerCache[assetPath]!.seek(Duration(seconds: 0));
-    ;
     audioPlayerCache[assetPath]!.play();
   } else {
     AudioPlayer player = AudioPlayer();

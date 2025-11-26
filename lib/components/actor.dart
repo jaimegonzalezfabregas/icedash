@@ -10,7 +10,13 @@ abstract class Actor extends PositionComponent implements OpacityProvider {
   bool selffade;
   SpriteComponent? display;
 
-  Actor(this.asset, {super.position, super.angle, this.colision = true, this.selffade = false}) {
+  Actor(
+    this.asset, {
+    super.position,
+    super.angle,
+    this.colision = true,
+    this.selffade = false,
+  }) {
     super.priority = 10;
     super.size = Vector2.all(1);
     super.anchor = Anchor.center;
@@ -23,7 +29,10 @@ abstract class Actor extends PositionComponent implements OpacityProvider {
   @override
   FutureOr<void> onLoad() async {
     if (asset != null) {
-      display = SpriteComponent(sprite: await Sprite.load(asset!), size: Vector2(1, 1));
+      display = SpriteComponent(
+        sprite: await Sprite.load(asset!),
+        size: Vector2(1, 1),
+      );
       add(display!);
     }
     await super.onLoad();

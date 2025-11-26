@@ -47,7 +47,12 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
 
   late Rect worldBB;
 
-  RoomComponent(this.entranceWorldPos, this.entranceDirection, this.room, this.entranceGateId) {
+  RoomComponent(
+    this.entranceWorldPos,
+    this.entranceDirection,
+    this.room,
+    this.entranceGateId,
+  ) {
     entranceRoomPos = room.gatePositions[entranceGateId].dartVector();
 
     worldBB = Rect.fromLTWH(
@@ -80,18 +85,31 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
     for (var sprite in tileSpriteGrid.values) {
       double d = (sprite.position - entranceWorldPos).length * rippleDuration;
 
-      await sprite.add(OpacityEffect.fadeIn(EffectController(duration: fadeDuration, startDelay: d)));
+      await sprite.add(
+        OpacityEffect.fadeIn(
+          EffectController(duration: fadeDuration, startDelay: d),
+        ),
+      );
     }
 
     for (var actor in actorList) {
       if (!actor.selffade) {
         double d = (actor.position - entranceWorldPos).length * rippleDuration;
 
-        await actor.add(OpacityEffect.fadeIn(EffectController(duration: fadeDuration, startDelay: d)));
+        await actor.add(
+          OpacityEffect.fadeIn(
+            EffectController(duration: fadeDuration, startDelay: d),
+          ),
+        );
       }
     }
 
-    add(FunctionEffect((_, __) {}, EffectController(duration: maxDelay + fadeDuration + 1)));
+    add(
+      FunctionEffect(
+        (_, __) {},
+        EffectController(duration: maxDelay + fadeDuration + 1),
+      ),
+    );
   }
 
   void fadeOut(int exitGateId) {
@@ -120,13 +138,21 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
     for (var sprite in tileSpriteGrid.values) {
       double d = (sprite.position - exitWorldPos).length * rippleDuration;
 
-      sprite.add(OpacityEffect.fadeOut(EffectController(duration: fadeDuration, startDelay: maxDelay - d)));
+      sprite.add(
+        OpacityEffect.fadeOut(
+          EffectController(duration: fadeDuration, startDelay: maxDelay - d),
+        ),
+      );
     }
 
     for (var actor in actorList) {
       double d = (actor.position - exitWorldPos).length * rippleDuration;
 
-      actor.add(OpacityEffect.fadeOut(EffectController(duration: fadeDuration, startDelay: maxDelay - d)));
+      actor.add(
+        OpacityEffect.fadeOut(
+          EffectController(duration: fadeDuration, startDelay: maxDelay - d),
+        ),
+      );
     }
 
     add(
@@ -200,14 +226,23 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
             if (destination != null) {
               String? label = room.gateLables[gateId];
 
-              var gate = Gate(this, gateId, destination, room.gateDirections[gateId], label, position: mapPos2WorldVector(pos));
+              var gate = Gate(
+                this,
+                gateId,
+                destination,
+                room.gateDirections[gateId],
+                label,
+                position: mapPos2WorldVector(pos),
+              );
               gate.opacity = startingOpacity;
               add(gate);
               actorList.add(gate);
             }
 
             if (usedEntrance) {
-              var entrance = EntranceTmpIcePatch(position: mapPos2WorldVector(pos));
+              var entrance = EntranceTmpIcePatch(
+                position: mapPos2WorldVector(pos),
+              );
               add(
                 FunctionEffect(
                   (_, _) {},
@@ -250,7 +285,12 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
     clean();
   }
 
-  Future<bool> canMove(Vector2 og, Vector2 dst, Direction dir, bool firstPush) async {
+  Future<bool> canMove(
+    Vector2 og,
+    Vector2 dst,
+    Direction dir,
+    bool firstPush,
+  ) async {
     Tile ogTile = await getTile(og);
 
     if (ogTile is Tile_Stop && !firstPush) {
@@ -266,7 +306,8 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
 
     if (canWalk == true) {
       for (var actor in actorList) {
-        if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(dst)) {
+        if (await worldVector2MapPos(actor.position) ==
+            await worldVector2MapPos(dst)) {
           canWalk &= !actor.colision;
         }
       }
@@ -281,7 +322,8 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
 
     if (canWalk == true) {
       for (var actor in actorList) {
-        if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(dst)) {
+        if (await worldVector2MapPos(actor.position) ==
+            await worldVector2MapPos(dst)) {
           canWalk &= !actor.colision;
         }
       }
@@ -293,7 +335,8 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
   Future<bool> hit(Vector2 pos, Direction dir, {bool box = false}) async {
     var consecuences = false;
     for (var actor in actorList) {
-      if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(pos)) {
+      if (await worldVector2MapPos(actor.position) ==
+          await worldVector2MapPos(pos)) {
         if (!box || actor is Box) {
           consecuences |= await actor.hit(dir);
         }
@@ -314,7 +357,8 @@ class RoomComponent extends Component with HasGameReference<IceDashGame> {
 
   void predictedHit(Vector2 og, Vector2 pos, Direction dir) async {
     for (var actor in actorList) {
-      if (await worldVector2MapPos(actor.position) == await worldVector2MapPos(pos)) {
+      if (await worldVector2MapPos(actor.position) ==
+          await worldVector2MapPos(pos)) {
         actor.predictedHit(og, dir);
       }
     }

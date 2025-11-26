@@ -10,19 +10,17 @@ import 'package:icedash/main.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/src/rust/api/tile.dart';
 
-
 class Player extends SpriteComponent with HasGameReference<IceDashGame> {
-  Player({super.position}) : super(priority: 20, size: Vector2.all(1), anchor: Anchor.center);
+  Player({super.position})
+    : super(priority: 20, size: Vector2.all(1), anchor: Anchor.center);
 
   List<Direction> movementQueue = [];
 
   int? remainingMoves;
   int? remainingMovesReset;
 
-  String animationState = "idle";
-
   Random rnd = Random();
-  Vector2 randomVector2() => (Vector2.random(rnd)- Vector2.random(rnd)) * 2;
+  Vector2 randomVector2() => (Vector2.random(rnd) - Vector2.random(rnd)) * 2;
 
   @override
   Future<void> onLoad() async {
@@ -74,7 +72,12 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
     Vector2 delta = dir.dartVector();
     bool firstPush = true;
 
-    while ((await game.idWorld.canMove(cursor, cursor + delta, dir, firstPush))) {
+    while ((await game.idWorld.canMove(
+      cursor,
+      cursor + delta,
+      dir,
+      firstPush,
+    ))) {
       firstPush = false;
       cursor = cursor + delta;
     }
@@ -100,13 +103,16 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         break;
     }
 
+    if (secondsToHit < secPerStep * 2) {
+      return;
+    }
+
     add(
       FunctionEffect(
         (_, __) {},
         LinearEffectController(secPerStep / 2),
         onComplete: () async {
           sprite = await Sprite.load('player/player_${axis}0001.png');
-          animationState = "${axis}0001";
         },
       ),
     );
@@ -117,7 +123,6 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         LinearEffectController(secPerStep),
         onComplete: () async {
           sprite = await Sprite.load('player/player_${axis}0002.png');
-          animationState = "${axis}0002";
         },
       ),
     );
@@ -128,7 +133,6 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         LinearEffectController(secondsToHit - secPerStep / 2),
         onComplete: () async {
           sprite = await Sprite.load('player/player_${axis}0001.png');
-          animationState = "${axis}0001";
         },
       ),
     );
@@ -139,7 +143,6 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
         LinearEffectController(secondsToHit),
         onComplete: () async {
           sprite = await Sprite.load('player/player_idle.png');
-          animationState = "idle";
         },
       ),
     );
@@ -163,6 +166,8 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
     int movementLenght = (destination - position).length.floor();
 
+    animate(dir, movementLenght * secPerStep);
+
     MoveToEffect effect = MoveToEffect(
       destination,
       LinearEffectController(movementLenght * secPerStep),
@@ -171,7 +176,10 @@ class Player extends SpriteComponent with HasGameReference<IceDashGame> {
 
         Tile hitTile = await game.idWorld.getTile(position + dir.dartVector());
 
-        bool consecuences = await game.idWorld.hit(position + dir.dartVector(), dir);
+        bool consecuences = await game.idWorld.hit(
+          position + dir.dartVector(),
+          dir,
+        );
         bool exiting = hitTile is Tile_Outside;
 
         int moveI = remainingMoves == null ? 1 : remainingMoves!;

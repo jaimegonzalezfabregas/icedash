@@ -20,7 +20,11 @@ class Box extends Actor {
       await Flame.images.load('box.png'),
       size: Vector2.all(1),
       playing: false,
-      SpriteAnimationData.sequenced(textureSize: Vector2(16, 16), amount: 16, stepTime: 1 / 16 / 3),
+      SpriteAnimationData.sequenced(
+        textureSize: Vector2(16, 16),
+        amount: 16,
+        stepTime: 1 / 16 / 3,
+      ),
     );
     add(boxDisplay);
   }

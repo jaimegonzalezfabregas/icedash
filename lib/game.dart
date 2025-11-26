@@ -7,7 +7,8 @@ import 'package:flame/game.dart';
 import 'package:icedash/src/rust/api/direction.dart';
 import 'package:icedash/world.dart';
 
-class IceDashGame extends FlameGame with HasKeyboardHandlerComponents, DragCallbacks, LongPressDetector {
+class IceDashGame extends FlameGame
+    with HasKeyboardHandlerComponents, DragCallbacks, LongPressDetector {
   late IceDashWorld idWorld;
 
   @override
@@ -15,7 +16,10 @@ class IceDashGame extends FlameGame with HasKeyboardHandlerComponents, DragCallb
 
   IceDashGame() {
     idWorld = IceDashWorld();
-    CameraComponent camera = CameraComponent(world: idWorld, viewport: MaxViewport());
+    CameraComponent camera = CameraComponent(
+      world: idWorld,
+      viewport: MaxViewport(),
+    );
     idWorld.setCamera(camera);
 
     super.world = idWorld;

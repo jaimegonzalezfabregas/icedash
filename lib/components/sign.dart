@@ -11,7 +11,13 @@ class Sign extends PositionComponent {
   String text;
   double textBoxWidth;
   double textBoxheight;
-  Sign(this.text, double angle, {super.position, this.textBoxWidth = 1, this.textBoxheight = 1}){
+  Sign(
+    this.text,
+    double angle, {
+    super.position,
+    this.textBoxWidth = 1,
+    this.textBoxheight = 1,
+  }) {
     super.angle = angle;
     super.priority = 19;
     super.anchor = Anchor.center;
@@ -27,7 +33,14 @@ class Sign extends PositionComponent {
       (Color.fromARGB(255, 255, 255, 255), Vector2(0, 0)),
     ]) {
       Future(() {
-        add(MyTextBox(text, delta: x.$2, color: x.$1, size: Vector2(textBoxWidth.toDouble(), textBoxheight.toDouble())));
+        add(
+          MyTextBox(
+            text,
+            delta: x.$2,
+            color: x.$1,
+            size: Vector2(textBoxWidth.toDouble(), textBoxheight.toDouble()),
+          ),
+        );
       });
     }
 
@@ -40,18 +53,27 @@ class Sign extends PositionComponent {
 class MyTextBox extends TextBoxComponent {
   Color color;
 
-  MyTextBox(String text, {required Vector2 size, required this.color, required Vector2 delta, super.angle})
-    : super(
-        position: delta / 16 / 4,
-        scale: Vector2.all(1 / bigNum),
-        size: size * bigNum,
-        text: text,
-        textRenderer: TextPaint(
-          style: TextStyle(fontSize: bigNum / 4, color: color, fontFamily: "BoldPixels"),
-        ),
-        boxConfig: TextBoxConfig(maxWidth: 3, margins: EdgeInsets.all(0)),
-        align: Anchor.center,
-        anchor: Anchor.center,
-        priority: 19,
-      );
+  MyTextBox(
+    String text, {
+    required Vector2 size,
+    required this.color,
+    required Vector2 delta,
+    super.angle,
+  }) : super(
+         position: delta / 16 / 4,
+         scale: Vector2.all(1 / bigNum),
+         size: size * bigNum,
+         text: text,
+         textRenderer: TextPaint(
+           style: TextStyle(
+             fontSize: bigNum / 4,
+             color: color,
+             fontFamily: "BoldPixels",
+           ),
+         ),
+         boxConfig: TextBoxConfig(maxWidth: 3, margins: EdgeInsets.all(0)),
+         align: Anchor.center,
+         anchor: Anchor.center,
+         priority: 19,
+       );
 }
