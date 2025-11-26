@@ -20,7 +20,7 @@ class Snow extends SpriteComponent {
     int i = Random().nextInt(4);
     lifetime = Random().nextDoubleBetween(3, 6);
     super.sprite = await Sprite.load("snow_flakes/$i.png");
-    super.size = Vector2(1, 1);
+    super.size = Vector2(3/16, 3 / 16);
     super.opacity = 0;
 
     double fallingSpeed = Random().nextDoubleBetween(0.7, 1.2);

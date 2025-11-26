@@ -41,15 +41,23 @@ class WeakWall extends Actor {
 
             Paint paint;
 
-            switch (i % 6) {
+            switch (i % 11) {
               case 0:
               case 1:
+                paint = Paint()..color = Color.fromARGB(255, 57, 74, 97);
+
               case 2:
               case 3:
                 paint = Paint()..color = Color.fromARGB(255, 113, 147, 192);
                 break;
               case 4:
                 paint = Paint()..color = Color.fromARGB(255, 173, 199, 233);
+                break;
+              case 5:
+              case 6:
+              case 7:
+              case 8:
+                paint = Paint()..color = Color.fromARGB(255, 255, 255, 255);
                 break;
               default:
                 paint = Paint()..color = Color.fromARGB(255, 180, 207, 243);
