@@ -21,6 +21,14 @@ jobs:
           version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
           echo "VERSION=$version" >> $GITHUB_ENV
 
+      - name: Check if Release Exists
+        id: check_release
+        run: |
+          if gh release view ${{ env.VERSION }} > /dev/null 2>&1; then
+            echo "Error: Release ${{ env.VERSION }} already exists."
+            exit 1  # Exit with non-zero status to fail the workflow
+          fi
+
       - name: Create Draft Release
         id: release
         run: |
