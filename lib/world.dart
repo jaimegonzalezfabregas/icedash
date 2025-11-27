@@ -242,7 +242,7 @@ class IceDashWorld extends World with HasGameReference {
 
     Rect boundingBox = _currentRoom!.worldBB.inflate(3);
 
-    double snowCount = (boundingBox.width * boundingBox.height / 100);
+    double snowCount = (boundingBox.width * boundingBox.height / 1000);
     snowDebt += snowCount;
 
     while (snowDebt > 1) {
